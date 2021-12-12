@@ -1,5 +1,5 @@
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_command, \
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, \
                                                create_wheel_buttons
 from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP
 from opendbc.can.packer import CANPacker
@@ -58,13 +58,13 @@ class CarController():
 
     # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
     # frame is 100Hz (0.01s period)
-    #if (self.ccframe % 25 == 0):  # 0.25s period
-    #  if (CS.lkas_car_model != -1):
-    #    new_msg = create_lkas_hud(
-    #        self.packer, CS.out.gearShifter, lkas_active, hud_alert,
-    #        self.hud_count, CS.lkas_car_model)
-    #    can_sends.append(new_msg)
-    #    self.hud_count += 1
+    if (self.ccframe % 25 == 0):  # 0.25s period
+      if (CS.lkas_car_model != -1):
+        new_msg = create_lkas_hud(
+            self.packer, CS.out.gearShifter, lkas_active, hud_alert,
+            self.hud_count, CS.lkas_car_model, CS.autoHighBeamBit, left_line, right_line, lead, left_lane_depart, right_lane_depart)
+        can_sends.append(new_msg)
+        self.hud_count += 1
 
     new_msg = create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, frame)
     can_sends.append(new_msg)

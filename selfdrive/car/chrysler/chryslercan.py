@@ -5,6 +5,53 @@ from selfdrive.car import make_can_msg
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
+def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_model, autoHighBeamBit, left_line, right_line, left_lane_depart, right_lane_depart):
+  # LKAS_HUD 0x2a6 (678) Controls what lane-keeping icon is displayed.
+
+  if hud_alert in [VisualAlert.steerRequired, VisualAlert.ldw]:
+    msg = b'\x00\x00\x00\x03\x00\x00\x00\x00'
+    return make_can_msg("DAS_6", msg, 0)
+
+  color = 1  # default values are for park or neutral in 2017 are 0 0, but trying 1 1 for 2019
+  lines = 1
+  alerts = 0
+
+  if hud_count < (1 * 4):  # first 3 seconds, 4Hz
+    alerts = 1
+  # CAR.PACIFICA_2018_HYBRID and CAR.PACIFICA_2019_HYBRID
+  # had color = 1 and lines = 1 but trying 2017 hybrid style for now.
+  if gear in (GearShifter.drive, GearShifter.reverse, GearShifter.low):
+    if lkas_active:
+      color = 2  # control active, display green.
+      if left_line:
+        if right_line:
+          lines = 3  # Both sides white
+        else:
+          lines = 11  
+      elif right_line:
+        lines = 10    # Right only white (GUESS, trying yellows for fun)
+      else:
+        lines = 4    # Neither lane border shown
+      #lines = 6
+      if left_lane_depart:
+        lines = 9
+        color = 3
+      elif right_lane_depart:
+        lines = 10
+        color = 3
+    else:
+      color = 1  # control off, display white.
+      lines = 1
+      
+  values = {
+    "LKAS_ICON_COLOR": color,  # byte 0, last 2 bits
+    "CAR_MODEL": lkas_car_model,  # byte 1
+    "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
+    "LKAS_ALERTS": alerts,  # byte 3, last 4 bits
+    "Auto_High_Beam": autoHighBeamBit,
+    }
+
+  return packer.make_can_msg("DAS_6", 0, values)  # 0x2a6
 
 
 def create_lkas_command(packer, apply_steer, moving_fast, frame):
