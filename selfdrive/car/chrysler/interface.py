@@ -29,6 +29,8 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 12.7
       ret.steerActuatorDelay = 0.2  # in seconds
 
+    ret.centerToFront = ret.wheelbase * 0.44
+
     if candidate in (CAR.RAM_1500):
       ret.wheelbase = 3.88  # 2021 Ram 1500
       ret.steerRatio = 15.  # just a guess
@@ -36,6 +38,8 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.10], [0.008,]]
       ret.steerActuatorDelay = 0.1
+      ret.steerRateCost = 1.0  # may need tuning
+      ret.centerToFront = ret.wheelbase * 0.4 # just a guess
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.78  # in meters
@@ -44,8 +48,9 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.10], [0.008,]]
       ret.steerActuatorDelay = 0.1
+      ret.steerRateCost = 1.0  # may need tuning
+      ret.centerToFront = ret.wheelbase * 0.4 # just a guess
 
-    ret.centerToFront = ret.wheelbase * 0.44
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019, CAR.RAM_1500, CAR.RAM_2500):
       # TODO allow 2019 cars to steer down to 13 m/s if already engaged.
