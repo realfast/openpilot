@@ -22,16 +22,32 @@ class CarInterface(CarInterfaceBase):
     ret.steerActuatorDelay = 0.1
     ret.steerRateCost = 0.7
     ret.steerLimitTimer = 0.4
+    ret.minSteerSpeed = 3.8  # m/s
 
     if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
       ret.wheelbase = 2.91  # in meters
       ret.steerRatio = 12.7
       ret.steerActuatorDelay = 0.2  # in seconds
 
+    if candidate in (CAR.RAM_1500):
+      ret.wheelbase = 3.88  # 2021 Ram 1500
+      ret.steerRatio = 15.  # just a guess
+      ret.mass = 2493. + STD_CARGO_KG  # kg curb weight 2021 Ram 1500
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.10], [0.008,]]
+      ret.steerActuatorDelay = 0.1
+
+    if candidate in (CAR.RAM_2500):
+      ret.wheelbase = 3.78  # in meters
+      ret.steerRatio = 15.  # just a guess
+      ret.mass = 3254. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.10], [0.008,]]
+      ret.steerActuatorDelay = 0.1
+
     ret.centerToFront = ret.wheelbase * 0.44
 
-    ret.minSteerSpeed = 3.8  # m/s
-    if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
+    if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019, CAR.RAM_1500, CAR.RAM_2500):
       # TODO allow 2019 cars to steer down to 13 m/s if already engaged.
       ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
 
@@ -80,6 +96,6 @@ class CarInterface(CarInterfaceBase):
     if (self.CS.frame == -1):
       return []  # if we haven't seen a frame 220, then do not update.
 
-    can_sends = self.CC.update(c.enabled, self.CS, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert)
+    can_sends = self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
 
     return can_sends
