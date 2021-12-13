@@ -157,53 +157,79 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
   }
 
   // LKA STEER Chrysler/Jeep
-  if ((addr == LKAS_COMMAND) || (addr == LKAS_COMMAND_RAM) || (addr == LKAS_COMMAND_HD)) {
+  if ((addr == LKAS_COMMAND)) {
+    int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1) - 1024U;
     uint32_t ts = microsecond_timer_get();
     bool violation = 0;
-      
-      if (controls_allowed) {
-        if (addr == LKAS_COMMAND){
 
-          int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1) - 1024U;
+    if (controls_allowed) {
 
-          // *** global torque limit check ***
-          violation |= max_limit_check(desired_torque, CHRYSLER_MAX_STEER, -CHRYSLER_MAX_STEER);
+      // *** global torque limit check ***
+      violation |= max_limit_check(desired_torque, CHRYSLER_MAX_STEER, -CHRYSLER_MAX_STEER);
 
-          // *** torque rate limit check ***
-          violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-           &torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
+      // *** torque rate limit check ***
+      violation |= dist_to_meas_check(desired_torque, desired_torque_last,
+        &torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
 
-          // used next time
-          desired_torque_last = desired_torque;
+      // used next time
+      desired_torque_last = desired_torque;
 
-          // *** torque real time rate limit check ***
-          violation |= rt_rate_limit_check(desired_torque, rt_torque_last, CHRYSLER_MAX_RT_DELTA);
-        }
+      // *** torque real time rate limit check ***
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, CHRYSLER_MAX_RT_DELTA);
 
-        else if((addr == LKAS_COMMAND_RAM) || (addr == LKAS_COMMAND_HD)){
-
-          int desired_torque = ((GET_BYTE(to_send, 1) & 0x7U) << 8) + GET_BYTE(to_send, 2) - 1024U;
-
-          // *** global torque limit check ***
-          violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
-
-          // *** torque rate limit check ***
-          //violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-           //&torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
-
-          // used next time
-          desired_torque_last = desired_torque;
-
-          // *** torque real time rate limit check ***
-          //violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
-        }
-        // every RT_INTERVAL set the new limits
-          uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-          if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
-            rt_torque_last = desired_torque;
-            ts_last = ts;
-          } 
+      // every RT_INTERVAL set the new limits
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+      if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
+        rt_torque_last = desired_torque;
+        ts_last = ts;
       }
+    }
+
+    // no torque if controls is not allowed
+    if (!controls_allowed && (desired_torque != 0)) {
+      violation = 1;
+    }
+
+    // reset to 0 if either controls is not allowed or there's a violation
+    if (violation || !controls_allowed) {
+      desired_torque_last = 0;
+      rt_torque_last = 0;
+      ts_last = ts;
+    }
+
+    if (violation) {
+      tx = 0;
+    }
+  }
+
+  // LKA STEER Ram
+  if ((addr == LKAS_COMMAND_RAM) ||(addr == LKAS_COMMAND_HD)) {
+    int desired_torque = ((GET_BYTE(to_send, 1) & 0x7U) << 8) + GET_BYTE(to_send, 2) - 1024U;
+    uint32_t ts = TIM2->CNT;
+    bool violation = 0;
+
+    if (controls_allowed) {
+
+      // *** global torque limit check ***
+      //violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
+
+      // *** torque rate limit check ***
+      //violation |= dist_to_meas_check(desired_torque, desired_torque_last,
+        //&torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
+
+      // used next time
+      desired_torque_last = desired_torque;
+
+      // *** torque real time rate limit check ***
+      //violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
+
+      // every RT_INTERVAL set the new limits
+      uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+      if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
+        rt_torque_last = desired_torque;
+        ts_last = ts;
+      }
+    }
 
     // no torque if controls is not allowed
     if (!controls_allowed && (desired_torque != 0)) {
