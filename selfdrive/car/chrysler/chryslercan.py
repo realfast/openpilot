@@ -5,7 +5,7 @@ from selfdrive.car import make_can_msg
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_model):
+def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_model, autoHighBeamBit):
   # LKAS_HUD 0x2a6 (678) Controls what lane-keeping icon is displayed.
 
   if hud_alert in [VisualAlert.steerRequired, VisualAlert.ldw]:
@@ -33,25 +33,26 @@ def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_mo
     "CAR_MODEL": lkas_car_model,  # byte 1
     "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
     "LKAS_ALERTS": alerts,  # byte 3, last 4 bits
+    "Auto_High_Beam": autoHighBeamBit,
     }
 
-  return packer.make_can_msg("LKAS_HUD", 0, values)  # 0x2a6
+  return packer.make_can_msg("DAS_6", 0, values)  # 0x2a6
 
 
 def create_lkas_command(packer, apply_steer, moving_fast, frame):
-  # LKAS_COMMAND 0x292 (658) Lane-keeping signal to turn the wheel.
+  # LKAS_COMMAND Lane-keeping signal to turn the wheel.
   values = {
     "LKAS_STEERING_TORQUE": apply_steer,
-    "LKAS_HIGH_TORQUE": int(moving_fast),
+    "LKAS_CONTROL_BIT": int(moving_fast),
     "COUNTER": frame % 0x10,
   }
   return packer.make_can_msg("LKAS_COMMAND", 0, values)
 
 
 def create_wheel_buttons(packer, frame, cancel=False):
-  # WHEEL_BUTTONS (571) Message sent to cancel ACC.
+  # Cruise_Control_Buttons Message sent to cancel ACC.
   values = {
-    "ACC_CANCEL": cancel,
+    "ACC_Cancel": cancel,
     "COUNTER": frame % 10
   }
-  return packer.make_can_msg("WHEEL_BUTTONS", 0, values)
+  return packer.make_can_msg("Cruise_Control_Buttons", 0, values)
