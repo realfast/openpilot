@@ -198,11 +198,11 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
           //violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
         }
         // every RT_INTERVAL set the new limits
-        uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
-        if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
-          rt_torque_last = desired_torque;
-          ts_last = ts;
-        }
+          uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
+          if (ts_elapsed > CHRYSLER_RT_INTERVAL) {
+            rt_torque_last = desired_torque;
+            ts_last = ts;
+          } 
       }
 
     // no torque if controls is not allowed
