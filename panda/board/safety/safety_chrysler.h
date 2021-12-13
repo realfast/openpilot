@@ -211,7 +211,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     if (controls_allowed) {
 
       // *** global torque limit check ***
-      //violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
+      violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
 
       // *** torque rate limit check ***
       //violation |= dist_to_meas_check(desired_torque, desired_torque_last,
