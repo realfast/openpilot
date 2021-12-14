@@ -6,7 +6,7 @@ const int CHRYSLER_MAX_RATE_DOWN = 3;
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
 const int CHRYSLER_GAS_THRSLD = 7.7;  // 7% more than 2m/s changed from wheel rpm to km/h 
 const int CHRYSLER_STANDSTILL_THRSLD = 3.6;  // about 1m/s changed from wheel rpm to km/h 
-const int RAM_MAX_STEER = 365; ///TESTING FOR MAX STEER
+const int RAM_MAX_STEER = 485; ///TESTING FOR MAX STEER
 const int RAM_MAX_RT_DELTA = 240;        // Up from 112 max delta torque allowed for real time checks 
 
 
