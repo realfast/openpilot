@@ -221,7 +221,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
       desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      //violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
