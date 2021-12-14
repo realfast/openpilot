@@ -19,13 +19,7 @@ class CarController():
     self.packer = CANPacker(dbc_name)
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
-             left_line, right_line, lead, left_lane_depart, right_lane_depart, c):
-
-    if CS.lkastoggle is True:
-      c.jvePilotState.carControl.useLaneLines = not c.jvePilotState.carControl.useLaneLines
-      self.params.put("EndToEndToggle", "0" if c.jvePilotState.carControl.useLaneLines else "1")
-      c.jvePilotState.notifyUi = True
-      
+             left_line, right_line, lead, left_lane_depart, right_lane_depart):
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     frame = CS.lkas_counter
     if self.prev_frame == frame:

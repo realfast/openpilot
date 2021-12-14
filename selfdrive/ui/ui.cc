@@ -183,10 +183,6 @@ static void update_state(UIState *s) {
     scene.light_sensor = std::clamp<float>(1.0 - (ev / max_ev), 0.0, 1.0);
   }
   scene.started = sm["deviceState"].getDeviceState().getStarted() && scene.ignition;
-
-  if (sm.updated("jvePilotState")) {
-    scene.end_to_end = !sm["jvePilotState"].getJvePilotUIState().getUseLaneLines();
-  }
 }
 
 void ui_update_params(UIState *s) {
@@ -223,8 +219,7 @@ static void update_status(UIState *s) {
 
 
 QUIState::QUIState(QObject *parent) : QObject(parent) {
-  //ui_state.pm = std::make_unique<PubMaster, const std::initializer_list<const char *>>({"jvePilotUIState"});
-  ui_state.sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({"jvePilotState",
+  ui_state.sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "roadCameraState",
     "pandaStates", "carParams", "driverMonitoringState", "sensorEvents", "carState", "liveLocationKalman",
   });

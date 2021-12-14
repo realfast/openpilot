@@ -103,6 +103,6 @@ class CarInterface(CarInterfaceBase):
     if (self.CS.frame == -1):
       return []  # if we haven't seen a frame 220, then do not update.
 
-    can_sends = self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart,c)
+    can_sends = self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
 
     return can_sends
