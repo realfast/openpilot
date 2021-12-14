@@ -51,7 +51,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.25
       #ret.steerRateCost = 1.0  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 15.65
+      ret.minSteerSpeed = 15.25
 
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
