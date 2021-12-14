@@ -43,11 +43,11 @@ class CarController():
           self.gone_fast_yet = False  # < 14.5m/s stock turns off this bit, but fine down to 13.5
           
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
-      #if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.1):  # for command high bit
-      #  self.gone_fast_yet = True
-      #elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
-      #  self.gone_fast_yet = False
-      self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
+      if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.1):  # for command high bit
+        self.gone_fast_yet = True
+      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
+        self.gone_fast_yet = False
+      #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
     lkas_active = moving_fast and enabled
 
