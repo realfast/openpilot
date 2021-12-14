@@ -1,7 +1,7 @@
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, \
                                                create_wheel_buttons
-from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP
+from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP, STEER_DELTA_UP, STEER_DELTA_DOWN
 from opendbc.can.packer import CANPacker
 
 class CarController():
@@ -15,6 +15,8 @@ class CarController():
     self.steer_rate_limited = False
     #self.CarControllerParams = CarControllerParams
     CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.) #Needs road tested. If problems occur update lines 17, 30, and 31 with self.CarControllerParams
+    CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) #Needs road tested. 
+    CarControllerParams.STEER_DELTA_DOWN = STEER_DELTA_DOWN.get(CP.carFingerprint, 1.) #Needs road tested.
 
     self.packer = CANPacker(dbc_name)
 

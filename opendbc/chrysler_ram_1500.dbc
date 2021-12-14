@@ -126,11 +126,18 @@ BO_ 250 DAS_6: 8 XXX
 BO_ 464 ORC_1: 8 XXX
  SG_ Driver_Seatbelt_Status : 16|1@0+ (1,0) [0|1] "" XXX
 
+BO_ 650 Center_Stack_2: 8 XXX
+ SG_ LKAS_Button : 57|1@1+ (1,0) [0|0] "" XXX
+
 BO_ 657 BCM_1: 8 XXX
  SG_ Driver_Door_Ajar : 17|1@1+ (1,0) [0|0] "" XXX
  SG_ Passenger_Door_Ajar : 18|1@1+ (1,0) [0|0] "" XXX
  SG_ Left_Rear_Door_Ajar : 19|1@1+ (1,0) [0|0] "" XXX
  SG_ Right_Rear_Door_Ajar : 20|1@1+ (1,0) [0|0] "" XXX
+
+BO_ 720 BSM_1: 6 XXX
+ SG_ Blind_Spot_Monitor_Left : 0|3@1+ (1,0) [0|0] "" XXX
+ SG_ Blind_Spot_Monitor_Right : 3|3@1+ (1,0) [0|0] "" XXX
 
 BO_ 792 Steering_Column_Commands: 8 XXX
  SG_ Turn_Signal_Status : 0|2@1+ (1,0) [0|3] "" XXX
@@ -159,9 +166,6 @@ BO_ 135 ABS_2: 8 XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|1] "" XXX
  SG_ DRIVER_BRAKE : 15|8@0+ (1,0) [0|1] "" XXX
 
-BO_ 720 BSM_1: 6 XXX
- SG_ Blind_Spot_Monitor_Left : 0|3@1+ (1,0) [0|0] "" XXX
- SG_ Blind_Spot_Monitor_Right : 3|3@1+ (1,0) [0|0] "" XXX
 
 
 

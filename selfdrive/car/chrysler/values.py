@@ -7,8 +7,8 @@ Ecu = car.CarParams.Ecu
 
 class CarControllerParams:
   #STEER_MAX = 261         # 262 faults in Chrysler 360 faults in ram
-  STEER_DELTA_UP = 14      # 3 is stock. 100 is fine. 200 is too much it seems
-  STEER_DELTA_DOWN = 14   # no faults on the way down it seems
+  #STEER_DELTA_UP = 14      # 3 is stock. 100 is fine. 200 is too much it seems
+  #STEER_DELTA_DOWN = 14   # no faults on the way down it seems
   STEER_ERROR_MAX = 100
 
 class CAR:
@@ -98,8 +98,8 @@ DBC = {
   CAR.PACIFICA_2019_HYBRID: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
   CAR.JEEP_CHEROKEE: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
   CAR.JEEP_CHEROKEE_2019: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.RAM_1500: dbc_dict('chrysler_ram_1500', 'chrysler_ram_1500'),
-  CAR.RAM_2500: dbc_dict('chrysler_ram_2500', 'chrysler_ram_2500'),
+  CAR.RAM_1500: dbc_dict('chrysler_ram_1500', None),
+  CAR.RAM_2500: dbc_dict('chrysler_ram_2500', None),
 }
 
 STEER_MAX_LOOKUP = {
@@ -112,6 +112,30 @@ STEER_MAX_LOOKUP = {
     CAR.JEEP_CHEROKEE_2019: 261,
     CAR.RAM_1500: 350,
     CAR.RAM_2500: 360,
+  }
+
+STEER_DELTA_UP = {
+    CAR.PACIFICA_2017_HYBRID: 3,
+    CAR.PACIFICA_2018: 3,
+    CAR.PACIFICA_2020: 3,
+    CAR.PACIFICA_2018_HYBRID: 3,
+    CAR.PACIFICA_2019_HYBRID: 3,
+    CAR.JEEP_CHEROKEE: 3,
+    CAR.JEEP_CHEROKEE_2019: 3,
+    CAR.RAM_1500: 14,
+    CAR.RAM_2500: 14,
+  }
+
+STEER_DELTA_DOWN = {
+    CAR.PACIFICA_2017_HYBRID: 3,
+    CAR.PACIFICA_2018: 3,
+    CAR.PACIFICA_2020: 3,
+    CAR.PACIFICA_2018_HYBRID: 3,
+    CAR.PACIFICA_2019_HYBRID: 3,
+    CAR.JEEP_CHEROKEE: 3,
+    CAR.JEEP_CHEROKEE_2019: 3,
+    CAR.RAM_1500: 14,
+    CAR.RAM_2500: 14,
   }
 
 
