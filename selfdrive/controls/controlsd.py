@@ -62,7 +62,7 @@ class Controls:
     # Setup sockets
     self.pm = pm
     if self.pm is None:
-      self.pm = messaging.PubMaster(['sendcan', 'controlsState', 'carState',
+      self.pm = messaging.PubMaster(['jvePilotState', 'sendcan', 'controlsState', 'carState',
                                      'carControl', 'carEvents', 'carParams'])
 
     self.camera_packets = ["roadCameraState", "driverCameraState"]
@@ -76,7 +76,7 @@ class Controls:
     self.sm = sm
     if self.sm is None:
       ignore = ['driverCameraState', 'managerState'] if SIMULATION else None
-      self.sm = messaging.SubMaster(['deviceState', 'pandaStates', 'peripheralState', 'modelV2', 'liveCalibration',
+      self.sm = messaging.SubMaster(['jvePilotUIState', 'deviceState', 'pandaStates', 'peripheralState', 'modelV2', 'liveCalibration',
                                      'driverMonitoringState', 'longitudinalPlan', 'lateralPlan', 'liveLocationKalman',
                                      'managerState', 'liveParameters', 'radarState'] + self.camera_packets + joystick_packet,
                                      ignore_alive=ignore, ignore_avg_freq=['radarState', 'longitudinalPlan'])
@@ -158,6 +158,10 @@ class Controls:
     self.current_alert_types = [ET.PERMANENT]
     self.logged_comm_issue = False
     self.button_timers = {ButtonEvent.Type.decelCruise: 0, ButtonEvent.Type.accelCruise: 0}
+
+    self.jvePilotState = car.JvePilotState.new_message()
+    self.jvePilotState.carControl.useLaneLines = not params.get_bool('EndToEndToggle')
+    self.ui_notify()
 
     # TODO: no longer necessary, aside from process replay
     self.sm['liveParameters'].valid = True
@@ -395,7 +399,18 @@ class Controls:
 
     self.distance_traveled += CS.vEgo * DT_CTRL
 
+    if self.jvePilotState.notifyUi:
+      self.ui_notify()
+
     return CS
+
+  def ui_notify(self):
+    self.jvePilotState.notifyUi = False
+
+    msg = messaging.new_message('jvePilotUIState')
+    msg.jvePilotUIState = self.sm['jvePilotUIState']
+    msg.jvePilotUIState.useLaneLines = self.jvePilotState.carControl.useLaneLines
+    self.pm.send('jvePilotState', msg)
 
   def state_transition(self, CS):
     """Compute conditional state transitions and execute actions on state transitions"""

@@ -5,6 +5,15 @@ $Cxx.namespace("cereal");
 
 # ******* events causing controls state machine transition *******
 
+struct JvePilotState {
+  notifyUi @0 :Bool;
+  carControl @1 :JvePilotState.CarControl;
+
+  struct CarControl {
+    useLaneLines @0 :Bool;
+  }
+}
+
 struct CarEvent @0x9b1657f34caf3ad3 {
   name @0 :EventName;
 
@@ -367,7 +376,7 @@ struct CarControl {
 
   gasDEPRECATED @1 :Float32;
   brakeDEPRECATED @2 :Float32;
-  steeringTorqueDEPRECATED @3 :Float32;
+  jvePilotState @3 :JvePilotState; # repurposed for jvePilot
 }
 
 # ****** car param ******

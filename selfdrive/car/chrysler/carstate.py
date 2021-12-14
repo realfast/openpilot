@@ -76,6 +76,7 @@ class CarState(CarStateBase):
     ret.leftBlinker = cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 1
     ret.rightBlinker = cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 2
     ret.genericToggle = bool(cp.vl["Steering_Column_Commands"]["High_Beam_Lever_Status"])
+    self.lkastoggle = bool(cp.vl["Center_Stack_2"]["TOGGLE_LKAS"])
  
   # lock info 
     ret.doorOpen = any([cp.vl["BCM_1"]["Driver_Door_Ajar"],
@@ -113,6 +114,7 @@ class CarState(CarStateBase):
       ("Traction_Button", "Center_Stack_1", 0),#Traction Control Button
       ("Turn_Signal_Status", "Steering_Column_Commands", 0),#Blinker 
       ("High_Beam_Lever_Status", "Steering_Column_Commands", 0),#High Beam Lever
+      ("TOGGLE_LKAS", "Center_Stack_2", 0),#LKAS Button
       ("ACC_Accel", "Cruise_Control_Buttons", 0),#ACC Accel Button
       ("ACC_Decel", "Cruise_Control_Buttons", 0),#ACC Decel Button
       ("ACC_Cancel", "Cruise_Control_Buttons", 0),#ACC Cancel Button
@@ -136,6 +138,7 @@ class CarState(CarStateBase):
       ("Steering_Column_Angle_Status", 100),
       ("EPS_2", 100),
       ("Center_Stack_1", 1),
+      ("Center_Stack_2", 1),
       ("Steering_Column_Commands", 10),
       ("Cruise_Control_Buttons", 50),
       ("BCM_1", 1),
