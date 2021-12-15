@@ -40,11 +40,11 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 1.0  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 15
+      ret.minSteerSpeed = 14.65
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.78  # in meters
-      ret.steerRatio = 15.  # just a guess
+      ret.steerRatio = 27.5  # just a guess
       ret.mass = 3254. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.015,]]
