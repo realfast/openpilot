@@ -80,10 +80,10 @@ BO_ 332 ESP_4: 8 XXX
  SG_ ENERGY_RELATED : 39|16@0+ (1,0) [0|65535] "" XXX
 
 BO_ 344 ESP_6: 8 XXX
- SG_ Wheel_RPM_Front_Left : 5|14@0+ (0.02,0) [0|8191] "rpm" XXX
- SG_ Wheel_RPM_Front_Right : 21|14@0+ (0.02,0) [0|8191] "rpm" XXX
- SG_ Wheel_RPM_Rear_Left : 37|14@0+ (0.02,0) [0|8191] "rpm" XXX
- SG_ Wheel_RPM_Rear_Right : 53|14@0+ (0.02,0) [0|8191] "rpm" XXX
+ SG_ Wheel_RPM_Front_Left : 5|14@0+ (0.5,0) [0|8191] "rpm" XXX
+ SG_ Wheel_RPM_Front_Right : 21|14@0+ (0.5,0) [0|8191] "rpm" XXX
+ SG_ Wheel_RPM_Rear_Left : 37|14@0+ (0.5,0) [0|8191] "rpm" XXX
+ SG_ Wheel_RPM_Rear_Right : 53|14@0+ (0.5,0) [0|8191] "rpm" XXX
 
 BO_ 368 Transmission_Status: 8 XXX
  SG_ Gear_State : 2|3@1+ (1,0) [0|15] "" XXX
