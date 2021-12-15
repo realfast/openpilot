@@ -14,9 +14,9 @@ class CarController():
     self.gone_fast_yet = False
     self.steer_rate_limited = False
     #self.CarControllerParams = CarControllerParams
-    CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.) #Needs road tested. If problems occur update lines 17, 30, and 31 with self.CarControllerParams
-    CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) #Needs road tested. 
-    CarControllerParams.STEER_DELTA_DOWN = STEER_DELTA_DOWN.get(CP.carFingerprint, 1.) #Needs road tested.
+    CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
+    CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
+    CarControllerParams.STEER_DELTA_DOWN = STEER_DELTA_DOWN.get(CP.carFingerprint, 1.) 
 
     self.packer = CANPacker(dbc_name)
 
