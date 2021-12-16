@@ -44,10 +44,10 @@ const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3},{LKAS_COMMAND,
 
 AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, {EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
-  {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
-  {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
-  {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // gas pedal
-  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // forward cam ACC may need set to bus 0 to for jeep/pacifica
+  {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, {ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}}},  // brake pressed
+  {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, {ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}}},  // vehicle Speed
+  {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}, {ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U,  .expected_timestep = 20000U}}}, // gas pedal
+  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}}, // forward cam ACC may need set to bus 0 to for jeep/pacifica
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
@@ -127,7 +127,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // update speed
     if ((bus == 0U) && ((addr == ESP_8) || (addr == ESP_8_RAM))) {
-      vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + GET_BYTE(to_push, 5))*0.0078125;
+      vehicle_speed = ((GET_BYTE(to_push, 4) & 0x3U) << 8) + (GET_BYTE(to_push, 5))*0.0078125;
       vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
     }
 
@@ -247,7 +247,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
-      tx = 1;
+      tx = 0;
     }
   }
 
