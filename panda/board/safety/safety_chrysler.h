@@ -127,7 +127,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // update speed
     if ((bus == 0U) && ((addr == ESP_8) || (addr == ESP_8_RAM))) {
-      vehicle_speed = ((GET_BYTE(to_push, 4) & 0x3U) << 8) + (GET_BYTE(to_push, 5))*0.0078125;
+      vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + (GET_BYTE(to_push, 5)))*0.0078125;
       vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
     }
 
