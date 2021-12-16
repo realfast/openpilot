@@ -217,14 +217,14 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
       violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
 
       // *** torque rate limit check ***
-      violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-        &torque_meas, RAM_MAX_RATE_UP, RAM_MAX_RATE_DOWN, RAM_MAX_TORQUE_ERROR);
+      //violation |= dist_to_meas_check(desired_torque, desired_torque_last,
+        //&torque_meas, RAM_MAX_RATE_UP, RAM_MAX_RATE_DOWN, RAM_MAX_TORQUE_ERROR);
 
       // used next time
       desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
+      //violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
@@ -247,7 +247,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
-      tx = 1;
+      tx = 0;
     }
   }
 
