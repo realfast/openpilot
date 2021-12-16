@@ -145,7 +145,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
       brake_pressed_prev = brake_pressed;
     }
 
-    generic_rx_checks((bus == 0U) && ((addr == LKAS_COMMAND) || (addr == LKAS_COMMAND_RAM) || (addr == LKAS_COMMAND_HD)));
+    //generic_rx_checks((bus == 0U) && ((addr == LKAS_COMMAND) || (addr == LKAS_COMMAND_RAM) || (addr == LKAS_COMMAND_HD)));
   }
   return valid;
 }
