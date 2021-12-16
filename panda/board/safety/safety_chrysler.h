@@ -247,7 +247,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
-      tx = 1;
+      tx = 0;
     }
   }
 
