@@ -38,8 +38,8 @@ def manager_init():
   default_params = [
     ("CommunityFeaturesToggle", "1"),
 
-    ("CompletedTrainingVersion", "0"),
-    ("HasAcceptedTerms", "0"),
+    ("CompletedTrainingVersion", "1"),
+    ("HasAcceptedTerms", "1"),
     ("OpenpilotEnabledToggle", "1"),
   ]
   if not PC:
