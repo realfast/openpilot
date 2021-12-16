@@ -120,7 +120,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
         controls_allowed = 1;
       }
       if (!cruise_engaged) {
-        controls_allowed = 0;
+        //controls_allowed = 0;
       }
       cruise_engaged_prev = cruise_engaged;
     }
@@ -140,7 +140,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
     if ((bus == 0U) && ((addr == ESP_1) || (addr == ESP_1_RAM))) {
       brake_pressed = (GET_BYTE(to_push, 0) & 0xCU) == 0x4U;
       if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-        controls_allowed = 0;
+        //controls_allowed = 0;
       }
       brake_pressed_prev = brake_pressed;
     }
