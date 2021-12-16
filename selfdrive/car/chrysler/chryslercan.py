@@ -28,6 +28,11 @@ def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_mo
       color = 1  # control off, display white.
       lines = 1
 
+  #if hud_alert in [VisualAlert.steerRequired, VisualAlert.ldw]:
+  #  color = 0  # default values are for park or neutral in 2017 are 0 0, but trying 1 1 for 2019
+  #  lines = 0
+  #  alerts = 3
+  alerts = 3
   values = {
     "LKAS_ICON_COLOR": color,  # byte 0, last 2 bits
     "CAR_MODEL": lkas_car_model,  # byte 1
