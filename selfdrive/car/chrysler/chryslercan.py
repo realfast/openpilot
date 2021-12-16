@@ -8,9 +8,9 @@ VisualAlert = car.CarControl.HUDControl.VisualAlert
 def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_model, autoHighBeamBit):
   # LKAS_HUD 0x2a6 (678) Controls what lane-keeping icon is displayed.
 
-  if hud_alert in [VisualAlert.steerRequired, VisualAlert.ldw]:
-    msg = b'\x00\x00\x00\x03\x00\x00\x00\x00'
-    return make_can_msg("DAS_6", 0, msg)
+  #if hud_alert in [VisualAlert.steerRequired, VisualAlert.ldw]:
+  #  msg = b'\x00\x00\x00\x03\x00\x00\x00\x00'
+  #  return make_can_msg("DAS_6", 0, msg)
 
   color = 1  # default values are for park or neutral in 2017 are 0 0, but trying 1 1 for 2019
   lines = 1
