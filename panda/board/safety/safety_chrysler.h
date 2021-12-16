@@ -6,8 +6,11 @@ const int CHRYSLER_MAX_RATE_DOWN = 3;
 const int CHRYSLER_MAX_TORQUE_ERROR = 80;    // max torque cmd in excess of torque motor
 const int CHRYSLER_GAS_THRSLD = 7.7;  // 7% more than 2m/s changed from wheel rpm to km/h 
 const int CHRYSLER_STANDSTILL_THRSLD = 3.6;  // about 1m/s changed from wheel rpm to km/h 
-const int RAM_MAX_STEER = 365; ///TESTING FOR MAX STEER
-const int RAM_MAX_RT_DELTA = 240;        // Up from 112 max delta torque allowed for real time checks 
+const int RAM_MAX_STEER = 365; 
+const int RAM_MAX_RT_DELTA = 560;        // since 3 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
+const int RAM_MAX_RATE_UP = 15;
+const int RAM_MAX_RATE_DOWN = 15;
+const int RAM_MAX_TORQUE_ERROR = 400;    // since 3 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 
 
 // Safety-relevant CAN messages for Chrysler/Jeep platforms
@@ -41,10 +44,10 @@ const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3},{LKAS_COMMAND,
 
 AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, {EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
-  {.msg = {{ESP_1, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U}, {ESP_1_RAM, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U}}},  // brake pressed
-  {.msg = {{ESP_8, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U}, {ESP_8_RAM, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U}}},  // vehicle Speed
-  {.msg = {{ECM_5, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U}, {ECM_5_RAM, 0, 8, .check_checksum = false, .max_counter = 15U,  .expected_timestep = 20000U}}}, // gas pedal
-  {.msg = {{DAS_3, 2, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, {DAS_3_RAM, 2, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}}}, // forward cam ACC
+  {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
+  {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
+  {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}}, // gas pedal
+  {.msg = {{DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {DAS_3_RAM, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}}, // forward cam ACC may need set to bus 0 to for jeep/pacifica
 };
 #define CHRYSLER_ADDR_CHECK_LEN (sizeof(chrysler_addr_checks) / sizeof(chrysler_addr_checks[0]))
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
@@ -124,7 +127,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // update speed
     if ((bus == 0U) && ((addr == ESP_8) || (addr == ESP_8_RAM))) {
-      vehicle_speed = ((GET_BYTE(to_push, 4) & 0x3U) << 8) + (GET_BYTE(to_push, 5))*0.0078125;
+      vehicle_speed = (((GET_BYTE(to_push, 4) & 0x3U) << 8) + GET_BYTE(to_push, 5))*0.0078125;
       vehicle_moving = (int)vehicle_speed > CHRYSLER_STANDSTILL_THRSLD;
     }
 
@@ -211,17 +214,17 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     if (controls_allowed) {
 
       // *** global torque limit check ***
-      //violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
+      violation |= max_limit_check(desired_torque, RAM_MAX_STEER, -RAM_MAX_STEER);
 
       // *** torque rate limit check ***
-      //violation |= dist_to_meas_check(desired_torque, desired_torque_last,
-        //&torque_meas, CHRYSLER_MAX_RATE_UP, CHRYSLER_MAX_RATE_DOWN, CHRYSLER_MAX_TORQUE_ERROR);
+      violation |= dist_to_meas_check(desired_torque, desired_torque_last,
+        &torque_meas, RAM_MAX_RATE_UP, RAM_MAX_RATE_DOWN, RAM_MAX_TORQUE_ERROR);
 
       // used next time
       desired_torque_last = desired_torque;
 
       // *** torque real time rate limit check ***
-      //violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
+      violation |= rt_rate_limit_check(desired_torque, rt_torque_last, RAM_MAX_RT_DELTA);
 
       // every RT_INTERVAL set the new limits
       uint32_t ts_elapsed = get_ts_elapsed(ts, ts_last);
