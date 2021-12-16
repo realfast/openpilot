@@ -114,7 +114,7 @@ BO_ 629 DAS_6: 8 XXX
  SG_ LKAS_ICON_COLOR : 51|4@0+ (1,0) [0|15] "" XXX
  SG_ LKAS_Disabled : 56|1@1+ (1,0) [0|0] "" XXX
  SG_ CAR_MODEL : 15|8@0+ (1,0) [0|255] "" XXX
- SG_ LKAS_ALERTS : 27|4@0+ (1,0) [0|1] "" XXX
+ SG_ LKAS_ALERTS : 35|4@0+ (1,0) [0|1] "" XXX
 
 
 BO_ 630 LKAS_COMMAND: 8 XXX
