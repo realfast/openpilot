@@ -20,8 +20,7 @@ class CarController():
 
     self.packer = CANPacker(dbc_name)
 
-  def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
-             left_line, right_line, lead, left_lane_depart, right_lane_depart):
+  def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert):
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     frame = CS.lkas_counter
     if self.prev_frame == frame:
@@ -73,8 +72,7 @@ class CarController():
       if (CS.lkas_car_model != -1):
         new_msg = create_lkas_hud(
             self.packer, CS.out.gearShifter, lkas_active, hud_alert,
-            self.hud_count, CS.lkas_car_model, CS.autoHighBeamBit, 
-            left_line, right_line, left_lane_depart, right_lane_depart)
+            self.hud_count, CS.lkas_car_model, CS.autoHighBeamBit,)
         can_sends.append(new_msg)
         self.hud_count += 1
 
