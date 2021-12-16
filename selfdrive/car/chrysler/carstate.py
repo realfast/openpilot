@@ -63,7 +63,7 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = cp_cam.vl["DAS_3"]["ACC_Engaged"] == 1  # ACC is green.
       ret.cruiseState.speed = cp_cam.vl["DAS_4"]["ACC_Set_Speed"] * CV.KPH_TO_MS
       # ACC_Activation_Status is a three bit msg, 0 is off, 1 and 2 are Non-ACC mode, 3 and 4 are ACC mode
-      ret.cruiseState.available = True #cp_cam.vl["DAS_4"]['ACC_Activation_Status'] in [3, 4]  #3 ACCOn and 4 ACCSet
+      ret.cruiseState.available = cp_cam.vl["DAS_4"]['ACC_Activation_Status'] in [3, 4]  #3 ACCOn and 4 ACCSet
       ret.cruiseState.nonAdaptive = cp_cam.vl["DAS_4"]["ACC_Activation_Status"] in [1, 2] #1 NormalCCOn and 2 NormalCCSet
       #ret.cruiseState.speedOffset = ret.cruiseState.speed - ret.vEgo
       self.dashboard = cp_cam.vl["DAS_4"]
