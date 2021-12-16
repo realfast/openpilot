@@ -6,7 +6,7 @@ GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
 def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_model, autoHighBeamBit):
-  # DAS_6 0x2a6 (678) Controls what lane-keeping icon is displayed.
+  # LKAS_HUD 0x2a6 (678) Controls what lane-keeping icon is displayed.
 
   if hud_alert in [VisualAlert.steerRequired, VisualAlert.ldw]:
     msg = b'\x00\x00\x00\x03\x00\x00\x00\x00'
@@ -27,7 +27,7 @@ def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_mo
     else:
       color = 1  # control off, display white.
       lines = 1
-      
+
   values = {
     "LKAS_ICON_COLOR": color,  # byte 0, last 2 bits
     "CAR_MODEL": lkas_car_model,  # byte 1
