@@ -46,7 +46,11 @@ class CarState(CarStateBase):
     self.steer_command_bit = cp_cam.vl["LKAS_COMMAND"]['LKAS_CONTROL_BIT'] 
     self.lkas_counter = cp_cam.vl["LKAS_COMMAND"]["COUNTER"]
     self.autoHighBeamBit = cp_cam.vl["DAS_6"]['Auto_High_Beam'] #Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
+    self.lanelines = cp_cam.vl["DAS_6"]["LKAS_LANE_LINES"]
+    self.iconcolor = cp_cam.vl["DAS_6"]["LKAS_ICON_COLOR"]
+    self.lkasdisabled = cp_cam.vl["DAS_6"]["LKAS_Disabled"]
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"] 
+    self.lkasalerts = cp_cam.vl["DAS_6"]["LKAS_ALERTS"]
 
     if self.CP.carFingerprint in (CAR.PACIFICA_2017_HYBRID, CAR.PACIFICA_2018_HYBRID, CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2018, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019, CAR.JEEP_CHEROKEE):
       ret.cruiseState.enabled = cp.vl["DAS_3"]["ACC_Engaged"] == 1  # ACC is green.
@@ -74,8 +78,8 @@ class CarState(CarStateBase):
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
 
   # button presses
-    ret.leftBlinker = cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 1
-    ret.rightBlinker = cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 2
+    ret.leftBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 1) or cp.vl["BCM_1"]["Left_Turn_Request"]
+    ret.rightBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 2) or cp.vl["BCM_1"]["Right_Turn_Request"]
     ret.genericToggle = bool(cp.vl["Steering_Column_Commands"]["High_Beam_Lever_Status"])
  
   # lock info 
@@ -122,6 +126,8 @@ class CarState(CarStateBase):
       ("Passenger_Door_Ajar", "BCM_1", 0),#Passenger Door
       ("Left_Rear_Door_Ajar", "BCM_1", 0),#Driver Rear Door
       ("Right_Rear_Door_Ajar", "BCM_1", 0),#Passenger Rear Door
+      ("Left_Turn_Request", "BCM_1", 0),#Left Turn Request
+      ("Right_Turn_Request", "BCM_1", 0),#Right Turn Request
       ("Driver_Seatbelt_Status", "ORC_1", 0), #Driver Sear Belt
       ("COUNTER", "EPS_2", -1),#EPS Counter  
     ]
@@ -170,7 +176,11 @@ class CarState(CarStateBase):
       ("COUNTER", "LKAS_COMMAND", 0),
       ("LKAS_ERROR", "LKAS_COMMAND", 0),
       ("Auto_High_Beam", "DAS_6", -1), 
+      ("LKAS_LANE_LINES", "DAS_6", -1),
+      ("LKAS_ICON_COLOR", "DAS_6", -1),
+      ("LKAS_Disabled", "DAS_6", -1),
       ("CAR_MODEL", "DAS_6", -1),
+      ("LKAS_ALERTS", "DAS_6", -1),
       ("ACC_Engaged", "DAS_3", 0),#ACC Engaged
       ("ACC_Set_Speed", "DAS_4", -1),
       ("ACC_Activation_Status", "DAS_4", -1),

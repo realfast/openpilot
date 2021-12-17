@@ -143,6 +143,8 @@ BO_ 820 BCM_1: 8 XXX
  SG_ Passenger_Door_Ajar : 18|1@1+ (1,0) [0|0] "" XXX
  SG_ Left_Rear_Door_Ajar : 19|1@1+ (1,0) [0|0] "" XXX
  SG_ Right_Rear_Door_Ajar : 20|1@1+ (1,0) [0|0] "" XXX
+ SG_ Left_Turn_Request : 30|1@1+ (1,0) [0|0] "" XXX
+ SG_ Right_Turn_Request : 31|1@1+ (1,0) [0|0] ""  XXX
 
 
 

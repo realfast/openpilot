@@ -28,12 +28,18 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS):
       color = 1  # control off, display white.
       lines = 1
 
+  if CS.lkasdisabled > 0:
+    lines = CS.lanelines
+    color = CS.iconcolor
+    alerts = CS.lkasalerts
+
   values = {
     "LKAS_ICON_COLOR": color,  # byte 0, last 2 bits
     "CAR_MODEL": CS.lkas_car_model,  # byte 1
     "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
     "LKAS_ALERTS": alerts,  # byte 3, last 4 bits
     "Auto_High_Beam": CS.autoHighBeamBit,
+    "LKAS_Disabled": CS.lkasdisabled,
     }
 
   return packer.make_can_msg("DAS_6", 0, values)  # 0x2a6
