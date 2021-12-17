@@ -5,7 +5,7 @@ from selfdrive.car import make_can_msg
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_model, autoHighBeamBit):
+def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS):
   # LKAS_HUD 0x2a6 (678) Controls what lane-keeping icon is displayed.
 
   if hud_alert in [VisualAlert.steerRequired, VisualAlert.ldw]:
@@ -20,7 +20,7 @@ def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_mo
     alerts = 1
   # CAR.PACIFICA_2018_HYBRID and CAR.PACIFICA_2019_HYBRID
   # had color = 1 and lines = 1 but trying 2017 hybrid style for now.
-  if gear in (GearShifter.drive, GearShifter.reverse, GearShifter.low):
+  if CS.out.gearShifter in (GearShifter.drive, GearShifter.reverse, GearShifter.low):
     if lkas_active:
       color = 2  # control active, display green.
       lines = 6
@@ -30,10 +30,10 @@ def create_lkas_hud(packer, gear, lkas_active, hud_alert, hud_count, lkas_car_mo
 
   values = {
     "LKAS_ICON_COLOR": color,  # byte 0, last 2 bits
-    "CAR_MODEL": lkas_car_model,  # byte 1
+    "CAR_MODEL": CS.lkas_car_model,  # byte 1
     "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
     "LKAS_ALERTS": alerts,  # byte 3, last 4 bits
-    "Auto_High_Beam": autoHighBeamBit,
+    "Auto_High_Beam": CS.autoHighBeamBit,
     }
 
   return packer.make_can_msg("DAS_6", 0, values)  # 0x2a6

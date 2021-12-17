@@ -34,8 +34,8 @@ class CarController():
                                                    CS.out.steeringTorqueEps, CarControllerParams)
     self.steer_rate_limited = new_steer != apply_steer
 
-    moving_fast = CS.out.vEgo > CS.CP.minSteerSpeed  # for status message
-    lkas_active = moving_fast and enabled
+    #moving_fast = CS.out.vEgo > CS.CP.minSteerSpeed  # for status message
+    #lkas_active = moving_fast and enabled
 
     if self.car_fingerprint not in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.5):  # for command high bit
@@ -45,13 +45,16 @@ class CarController():
           self.gone_fast_yet = False  # < 14.5m/s stock turns off this bit, but fine down to 13.5
           
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
-      if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.1):  # for command high bit
+      if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
+      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.4):
         self.gone_fast_yet = False
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
-    lkas_active = moving_fast and enabled
+    #if CS.out.steerError is True: #possible fix for LKAS error Plan to test
+    #  gone_fast_yet = False
+
+    lkas_active = self.gone_fast_yet and enabled
 
     if not lkas_active:
       apply_steer = 0
@@ -72,8 +75,7 @@ class CarController():
     if (self.ccframe % 25 == 0):  # 0.25s period
       if (CS.lkas_car_model != -1):
         new_msg = create_lkas_hud(
-            self.packer, CS.out.gearShifter, lkas_active, hud_alert,
-            self.hud_count, CS.lkas_car_model, CS.autoHighBeamBit)
+            self.packer, lkas_active, hud_alert, self.hud_count, CS)
         can_sends.append(new_msg)
         self.hud_count += 1
 
