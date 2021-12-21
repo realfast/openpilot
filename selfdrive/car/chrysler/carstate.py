@@ -52,12 +52,6 @@ class CarState(CarStateBase):
     self.iconcolor = cp_cam.vl["DAS_6"]["LKAS_ICON_COLOR"]
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"] 
     self.lkasalerts = cp_cam.vl["DAS_6"]["LKAS_ALERTS"]
-    self.lkasbutton = (cp.vl["Center_Stack_2"]["LKAS_Button"] == 1)
-    if self.lkasbutton ==1 and self.lkasdisabled== 0 and self.lkasbuttonprev == 0:
-      self.lkasdisabled = 1
-    elif self.lkasbutton ==1 and self.lkasdisabled== 1 and self.lkasbuttonprev == 0:
-      self.lkasdisabled = 0
-    self.lkasbuttonprev = self.lkasbutton
 
 
     if self.CP.carFingerprint in (CAR.PACIFICA_2017_HYBRID, CAR.PACIFICA_2018_HYBRID, CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2018, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019, CAR.JEEP_CHEROKEE):
