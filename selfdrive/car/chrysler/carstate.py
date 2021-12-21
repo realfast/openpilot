@@ -9,6 +9,8 @@ class CarState(CarStateBase):
     super().__init__(CP)
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
     self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
+    self.lkasdisabled = 0
+    self.lkasbuttonprev = 0
   
   def update(self, cp, cp_cam):
 
@@ -48,9 +50,15 @@ class CarState(CarStateBase):
     self.autoHighBeamBit = cp_cam.vl["DAS_6"]['Auto_High_Beam'] #Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
     self.lanelines = cp_cam.vl["DAS_6"]["LKAS_LANE_LINES"]
     self.iconcolor = cp_cam.vl["DAS_6"]["LKAS_ICON_COLOR"]
-    self.lkasdisabled = cp_cam.vl["DAS_6"]["LKAS_Disabled"]
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"] 
     self.lkasalerts = cp_cam.vl["DAS_6"]["LKAS_ALERTS"]
+    self.lkasbutton = (cp.vl["Center_Stack_2"]["LKAS_Button"] == 1)
+    if self.lkasbutton ==1 and self.lkasdisabled== 0 and self.lkasbuttonprev == 0:
+      self.lkasdisabled = 1
+    elif self.lkasbutton ==1 and self.lkasdisabled== 1 and self.lkasbuttonprev == 0:
+      self.lkasdisabled = 0
+    self.lkasbuttonprev = self.lkasbutton
+
 
     if self.CP.carFingerprint in (CAR.PACIFICA_2017_HYBRID, CAR.PACIFICA_2018_HYBRID, CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2018, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019, CAR.JEEP_CHEROKEE):
       ret.cruiseState.enabled = cp.vl["DAS_3"]["ACC_Engaged"] == 1  # ACC is green.
@@ -64,7 +72,13 @@ class CarState(CarStateBase):
       ret.steerError = self.steer_state == 4 or (self.steer_state == 0 and ret.vEgo > self.CP.minSteerSpeed)
       
     if self.CP.carFingerprint in (CAR.RAM_1500, CAR.RAM_2500):
-      ret.cruiseState.enabled = cp_cam.vl["DAS_3"]["ACC_Engaged"] == 1  # ACC is green.
+      self.lkasbutton = (cp.vl["Center_Stack_2"]["LKAS_Button"] == 1)
+      if self.lkasbutton ==1 and self.lkasdisabled== 0 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 1
+      elif self.lkasbutton ==1 and self.lkasdisabled== 1 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 0
+      self.lkasbuttonprev = self.lkasbutton
+      ret.cruiseState.enabled = cp_cam.vl["DAS_3"]["ACC_Engaged"] == 1  and self.lkasdisabled == 0 # ACC is green.
       ret.cruiseState.speed = cp_cam.vl["DAS_4"]["ACC_Set_Speed"] * CV.KPH_TO_MS
       # ACC_Activation_Status is a three bit msg, 0 is off, 1 and 2 are Non-ACC mode, 3 and 4 are ACC mode
       ret.cruiseState.available = cp_cam.vl["DAS_4"]['ACC_Activation_Status'] in [3, 4]  #3 ACCOn and 4 ACCSet
@@ -78,8 +92,8 @@ class CarState(CarStateBase):
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
 
   # button presses
-    ret.leftBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 1) or cp.vl["BCM_1"]["Left_Turn_Request"]
-    ret.rightBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 2) or cp.vl["BCM_1"]["Right_Turn_Request"]
+    ret.leftBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 1)
+    ret.rightBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 2)
     ret.genericToggle = bool(cp.vl["Steering_Column_Commands"]["High_Beam_Lever_Status"])
  
   # lock info 
@@ -116,6 +130,7 @@ class CarState(CarStateBase):
       ("EPS_Motor_Torque", "EPS_2", 0),#EPS Motor Torque output
       ("Torque_Overlay_Status", "EPS_2", 1),
       ("Traction_Button", "Center_Stack_1", 0),#Traction Control Button
+      ("LKAS_Button", "Center_Stack_2", 0),#LKAS Button
       ("Turn_Signal_Status", "Steering_Column_Commands", 0),#Blinker 
       ("High_Beam_Lever_Status", "Steering_Column_Commands", 0),#High Beam Lever
       ("ACC_Accel", "Cruise_Control_Buttons", 0),#ACC Accel Button
@@ -126,8 +141,6 @@ class CarState(CarStateBase):
       ("Passenger_Door_Ajar", "BCM_1", 0),#Passenger Door
       ("Left_Rear_Door_Ajar", "BCM_1", 0),#Driver Rear Door
       ("Right_Rear_Door_Ajar", "BCM_1", 0),#Passenger Rear Door
-      ("Left_Turn_Request", "BCM_1", 0),#Left Turn Request
-      ("Right_Turn_Request", "BCM_1", 0),#Right Turn Request
       ("Driver_Seatbelt_Status", "ORC_1", 0), #Driver Sear Belt
       ("COUNTER", "EPS_2", -1),#EPS Counter  
     ]
@@ -143,6 +156,7 @@ class CarState(CarStateBase):
       ("Steering_Column_Angle_Status", 100),
       ("EPS_2", 100),
       ("Center_Stack_1", 1),
+      ("Center_Stack_2", 1),
       ("Steering_Column_Commands", 10),
       ("Cruise_Control_Buttons", 50),
       ("BCM_1", 1),

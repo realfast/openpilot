@@ -13,6 +13,7 @@ class CarController():
     self.car_fingerprint = CP.carFingerprint
     self.gone_fast_yet = False
     self.steer_rate_limited = False
+    self.lkasdisabled = 0
     #self.CarControllerParams = CarControllerParams
     CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
     CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
@@ -47,14 +48,14 @@ class CarController():
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.4):
+      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
         self.gone_fast_yet = False
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
     #if CS.out.steerError is True: #possible fix for LKAS error Plan to test
     #  gone_fast_yet = False
 
-    if (CS.lkasdisabled == 1) or (CS.out.steerError is True) :
+    if (CS.out.steerError is True) or  (CS.lkasdisabled is 1):
       self.gone_fast_yet = False
 
     lkas_active = self.gone_fast_yet and enabled

@@ -32,6 +32,7 @@ const int RAM_MAX_TORQUE_ERROR = 400;    // since 3 x the rate up from chrsyler,
 #define DAS_6_RAM                  250  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_RAM           166  // LKAS controls from DASM 
 #define Cruise_Control_Buttons_RAM 177  // Cruise control buttons
+#define Center_Stack_2_RAM             650  // Cruise control buttons
 
 // Safety-relevant CAN messages for the 5th gen RAM HD platform
 #define DAS_6_HD                   629  // LKAS HUD and auto headlight control from DASM
@@ -270,7 +271,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 
 
   // forward CAN 0 -> 2 so stock LKAS camera sees messages
-  if (bus_num == 0U) {
+  if (bus_num == 0U && (addr != Center_Stack_2_RAM)) {//Ram and HD share the same
     bus_fwd = 2;
   }
 
