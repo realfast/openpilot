@@ -61,7 +61,7 @@ class CarController():
     #if CS.out.steerError is True: #possible fix for LKAS error Plan to test
     #  gone_fast_yet = False
 
-    if (CS.out.steerError is True) or  (CS.lkasdisabled is 1) or (self.ccframe-self.lkaslast_frame<500):#If the LKAS Control bit is toggled too fast it can create and LKAS error
+    if (CS.out.steerError is True) or  (CS.lkasdisabled is 1) or (self.ccframe-self.lkaslast_frame<250):#If the LKAS Control bit is toggled too fast it can create and LKAS error
       self.gone_fast_yet = False
 
     lkas_active = self.gone_fast_yet and enabled
