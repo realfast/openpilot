@@ -15,7 +15,7 @@ if __name__ == "__main__":
   if args.addr:
     addrs = [int(args.addr, base=16)]
   else:
-    addrs = [0x400 + i for i in range(1024)]
+    addrs = [0x600 + i for i in range(256)]
     addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
   results = {}
 
