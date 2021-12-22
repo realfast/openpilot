@@ -40,7 +40,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 0.7  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 14
+      ret.minSteerSpeed = 14.35
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.785  # in meters
@@ -51,7 +51,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 0.7  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
-      ret.minSteerSpeed = 15.65
+      ret.minSteerSpeed = 16
 
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
@@ -86,7 +86,12 @@ class CarInterface(CarInterfaceBase):
     events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low],
                                        gas_resume_speed=2.)
 
-    if ret.vEgo < self.CP.minSteerSpeed:
+    # Low speed steer alert hysteresis logic
+    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.75):
+      self.low_speed_alert = True
+    elif ret.vEgo > (self.CP.minSteerSpeed):
+      self.low_speed_alert = False
+    if self.low_speed_alert:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 
     ret.events = events.to_msg()

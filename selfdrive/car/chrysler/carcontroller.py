@@ -14,6 +14,8 @@ class CarController():
     self.gone_fast_yet = False
     self.steer_rate_limited = False
     self.lkasdisabled = 0
+    self.lkaslast_frame = 0.
+    self.gone_fast_yet_previous = False
     #self.CarControllerParams = CarControllerParams
     CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
     CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
@@ -48,14 +50,18 @@ class CarController():
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.4):
-        self.gone_fast_yet = False
+      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.75):
+        self.gone_fast_yet = False   
+      if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
+        self.lkaslast_frame = self.ccframe
+      self.gone_fast_yet_previous = self.gone_fast_yet
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
+
 
     #if CS.out.steerError is True: #possible fix for LKAS error Plan to test
     #  gone_fast_yet = False
 
-    if (CS.out.steerError is True) or  (CS.lkasdisabled is 1):
+    if (CS.out.steerError is True) or  (CS.lkasdisabled is 1) or (self.ccframe-self.lkaslast_frame<500):#If the LKAS Control bit is toggled too fast it can create and LKAS error
       self.gone_fast_yet = False
 
     lkas_active = self.gone_fast_yet and enabled
