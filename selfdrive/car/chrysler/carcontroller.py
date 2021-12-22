@@ -67,7 +67,7 @@ class CarController():
 
     lkas_active = self.gone_fast_yet and enabled
 
-    if not lkas_active and not self.gone_fast_yet_previous == True:
+    if not lkas_active or self.gone_fast_yet_previous == False:
       apply_steer = 0
 
     self.apply_steer_last = apply_steer
