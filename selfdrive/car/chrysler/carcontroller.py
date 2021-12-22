@@ -52,22 +52,22 @@ class CarController():
         self.gone_fast_yet = True
       elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.75):
         self.gone_fast_yet = False   
-      if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
-        self.lkaslast_frame = self.ccframe
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
+    if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
+        self.lkaslast_frame = self.ccframe
 
     #if CS.out.steerError is True: #possible fix for LKAS error Plan to test
     #  gone_fast_yet = False
 
     if (CS.out.steerError is True) or (CS.lkasdisabled is 1) or (self.ccframe-self.lkaslast_frame<250):#If the LKAS Control bit is toggled too fast it can create and LKAS error
       self.gone_fast_yet = False
-      
+
     self.gone_fast_yet_previous = self.gone_fast_yet
 
     lkas_active = self.gone_fast_yet and enabled
 
-    if not lkas_active:
+    if not lkas_active and not self.gone_fast_yet_previous == True:
       apply_steer = 0
 
     self.apply_steer_last = apply_steer
