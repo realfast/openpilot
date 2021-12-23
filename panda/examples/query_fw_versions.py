@@ -16,7 +16,7 @@ if __name__ == "__main__":
     addrs = [int(args.addr, base=16)]
   else:
     addrs = [0x700 + i for i in range(256)]
-    addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
+    #addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
   results = {}
 
   uds_data_ids = {}
@@ -48,8 +48,8 @@ if __name__ == "__main__":
       # available diagnostic session without security access
       try:
         #uds_client.tester_present()
-        uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
-        #uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
+        #uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
+        uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
       except NegativeResponseError:
         pass
       except MessageTimeoutError:
