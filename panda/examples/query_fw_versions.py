@@ -13,7 +13,7 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   if args.addr:
-    range1= 0x800 - [int(args.addr, base=10)]
+    range1= 0x800 - [int(args.addr, base=16)]
     addrs = [args.addr + i for i in range(range1)]
   #else:
     #addrs = [0x748 + i for i in range(0x800-0x748)]
