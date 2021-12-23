@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
       bus = 1 if panda.has_obd() else 0
       rx_addr = addr - 0x280
-      uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.2, debug=args.debug)
+      uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=1, debug=args.debug)
       # Check for anything alive at this address, and switch to the highest
       # available diagnostic session without security access
       try:
