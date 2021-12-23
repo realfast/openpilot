@@ -15,7 +15,7 @@ if __name__ == "__main__":
   if args.addr:
     addrs = [int(args.addr, base=16)]
   else:
-    addrs = [0x764 + i for i in range(0x800-0x764)]
+    addrs = [0x700 + i for i in range(0x800-0x700)]
     #addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
   results = {}
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
       panda.send_heartbeat()
 
       bus = 1 if panda.has_obd() else 0
-      rx_addr = addr - 0x280
+      rx_addr = addr - 0x11C
       uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.05, debug=args.debug)
       # Check for anything alive at this address, and switch to the highest
       # available diagnostic session without security access
