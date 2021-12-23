@@ -47,9 +47,9 @@ if __name__ == "__main__":
       # Check for anything alive at this address, and switch to the highest
       # available diagnostic session without security access
       try:
-        uds_client.tester_present()
+        #uds_client.tester_present()
         uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
-        uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
+        #uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
       except NegativeResponseError:
         pass
       except MessageTimeoutError:
