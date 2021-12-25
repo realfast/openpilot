@@ -59,7 +59,8 @@ class ParamsLearner:
       self.speed = msg.vEgo
 
       in_linear_region = abs(self.steering_angle) < 45 or not self.steering_pressed
-      self.active = self.speed > 5 and in_linear_region
+      steer_angle_good = abs(self.steering_angle) > 3
+      self.active = self.speed > 5 and in_linear_region and steer_angle_good
 
       if self.active:
         self.kf.predict_and_observe(t, ObservationKind.STEER_ANGLE, np.array([[math.radians(msg.steeringAngleDeg)]]))
