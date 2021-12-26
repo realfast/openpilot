@@ -15,7 +15,7 @@ if __name__ == "__main__":
   if args.addr:
     addrs = [int(args.addr, base=16)]
   else:
-    #addrs = [0x600 + i for i in range(0x800-0x600)]
+    addrs = [0x600 + i for i in range(0x800-0x600)]
     addrs = [0x18da0000 + (i << 8) + 0xf1 for i in range(256)] #need to add + before = on this line
   results = {}
 
@@ -50,8 +50,8 @@ if __name__ == "__main__":
       # Check for anything alive at this address, and switch to the highest
       # available diagnostic session without security access
       try:
-        #uds_client.tester_present()
-        #uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
+        uds_client.tester_present()
+        uds_client.diagnostic_session_control(SESSION_TYPE.DEFAULT)
         uds_client.diagnostic_session_control(SESSION_TYPE.EXTENDED_DIAGNOSTIC)
       except NegativeResponseError:
         pass
