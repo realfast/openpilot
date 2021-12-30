@@ -40,7 +40,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 0.7  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 14.35
+      ret.minSteerSpeed = 14.5
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.785  # in meters
@@ -87,7 +87,7 @@ class CarInterface(CarInterfaceBase):
                                        gas_resume_speed=2.)
 
     # Low speed steer alert hysteresis logic
-    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.75):
+    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.5):
       self.low_speed_alert = True
     elif ret.vEgo > (self.CP.minSteerSpeed):
       self.low_speed_alert = False
