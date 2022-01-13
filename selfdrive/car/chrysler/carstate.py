@@ -189,6 +189,9 @@ class CarState(CarStateBase):
       signals += [
         ("LKAS_Button", "Center_Stack_2", 0),#LKAS Button
       ]
+      checks += [
+        ("Center_Stack_2", 1),
+        ]
 
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
