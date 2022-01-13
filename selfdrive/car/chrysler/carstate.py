@@ -47,15 +47,22 @@ class CarState(CarStateBase):
   # cruise state  
     self.steer_command_bit = cp_cam.vl["LKAS_COMMAND"]['LKAS_CONTROL_BIT'] 
     self.lkas_counter = cp_cam.vl["LKAS_COMMAND"]["COUNTER"]
-    self.autoHighBeamBit = cp_cam.vl["DAS_6"]['Auto_High_Beam'] #Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
     self.lanelines = cp_cam.vl["DAS_6"]["LKAS_LANE_LINES"]
     self.iconcolor = cp_cam.vl["DAS_6"]["LKAS_ICON_COLOR"]
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"] 
     self.lkasalerts = cp_cam.vl["DAS_6"]["LKAS_ALERTS"]
+    self.ccbuttoncounter = cp.vl["Cruise_Control_Buttons"]["COUNTER"]
 
 
     if self.CP.carFingerprint in (CAR.PACIFICA_2017_HYBRID, CAR.PACIFICA_2018_HYBRID, CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2018, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019, CAR.JEEP_CHEROKEE):
-      ret.cruiseState.enabled = cp.vl["DAS_3"]["ACC_Engaged"] == 1  # ACC is green.
+      self.lkasbutton = (cp.vl["Center_Stack_1"]["LKAS_Button"] == 1)
+      #if self.lkasbutton ==1 and self.lkasdisabled== 0 and self.lkasbuttonprev == 0:
+      #  self.lkasdisabled = 1
+      #elif self.lkasbutton ==1 and self.lkasdisabled== 1 and self.lkasbuttonprev == 0:
+      #  self.lkasdisabled = 0
+      self.lkasbuttonprev = self.lkasbutton
+      ret.cruiseState.enabled = cp.vl["DAS_3"]["ACC_Engaged"] == 1 # and self.lkasdisabled == 0 # ACC is green.
+      ret.cruiseState.standstill = cp.vl["DAS_3"]["ACC_StandStill"] == 1
       ret.cruiseState.speed = cp.vl["DAS_4"]["ACC_Set_Speed"] * CV.KPH_TO_MS
       # ACC_Activation_Status is a three bit msg, 0 is off, 1 and 2 are Non-ACC mode, 3 and 4 are ACC mode
       ret.cruiseState.available = cp.vl["DAS_4"]['ACC_Activation_Status'] in [3, 4]  #3 ACCOn and 4 ACCSet
@@ -73,13 +80,15 @@ class CarState(CarStateBase):
         self.lkasdisabled = 0
       self.lkasbuttonprev = self.lkasbutton
       ret.cruiseState.enabled = cp_cam.vl["DAS_3"]["ACC_Engaged"] == 1  and self.lkasdisabled == 0 # ACC is green.
+      ret.cruiseState.standstill = cp_cam.vl["DAS_3"]["ACC_StandStill"] == 1
       ret.cruiseState.speed = cp_cam.vl["DAS_4"]["ACC_Set_Speed"] * CV.KPH_TO_MS
       # ACC_Activation_Status is a three bit msg, 0 is off, 1 and 2 are Non-ACC mode, 3 and 4 are ACC mode
       ret.cruiseState.available = cp_cam.vl["DAS_4"]['ACC_Activation_Status'] in [3, 4]  #3 ACCOn and 4 ACCSet
       ret.cruiseState.nonAdaptive = cp_cam.vl["DAS_4"]["ACC_Activation_Status"] in [1, 2] #1 NormalCCOn and 2 NormalCCSet
+      self.autoHighBeamBit = cp_cam.vl["DAS_6"]['Auto_High_Beam'] #Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       #ret.cruiseState.speedOffset = ret.cruiseState.speed - ret.vEgo
       self.dashboard = cp_cam.vl["DAS_4"]
-      ret.steerError = cp_cam.vl["LKAS_COMMAND"]["LKAS_ERROR"]==1
+      ret.steerError = cp_cam.vl["LKAS_COMMAND"]["LKAS_ERROR"]==1 # TODO: Find another bit to determine the steer error
 
 
   # gear
@@ -124,12 +133,12 @@ class CarState(CarStateBase):
       ("EPS_Motor_Torque", "EPS_2", 0),#EPS Motor Torque output
       ("Torque_Overlay_Status", "EPS_2", 1),
       ("Traction_Button", "Center_Stack_1", 0),#Traction Control Button
-      ("LKAS_Button", "Center_Stack_2", 0),#LKAS Button
       ("Turn_Signal_Status", "Steering_Column_Commands", 0),#Blinker 
       ("High_Beam_Lever_Status", "Steering_Column_Commands", 0),#High Beam Lever
       ("ACC_Accel", "Cruise_Control_Buttons", 0),#ACC Accel Button
       ("ACC_Decel", "Cruise_Control_Buttons", 0),#ACC Decel Button
       ("ACC_Cancel", "Cruise_Control_Buttons", 0),#ACC Cancel Button
+      ("COUNTER", "Cruise_Control_Buttons", 0),#ACC Cancel Button
       ("ACC_Distance_Inc", "Cruise_Control_Buttons", 0),#ACC Distance Increase Button
       ("Driver_Door_Ajar", "BCM_1", 0),#driver Door
       ("Passenger_Door_Ajar", "BCM_1", 0),#Passenger Door
@@ -150,7 +159,6 @@ class CarState(CarStateBase):
       ("Steering_Column_Angle_Status", 100),
       ("EPS_2", 100),
       ("Center_Stack_1", 1),
-      ("Center_Stack_2", 1),
       ("Steering_Column_Commands", 10),
       ("Cruise_Control_Buttons", 50),
       ("BCM_1", 1),
@@ -167,11 +175,20 @@ class CarState(CarStateBase):
     if CP.carFingerprint in (CAR.PACIFICA_2017_HYBRID, CAR.PACIFICA_2018_HYBRID, CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2018, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019, CAR.JEEP_CHEROKEE):
       signals += [
         ("ACC_Engaged", "DAS_3", 0),#ACC Engaged
+        ("ACC_StandStill", "DAS_3", 0),#ACC Engaged
         ("ACC_Set_Speed", "DAS_4", -1),
         ("ACC_Activation_Status", "DAS_4", -1),
+        ("LKAS_Button", "Center_Stack_1", 0),#LKAS Button
       ]
-      checks += [("DAS_3", 50),
-        ("DAS_4", 50),]
+      checks += [
+        ("DAS_3", 50),
+        ("DAS_4", 50),
+        ]
+
+    if CP.carFingerprint in (CAR.RAM_1500, CAR.RAM_2500):
+      signals += [
+        ("LKAS_Button", "Center_Stack_2", 0),#LKAS Button
+      ]
 
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
@@ -183,28 +200,24 @@ class CarState(CarStateBase):
       ("LKAS_CONTROL_BIT", "LKAS_COMMAND", 0),
       ("COUNTER", "LKAS_COMMAND", 0),
       ("LKAS_ERROR", "LKAS_COMMAND", 0),
-      ("Auto_High_Beam", "DAS_6", -1), 
       ("LKAS_LANE_LINES", "DAS_6", -1),
       ("LKAS_ICON_COLOR", "DAS_6", -1),
       ("LKAS_Disabled", "DAS_6", -1),
       ("CAR_MODEL", "DAS_6", -1),
       ("LKAS_ALERTS", "DAS_6", -1),
-      ("ACC_Engaged", "DAS_3", 0),#ACC Engaged
-      ("ACC_Set_Speed", "DAS_4", -1),
-      ("ACC_Activation_Status", "DAS_4", -1),
     ]
     checks = [
       ("LKAS_COMMAND", 50),
       ("DAS_6", 15),
-      ("DAS_3", 50),
-      ("DAS_4", 50),
     ]
 
     if CP.carFingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       signals += [
         ("ACC_Engaged", "DAS_3", 0),#ACC Engaged
+        ("ACC_StandStill", "DAS_3", 0),#ACC Engaged
         ("ACC_Set_Speed", "DAS_4", -1),
         ("ACC_Activation_Status", "DAS_4", -1),
+        ("Auto_High_Beam", "DAS_6", -1),
       ]
       checks += [
         ("DAS_3", 50),

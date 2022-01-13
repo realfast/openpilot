@@ -75,6 +75,7 @@ BO_ 464 ORC_1: 8 XXX
 
 BO_ 500 DAS_3: 8 XXX
  SG_ Engine_Torque_Request : 4|13@0+ (0.25,-500) [-500|1547.5] "Nm" XXX
+ SG_ ACC_StandStill : 5|1@1+ (1,0) [0|0] ""  XXX
  SG_ Engine_Torque_Request_Max : 7|1@1+ (1,0) [0|0] "" XXX
  SG_ ACC_Enabled : 20|1@1+ (1,0) [0|0] "" XXX
  SG_ ACC_Engaged : 21|1@1+ (1,0) [0|0] "" XXX
@@ -113,7 +114,7 @@ BO_ 629 DAS_6: 8 XXX
  SG_ LKAS_LANE_LINES : 11|4@0+ (1,0) [0|15] "" XXX
  SG_ LKAS_ICON_COLOR : 51|4@0+ (1,0) [0|15] "" XXX
  SG_ LKAS_Disabled : 56|1@1+ (1,0) [0|0] "" XXX
- SG_ CAR_MODEL : 15|8@0+ (1,0) [0|255] "" XXX
+ SG_ CAR_MODEL : 19|4@0+ (1,0) [0|255] "" XXX
  SG_ LKAS_ALERTS : 35|4@0+ (1,0) [0|1] "" XXX
 
 
