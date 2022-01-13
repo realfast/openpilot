@@ -86,30 +86,37 @@ FW_VERSIONS = {
     (Ecu.combinationMeter, 0x742, None): [
       b'68360085AL',
       b'68294063AG',
+      b'68434860AC',
     ],
     (Ecu.srs, 0x744, None): [
       b'68441329AB',
       b'68490898AA',
+      b'68428609AB',
     ],
     (Ecu.esp, 0x747, None): [
       b'68432418AD',
       b'68432418AB',
+      b'68436004AE',
     ],
     (Ecu.fwdCamera, 0x753, None): [
       b'68320950AL',
       b'68320950AJ',
+      b'68454268AB',
     ],
     (Ecu.eps, 0x75A, None): [
       b'68273275AG',
+      b'68469901AA',
     ],
     (Ecu.engine, 0x7e0, None): [
-      b'\xf1\x3200000000XX'  # placeholder
+      b'68448163AJ',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'68360078AL',
+      b'68384328AD',
     ],
     (Ecu.gateway, 0x18DACBF1, None): [
       b'68402660AB',
+      b'68445283AB',
     ],
   },
 
@@ -118,7 +125,6 @@ FW_VERSIONS = {
       b'68492693AD'
     ],
     (Ecu.srs, 0x744, None): [
-      b'68428503AA',
       b'68428503AA',
     ],
     (Ecu.esp, 0x747, None): [
