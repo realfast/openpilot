@@ -114,7 +114,7 @@ FW_VERSIONS = {
     (Ecu.engine, 0x7e0, None): [
       b'68448163AJ',
       b'68500630AD',
-      b'           ',
+      b'           ', # TODO:some trucks are responding with nothing here
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'68360078AL',
@@ -132,7 +132,7 @@ FW_VERSIONS = {
   CAR.RAM_2500: {
     (Ecu.combinationMeter, 0x742, None): [
       b'68492693AD',
-      b'68525485AB', #CHECK in newest updat on dongle 5c05760b592aee2c
+      b'68525485AB', #TODO: CHECK in newest updat on dongle 5c05760b592aee2c
     ],
     (Ecu.srs, 0x744, None): [
       b'68428503AA',
