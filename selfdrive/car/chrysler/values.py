@@ -92,16 +92,20 @@ FW_VERSIONS = {
       b'68441329AB',
       b'68490898AA',
       b'68428609AB',
+      b'68500728AA',
     ],
     (Ecu.esp, 0x747, None): [
       b'68432418AD',
       b'68432418AB',
       b'68436004AE',
+      b'68438454AD',
+      b'68436004AD',
     ],
     (Ecu.fwdCamera, 0x753, None): [
       b'68320950AL',
       b'68320950AJ',
       b'68454268AB',
+      b'68475160AG',
     ],
     (Ecu.eps, 0x75A, None): [
       b'68273275AG',
@@ -109,10 +113,15 @@ FW_VERSIONS = {
     ],
     (Ecu.engine, 0x7e0, None): [
       b'68448163AJ',
+      b'68500630AD',
+      b'           ',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'68360078AL',
       b'68384328AD',
+      b'68360085AL',
+      b'68502994AD',
+      b'68445533AB',
     ],
     (Ecu.gateway, 0x18DACBF1, None): [
       b'68402660AB',
@@ -122,10 +131,12 @@ FW_VERSIONS = {
 
   CAR.RAM_2500: {
     (Ecu.combinationMeter, 0x742, None): [
-      b'68492693AD'
+      b'68492693AD',
+      b'68525485AB', #CHECK in newest updat on dongle 5c05760b592aee2c
     ],
     (Ecu.srs, 0x744, None): [
       b'68428503AA',
+      b'68428505AA',
     ],
     (Ecu.esp, 0x747, None): [
       b'68504022AB',
@@ -139,10 +150,13 @@ FW_VERSIONS = {
       b'68507906AB'
     ],
     (Ecu.engine, 0x7e0, None): [
-      b'M2370131MB'
+      b'M2370131MB',
+      b'52421132AF',
     ],
     #(Ecu.transmission, 0x7e1, None): [
     #  b'\xf1\x3200000000XX',  # placeholder
+      #b'68504640AC',
+      #b'68538041AB',
     #],
     (Ecu.gateway, 0x18DACBF1, None): [
       b'68488419AB',
