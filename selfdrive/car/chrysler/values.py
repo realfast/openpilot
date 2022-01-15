@@ -87,6 +87,7 @@ FW_VERSIONS = {
       b'68360085AL',
       b'68294063AG',
       b'68434860AC',
+      b'68527375AD',
     ],
     (Ecu.srs, 0x744, None): [
       b'68441329AB',
@@ -100,20 +101,24 @@ FW_VERSIONS = {
       b'68436004AE',
       b'68438454AD',
       b'68436004AD',
+      b'68535469AB',
     ],
     (Ecu.fwdCamera, 0x753, None): [
       b'68320950AL',
       b'68320950AJ',
       b'68454268AB',
       b'68475160AG',
+      b'04672892AB',
     ],
     (Ecu.eps, 0x75A, None): [
       b'68273275AG',
       b'68469901AA',
+      b'68552788AA',
     ],
     (Ecu.engine, 0x7e0, None): [
       b'68448163AJ',
       b'68500630AD',
+      b'68539650AD',
       b'           ', # TODO:some trucks are responding with nothing here
     ],
     (Ecu.transmission, 0x7e1, None): [
@@ -122,10 +127,12 @@ FW_VERSIONS = {
       b'68360085AL',
       b'68502994AD',
       b'68445533AB',
+      b'68540431AB',
     ],
     (Ecu.gateway, 0x18DACBF1, None): [
       b'68402660AB',
       b'68445283AB',
+      b'68533631AB',
     ],
   },
 
