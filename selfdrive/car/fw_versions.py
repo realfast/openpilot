@@ -89,12 +89,6 @@ SUBARU_VERSION_REQUEST = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \
 SUBARU_VERSION_RESPONSE = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER + 0x40]) + \
   p16(uds.DATA_IDENTIFIER_TYPE.APPLICATION_DATA_IDENTIFICATION)
 
-CHRYSLER_VERSION_REQUEST = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \
-  p16(0xf132)
-CHRYSLER_VERSION_RESPONSE = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER + 0x40]) + \
-  p16(0xf132)
-
-CHRYSLER_RX_OFFSET = -0x280
 
 # brand, request, response, response offset
 REQUESTS = [
@@ -183,19 +177,6 @@ REQUESTS = [
     [NISSAN_VERSION_RESPONSE_STANDARD],
     NISSAN_RX_OFFSET,
   ),
-    # Chrysler / FCA / Stellantis
-  (
-    "chrysler",
-    [CHRYSLER_VERSION_REQUEST],
-    [CHRYSLER_VERSION_RESPONSE],
-    CHRYSLER_RX_OFFSET,
-  ),
-  (
-    "chrysler",
-    [CHRYSLER_VERSION_REQUEST],
-    [CHRYSLER_VERSION_RESPONSE],
-    DEFAULT_RX_OFFSET,
-  ),
 ]
 
 
@@ -272,11 +253,11 @@ def match_fw_to_car_exact(fw_versions_dict):
       addr = ecu[1:]
       found_version = fw_versions_dict.get(addr, None)
       ESSENTIAL_ECUS = [Ecu.engine, Ecu.eps, Ecu.esp, Ecu.fwdRadar, Ecu.fwdCamera, Ecu.vsa]
-      if ecu_type == Ecu.esp and candidate in [TOYOTA.RAV4, TOYOTA.COROLLA, TOYOTA.HIGHLANDER, TOYOTA.SIENNA, TOYOTA.LEXUS_IS] and found_version is None:
+      if ecu_type == Ecu.esp and candidate in (TOYOTA.RAV4, TOYOTA.COROLLA, TOYOTA.HIGHLANDER, TOYOTA.SIENNA, TOYOTA.LEXUS_IS) and found_version is None:
         continue
 
       # On some Toyota models, the engine can show on two different addresses
-      if ecu_type == Ecu.engine and candidate in [TOYOTA.CAMRY, TOYOTA.COROLLA_TSS2, TOYOTA.CHR, TOYOTA.LEXUS_IS] and found_version is None:
+      if ecu_type == Ecu.engine and candidate in (TOYOTA.CAMRY, TOYOTA.COROLLA_TSS2, TOYOTA.CHR, TOYOTA.LEXUS_IS) and found_version is None:
         continue
 
       # Ignore non essential ecus
