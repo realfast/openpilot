@@ -80,7 +80,7 @@ const LogCameraInfo cameras_logged[] = {
     .downscale = false,
     .has_qcamera = false,
     .trigger_rotate = Hardware::TICI(),
-    .enable = !Hardware::PC(),
+    .enable = true,
     .record = Params().getBool("RecordFront"),
   },
   {
@@ -108,7 +108,6 @@ const LogCameraInfo qcam_info = {
 };
 
 struct LoggerdState {
-  Context *ctx;
   LoggerState logger = {};
   char segment_path[4096];
   std::mutex rotate_lock;

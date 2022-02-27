@@ -11,14 +11,14 @@ bool sync_encoders(LoggerdState *s, CameraType cam_type, uint32_t frame_id) {
     update_max_atomic(s->start_frame_id, frame_id + 2);
     if (std::exchange(s->camera_ready[cam_type], true) == false) {
       ++s->encoders_ready;
-      LOGE("camera %d encoder ready", cam_type);
+      LOGD("camera %d encoder ready", cam_type);
     }
     return false;
   } else {
     if (s->max_waiting == 1) update_max_atomic(s->start_frame_id, frame_id);
     bool synced = frame_id >= s->start_frame_id;
     s->camera_synced[cam_type] = synced;
-    if (!synced) LOGE("camera %d waiting for frame %d, cur %d", cam_type, (int)s->start_frame_id, frame_id);
+    if (!synced) LOGD("camera %d waiting for frame %d, cur %d", cam_type, (int)s->start_frame_id, frame_id);
     return synced;
   }
 }
@@ -38,7 +38,7 @@ bool trigger_rotate_if_needed(LoggerdState *s, int cur_seg, uint32_t frame_id) {
 }
 
 void encoder_thread(LoggerdState *s, const LogCameraInfo &cam_info) {
-  set_thread_name(cam_info.filename);
+  util::set_thread_name(cam_info.filename);
 
   int cur_seg = -1;
   int encode_idx = 0;
@@ -185,15 +185,14 @@ void loggerd_thread() {
   } QlogState;
   std::unordered_map<SubSocket*, QlogState> qlog_states;
 
-  LoggerdState s;
-  s.ctx = Context::create();
-  Poller * poller = Poller::create();
+  std::unique_ptr<Context> ctx(Context::create());
+  std::unique_ptr<Poller> poller(Poller::create());
 
   // subscribe to all socks
   for (const auto& it : services) {
     if (!it.should_log) continue;
 
-    SubSocket * sock = SubSocket::create(s.ctx, it.name);
+    SubSocket * sock = SubSocket::create(ctx.get(), it.name);
     assert(sock != NULL);
     poller->registerSocket(sock);
     qlog_states[sock] = {
@@ -203,6 +202,7 @@ void loggerd_thread() {
     };
   }
 
+  LoggerdState s;
   // init logger
   logger_init(&s.logger, "rlog", true);
   logger_rotate(&s);
@@ -244,7 +244,7 @@ void loggerd_thread() {
 
         count++;
         if (count >= 200) {
-          LOGE("large volume of '%s' messages", qs.name.c_str());
+          LOGD("large volume of '%s' messages", qs.name.c_str());
           break;
         }
       }
@@ -266,6 +266,4 @@ void loggerd_thread() {
 
   // messaging cleanup
   for (auto &[sock, qs] : qlog_states) delete sock;
-  delete poller;
-  delete s.ctx;
 }
