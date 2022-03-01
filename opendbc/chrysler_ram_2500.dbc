@@ -42,6 +42,15 @@ BO_ 258 Steering_Column_Angle_Status: 8 XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
 
+BO_ 264 ECM_1: 8 XXX
+ SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
+ SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
+ SG_ Engine_RPM : 7|16@0+ (1,0) [0|65534] "rpm" XXX
+
+BO_ 280 AXLE_TORQ_ICE: 8 XXX
+ SG_ AXLE_TORQ_MAX : 4|13@0+ (.25,-500) [-500|1547.5] "NM" XXX
+ SG_ AXLE_TORQ_MIN : 20|13@0+ (.25,-500) [-500|1547.5] "NM" XXX
+
 BO_ 284 ESP_8: 8 XXX 
  SG_ BRK_PRESSURE : 3|12@0+ (1,0) [0|1] "" XXX
  SG_ BRAKE_PEDAL : 19|12@0+ (1,0) [0|1] "" XXX
@@ -74,22 +83,33 @@ BO_ 464 ORC_1: 8 XXX
  SG_ Driver_Seatbelt_Status : 16|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 500 DAS_3: 8 XXX
- SG_ Engine_Torque_Request : 4|13@0+ (0.25,-500) [-500|1547.5] "Nm" XXX
- SG_ ACC_StandStill : 5|1@1+ (1,0) [0|0] ""  XXX
- SG_ Engine_Torque_Request_Max : 7|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_TORQ : 4|13@0+ (0.25,-500) [-500|1547.5] "Nm" XXX
+ SG_ ACC_STOP : 5|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_GO : 6|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_TORQ_REQ : 7|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_DECEL : 19|12@0+ (0.004885,-16) [-16|4] "m/s2" XXX
  SG_ ACC_Enabled : 20|1@1+ (1,0) [0|0] "" XXX
  SG_ ACC_Engaged : 21|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_DECEL_REQ : 36|3@1+ (1,0) [0|0] "" XXX
+ SG_ Status : 46|2@1+ (1,0) [0|0] ""  XXX
+ SG_ DISABLE_FUEL_SHUTOFF : 23|1@1+ (1,0) [0|0] "" XXX
+ SG_ GR_MAX_REQ : 32|4@1+ (1,0) [0|0] "" XXX
+ SG_ COLLISION_BRK_PREP : 48|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_BRK_PREP : 49|1@1+ (1,0) [0|0] "" XXX
+ SG_ DISPLAY_REQ : 50|2@1+ (1,0) [0|0] "" XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
 
 BO_ 501 DAS_4: 8 XXX
  SG_ ACC_Set_Speed : 8|8@1+ (1,0) [0|255] "km/h" XXX
  SG_ ACC_Activation_Status : 36|3@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_DISTANCE_CONFIG_2 : 41|2@0+ (1,0) [0|3] "" XXX
 
 BO_ 544 EPS_2: 8 XXX
  SG_ Steering_Column_Torque : 2|11@0+ (1,-1024) [-1024|1023] "" XXX
  SG_ Torque_Overlay_Status : 6|4@0+ (1,0) [0|15] "" XXX
  SG_ Torque_From_EPS : 19|12@0+ (1,-2048) [-2048|2047] "" XXX
+ SG_ LKAS_ACTIVE : 23|1@0+ (1,0) [0|15] "" XXX
  SG_ EPS_Motor_Torque : 34|11@0+ (1,-1024) [-1024|1023] "" XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX

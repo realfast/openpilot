@@ -11,8 +11,8 @@ from cereal import log
 
 
 class LateralPlanner:
-  def __init__(self, CP, use_lanelines=True, wide_camera=False):
-    self.use_lanelines = use_lanelines
+  def __init__(self, CP, wide_camera=False):
+    self.use_lanelines = True
     self.LP = LanePlanner(wide_camera)
     self.DH = DesireHelper()
 
@@ -29,11 +29,15 @@ class LateralPlanner:
     self.lat_mpc = LateralMpc()
     self.reset_mpc(np.zeros(4))
 
+    self.lateralPlan = None
+
   def reset_mpc(self, x0=np.zeros(4)):
     self.x0 = x0
     self.lat_mpc.reset(x0=self.x0)
 
   def update(self, sm):
+    self.use_lanelines = sm['carControl'].jvePilotState.carControl.useLaneLines
+
     v_ego = sm['carState'].vEgo
     measured_curvature = sm['controlsState'].curvature
 
@@ -55,8 +59,7 @@ class LateralPlanner:
     if self.DH.desire == log.LateralPlan.Desire.laneChangeRight or self.DH.desire == log.LateralPlan.Desire.laneChangeLeft:
       self.LP.lll_prob *= self.DH.lane_change_ll_prob
       self.LP.rll_prob *= self.DH.lane_change_ll_prob
-
-    # Calculate final driving path and set MPC costs
+# Calculate final driving path and set MPC costs
     if self.use_lanelines:
       d_path_xyz = self.LP.get_d_path(v_ego, self.t_idxs, self.path_xyz)
       self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
@@ -119,5 +122,7 @@ class LateralPlanner:
     lateralPlan.useLaneLines = self.use_lanelines
     lateralPlan.laneChangeState = self.DH.lane_change_state
     lateralPlan.laneChangeDirection = self.DH.lane_change_direction
+
+    self.lateralPlan = plan_send.lateralPlan
 
     pm.send('lateralPlan', plan_send)

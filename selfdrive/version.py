@@ -7,7 +7,7 @@ from functools import lru_cache
 from common.basedir import BASEDIR
 from selfdrive.swaglog import cloudlog
 
-TESTED_BRANCHES = ['devel', 'release2-staging', 'release3-staging', 'dashcam-staging', 'release2', 'release3', 'dashcam']
+TESTED_BRANCHES = ['jvePilot-release', 'origin/jvePilot-release']
 
 training_version: bytes = b"0.2.0"
 terms_version: bytes = b"2"
@@ -85,7 +85,7 @@ def is_comma_remote() -> bool:
   if origin is None:
     return False
 
-  return origin.startswith('git@github.com:commaai') or origin.startswith('https://github.com/commaai')
+  return origin.startswith('git@github.com:j-vanetten') or origin.startswith('https://github.com/j-vanetten')
 
 
 @cache

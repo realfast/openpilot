@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
 from cereal import car
-from selfdrive.car.chrysler.values import CAR
+from selfdrive.car.chrysler.values import CAR, CarControllerParams
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
+from common.cached_params import CachedParams
+from common.op_params import opParams
 
+ButtonType = car.CarState.ButtonEvent.Type
+
+GAS_RESUME_SPEED = 2.
+cachedParams = CachedParams()
+opParams = opParams()
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
+  def get_pid_accel_limits(CP, current_speed, cruise_speed):
+    return -10., 10.  # high limits
+
+  @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=None):
+    min_steer_check = opParams.get('steer.checkMinimum')
+
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "chrysler"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
@@ -22,14 +35,24 @@ class CarInterface(CarInterfaceBase):
     ret.steerActuatorDelay = 0.1
     ret.steerRateCost = 0.7
     ret.steerLimitTimer = 0.4
-    ret.minSteerSpeed = 3.8  # m/s
 
     if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
       ret.wheelbase = 2.91  # in meters
       ret.steerRatio = 12.7
       ret.steerActuatorDelay = 0.2  # in seconds
+      ret.enableBsm = True
 
     ret.centerToFront = ret.wheelbase * 0.44
+
+    if min_steer_check:
+      ret.minSteerSpeed = 3.8  # m/s
+      if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
+        # TODO allow 2019 cars to steer down to 13 m/s if already engaged.
+        ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
+      elif candidate in (CAR.RAM_2500):
+        ret.minSteerSpeed = 16
+      elif candidate in (CAR.RAM_1500):
+        ret.minSteerSpeed = 14.5
 
     if candidate in (CAR.RAM_1500):
       ret.wheelbase = 3.88  # 2021 Ram 1500
@@ -53,11 +76,6 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
       ret.minSteerSpeed = 16
 
-
-    if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
-      # TODO allow 2019 cars to steer down to 13 m/s if already engaged.
-      ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
-
     # starting with reasonable value for civic and scaling by mass and wheelbase
     ret.rotationalInertia = scale_rot_inertia(ret.mass, ret.wheelbase)
 
@@ -65,7 +83,10 @@ class CarInterface(CarInterfaceBase):
     # mass and CG position, so all cars will have approximately similar dyn behaviors
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
 
-    ret.enableBsm = 720 in fingerprint[0]
+    ret.openpilotLongitudinalControl = True  # kind of...
+    ret.pcmCruiseSpeed = False  # Let jvePilot control the pcm cruise speed
+
+    ret.enableBsm |= 720 in fingerprint[0]
 
     return ret
 
@@ -83,15 +104,20 @@ class CarInterface(CarInterfaceBase):
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # events
-    events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
+    events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low],
+                                       gas_resume_speed=GAS_RESUME_SPEED, pcm_enable=False)
 
-    # Low speed steer alert hysteresis logic
-    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.5):
-      self.low_speed_alert = True
-    elif ret.vEgo > (self.CP.minSteerSpeed):
-      self.low_speed_alert = False
-    if self.low_speed_alert:
+    if ret.brakePressed and ret.vEgo < GAS_RESUME_SPEED:
+      events.add(car.CarEvent.EventName.accBrakeHold)
+    elif not self.CC.moving_fast:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
+
+    if self.CS.button_pressed(ButtonType.cancel):
+      events.add(car.CarEvent.EventName.buttonCancel)  # cancel button pressed
+    elif ret.cruiseState.enabled and not self.CS.out.cruiseState.enabled:
+      events.add(car.CarEvent.EventName.pcmEnable)  # cruse is enabled
+    elif (not ret.cruiseState.enabled) and (ret.vEgo > GAS_RESUME_SPEED or (self.CS.out.cruiseState.enabled and (not ret.standstill))):
+      events.add(car.CarEvent.EventName.pcmDisable)  # give up, too fast to resume
 
     ret.events = events.to_msg()
 
@@ -107,5 +133,5 @@ class CarInterface(CarInterfaceBase):
     if (self.CS.frame == -1):
       return car.CarControl.Actuators.new_message(), []  # if we haven't seen a frame 220, then do not update.
 
-
-    return self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
+    return self.CC.update(c.enabled, self.CS, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert,
+                          GAS_RESUME_SPEED, c)

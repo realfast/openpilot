@@ -1,3 +1,4 @@
+#include <QMouseEvent>
 #include "selfdrive/ui/qt/onroad.h"
 
 #include <cmath>
@@ -6,6 +7,7 @@
 
 #include "selfdrive/common/timing.h"
 #include "selfdrive/ui/qt/util.h"
+#include "selfdrive/ui/qt/api.h"
 #ifdef ENABLE_MAPS
 #include "selfdrive/ui/qt/maps/map.h"
 #include "selfdrive/ui/qt/maps/map_helpers.h"
@@ -66,13 +68,26 @@ void OnroadWindow::updateState(const UIState &s) {
   }
 }
 
+void OnroadWindow::notify_state() {
+  MessageBuilder msg;
+  auto state = msg.initEvent().initJvePilotUIState();
+  state.setAutoFollow(uiState()->scene.autoFollowEnabled);
+  state.setAccEco(uiState()->scene.accEco);
+  uiState()->pm->send("jvePilotUIState", msg);
+}
+
 void OnroadWindow::mousePressEvent(QMouseEvent* e) {
-  if (map != nullptr) {
-    bool sidebarVisible = geometry().x() > 0;
-    map->setVisible(!sidebarVisible && !map->isVisible());
+  if (uiState()->scene.accEco_btn.contains(e->x(), e->y())) {
+    uiState()->scene.accEco = uiState()->scene.accEco == 2 ? 0 : uiState()->scene.accEco + 1;
+    notify_state();
+  } else {
+    if (map != nullptr) {
+      bool sidebarVisible = geometry().x() > 0;
+      map->setVisible(!sidebarVisible && !map->isVisible());
+    }
+    // propagation event to parent(HomeWindow)
+    QWidget::mousePressEvent(e);
   }
-  // propagation event to parent(HomeWindow)
-  QWidget::mousePressEvent(e);
 }
 
 void OnroadWindow::offroadTransition(bool offroad) {
@@ -171,6 +186,11 @@ void OnroadAlerts::paintEvent(QPaintEvent *event) {
 OnroadHud::OnroadHud(QWidget *parent) : QWidget(parent) {
   engage_img = loadPixmap("../assets/img_chffr_wheel.png", {img_size, img_size});
   dm_img = loadPixmap("../assets/img_driver_face.png", {img_size, img_size});
+  eco_imgs[0] = QPixmap("../assets/jvepilot/img_acc_eco_off.png").scaled(img_size + button_bigger, img_size + button_bigger, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  eco_imgs[1] = QPixmap("../assets/jvepilot/img_acc_eco_1.png").scaled(img_size + button_bigger, img_size + button_bigger, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  eco_imgs[2] = QPixmap("../assets/jvepilot/img_acc_eco_2.png").scaled(img_size + button_bigger, img_size + button_bigger, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  auto_follow_imgs[0] = QPixmap("../assets/jvepilot/auto_follow_off.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  auto_follow_imgs[1] = QPixmap("../assets/jvepilot/auto_follow_on.png").scaled(img_size, img_size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
   connect(this, &OnroadHud::valueChanged, [=] { update(); });
 }
@@ -187,6 +207,10 @@ void OnroadHud::updateState(const UIState &s) {
   }
   QString maxspeed_str = cruise_set ? QString::number(std::nearbyint(maxspeed)) : "N/A";
   float cur_speed = std::max(0.0, sm["carState"].getCarState().getVEgo() * (s.scene.is_metric ? MS_TO_KPH : MS_TO_MPH));
+
+  setProperty("pedalPressedAmount", int(sm["carState"].getCarState().getJvePilotCarState().getPedalPressedAmount() * 255));
+  setProperty("accEco", s.scene.accEco);
+  setProperty("autoFollowEnabled", s.scene.autoFollowEnabled == 1);
 
   setProperty("is_cruise_set", cruise_set);
   setProperty("speed", QString::number(std::nearbyint(cur_speed)));
@@ -232,6 +256,11 @@ void OnroadHud::paintEvent(QPaintEvent *event) {
   // current speed
   configFont(p, "Open Sans", 176, "Bold");
   drawText(p, rect().center().x(), 210, speed);
+  if (pedalPressedAmount < 0) {
+    drawText(p, rect().center().x(), 210, speed, QColor(200, 0, 0, -pedalPressedAmount));
+  } else if (pedalPressedAmount > 0) {
+    drawText(p, rect().center().x(), 210, speed, QColor(0, 200, 0, pedalPressedAmount));
+  }
   configFont(p, "Open Sans", 66, "Regular");
   drawText(p, rect().center().x(), 290, speedUnit, 200);
 
@@ -246,16 +275,38 @@ void OnroadHud::paintEvent(QPaintEvent *event) {
     drawIcon(p, radius / 2 + (bdr_s * 2), rect().bottom() - footer_h / 2,
              dm_img, QColor(0, 0, 0, 70), dmActive ? 1.0 : 0.2);
   }
+
+
+  if (accEco >= 0) { // got data yet?
+    // Auto Follow
+    drawIcon(p,
+             rect().right() - radius / 2 - bdr_s * 2,
+             rect().bottom() - footer_h / 2 - button_bigger - radius,
+             auto_follow_imgs[autoFollowEnabled], QColor(0, 0, 0, 0), 1.0);
+
+    // eco icon
+    drawIcon(p, rect().right() - radius / 2 - bdr_s * 2 - button_bigger, rect().bottom() - footer_h / 2 - button_bigger,
+             eco_imgs[accEco], QColor(0, 0, 0, 0), 1.0);
+    uiState()->scene.accEco_btn = QRect(
+      rect().right() - radius / 2 - bdr_s * 2 - button_bigger,
+      rect().bottom() - footer_h / 2 - button_bigger,
+      img_size + button_bigger,
+      img_size + button_bigger);
+  }
 }
 
-void OnroadHud::drawText(QPainter &p, int x, int y, const QString &text, int alpha) {
+void OnroadHud::drawText(QPainter &p, int x, int y, const QString &text, QColor color) {
   QFontMetrics fm(p.font());
   QRect init_rect = fm.boundingRect(text);
   QRect real_rect = fm.boundingRect(init_rect, 0, text);
   real_rect.moveCenter({x, y - real_rect.height() / 2});
 
-  p.setPen(QColor(0xff, 0xff, 0xff, alpha));
+  p.setPen(color);
   p.drawText(real_rect.x(), real_rect.bottom(), text);
+}
+
+void OnroadHud::drawText(QPainter &p, int x, int y, const QString &text, int alpha) {
+  drawText(p, x, y, text, QColor(0xff, 0xff, 0xff, alpha));
 }
 
 void OnroadHud::drawIcon(QPainter &p, int x, int y, QPixmap &img, QBrush bg, float opacity) {

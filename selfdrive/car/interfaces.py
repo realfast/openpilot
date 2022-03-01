@@ -11,6 +11,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
 from selfdrive.controls.lib.events import Events
 from selfdrive.controls.lib.vehicle_model import VehicleModel
+from common.params import Params
 
 GearShifter = car.CarState.GearShifter
 EventName = car.CarEvent.EventName
@@ -43,6 +44,10 @@ class CarInterfaceBase(ABC):
     self.CC = None
     if CarController is not None:
       self.CC = CarController(self.cp.dbc_name, CP, self.VM)
+
+    params = Params()
+    self.disable_auto_resume = params.get('jvePilot.settings.autoResume', encoding='utf8') != "1"
+    self.disable_on_gas = params.get('jvePilot.settings.disableOnGas', encoding='utf8') == "1"
 
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
@@ -82,6 +87,7 @@ class CarInterfaceBase(ABC):
     ret.wheelSpeedFactor = 1.0
 
     ret.pcmCruise = True     # openpilot's state is tied to the PCM's cruise state on most cars
+    ret.pcmCruiseSpeed = True   # jvePilot just wants to disable pcm speed sync
     ret.minEnableSpeed = -1. # enable is done by stock ACC, so ignore this
     ret.steerRatioRear = 0.  # no rear steering, at least on the listed cars aboveA
     ret.openpilotLongitudinalControl = False
@@ -109,7 +115,7 @@ class CarInterfaceBase(ABC):
   def apply(self, c: car.CarControl) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     pass
 
-  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True):
+  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True, gas_resume_speed=-1):
     events = Events()
 
     if cs_out.doorOpen:
@@ -121,22 +127,27 @@ class CarInterfaceBase(ABC):
       events.add(EventName.wrongGear)
     if cs_out.gearShifter == GearShifter.reverse:
       events.add(EventName.reverseGear)
-    if not cs_out.cruiseState.available:
-      events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
       events.add(EventName.espDisabled)
-    if cs_out.gasPressed:
-      events.add(EventName.gasPressed)
     if cs_out.stockFcw:
       events.add(EventName.stockFcw)
     if cs_out.stockAeb:
       events.add(EventName.stockAeb)
     if cs_out.vEgo > MAX_CTRL_SPEED:
       events.add(EventName.speedTooHigh)
-    if cs_out.cruiseState.nonAdaptive:
-      events.add(EventName.wrongCruiseMode)
     if cs_out.brakeHoldActive and self.CP.openpilotLongitudinalControl:
       events.add(EventName.brakeHold)
+
+    if cs_out.cruiseState.nonAdaptive:
+      events.add(EventName.wrongCruiseMode)
+    elif not cs_out.cruiseState.available:
+      events.add(EventName.wrongCarMode)
+
+    if not cs_out.cruiseState.enabled and len(events.names) and cs_out.vEgo <= gas_resume_speed:
+      events.add(EventName.pcmDisable)  # added safety.  Disable on anything sus if waiting to resume
+
+    if cs_out.gasPressed and self.disable_on_gas:
+      events.add(EventName.gasPressed)
 
 
     # Handle permanent and temporary steering faults
@@ -153,13 +164,12 @@ class CarInterfaceBase(ABC):
     if cs_out.steerError:
       events.add(EventName.steerUnavailable)
 
-    # Disable on rising edge of gas or brake. Also disable on brake when speed > 0.
-    if (cs_out.gasPressed and not self.CS.out.gasPressed) or \
-       (cs_out.brakePressed and (not self.CS.out.brakePressed or not cs_out.standstill)):
+    if (cs_out.gasPressed and self.disable_on_gas and (not self.CS.out.gasPressed) and cs_out.vEgo > gas_resume_speed) or \
+        (cs_out.brakePressed and (not self.CS.out.brakePressed) and not cs_out.standstill):
       events.add(EventName.pedalPressed)
 
     # we engage when pcm is active (rising edge)
-    if pcm_enable:
+    if pcm_enable or self.disable_auto_resume:
       if cs_out.cruiseState.enabled and not self.CS.out.cruiseState.enabled:
         events.add(EventName.pcmEnable)
       elif not cs_out.cruiseState.enabled:

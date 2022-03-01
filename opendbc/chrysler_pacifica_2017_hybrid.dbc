@@ -42,10 +42,14 @@ BO_ 258 Steering_Column_Angle_Status: 8 XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
 
-BO_ 264 ACCEL_PEDAL_MSG: 8 XXX
+BO_ 264 ECM_1: 8 XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
- SG_ ACCEL_PEDAL : 35|1@0+ (1,0) [0|1] "" XXX
+ SG_ Engine_RPM : 7|16@0+ (1,0) [0|65534] "rpm" XXX
+
+BO_ 280 AXLE_TORQ_ICE: 8 XXX
+ SG_ AXLE_TORQ_MAX : 4|13@0+ (.25,-500) [-500|1547.5] "NM" XXX
+ SG_ AXLE_TORQ_MIN : 20|13@0+ (.25,-500) [-500|1547.5] "NM" XXX
 
 BO_ 284 ESP_8: 8 XXX 
  SG_ BRK_PRESSURE : 3|12@0+ (1,0) [0|1] "" XXX
@@ -94,15 +98,17 @@ BO_ 464 ORC_1: 8 XXX
  SG_ Driver_Seatbelt_Status : 16|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 500 DAS_3: 8 XXX
- SG_ Engine_Torque_Request : 4|13@0+ (0.25,-500) [-500|1547.5] "Nm" XXX
- SG_ ACC_StandStill : 5|1@1+ (1,0) [0|0] ""  XXX
- SG_ Engine_Torque_Request_Max : 7|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_TORQ : 4|13@0+ (0.25,-500) [-500|1547.5] "Nm" XXX
+ SG_ ACC_STOP : 5|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_GO : 6|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_TORQ_REQ : 7|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_DECEL : 19|12@0+ (0.004885,-16) [-16|4] "m/s2" XXX
  SG_ ACC_Enabled : 20|1@1+ (1,0) [0|0] "" XXX
  SG_ ACC_Engaged : 21|1@1+ (1,0) [0|0] "" XXX
+ SG_ ACC_DECEL_REQ : 36|3@1+ (1,0) [0|0] "" XXX
+ SG_ Status : 46|2@1+ (1,0) [0|0] ""  XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
- SG_ BRAKE_MAYBE : 18|11@0+ (1,0) [0|255] "" XXX
- SG_ BRAKE_BOOL_1 : 36|1@0+ (1,0) [0|3] "" XXX
 
 BO_ 501 DAS_4: 8 XXX
  SG_ ACC_Set_Speed : 8|8@1+ (1,0) [0|255] "km/h" XXX
@@ -112,6 +118,13 @@ BO_ 501 DAS_4: 8 XXX
  SG_ ACC_DISTANCE_CONFIG_2 : 41|2@0+ (1,0) [0|3] "" XXX
  SG_ SPEED_DIGITAL : 63|8@0+ (1,0) [0|255] "mph" XXX
 
+BO_ 509 ACC_LOG: 8 XXX
+ SG_ OP_A_TARGET : 7|16@0+ (0.00025,-4) [0|65534] "m/s2" XXX
+ SG_ OP_V_TARGET : 23|16@0+ (0.00071428571,0) [0|65534] "m/s" XXX
+ SG_ LONG_STOPPING : 56|1@0+ (1,0) [0|1] "" XXX
+ SG_ LONG_STARTING : 57|1@0+ (1,0) [0|1] "" XXX
+ SG_ ADJUSTMENT : 39|16@0+ (1,0) [0|65535] "" XXX
+
 BO_ 514 SPEED_1: 8 XXX
  SG_ SPEED_LEFT : 7|12@0+ (0.071028,0) [0|65535] "m/s" XXX
  SG_ SPEED_RIGHT : 23|12@0+ (0.071028,0) [0|1023] "m/s" XXX
@@ -120,6 +133,7 @@ BO_ 544 EPS_2: 8 XXX
  SG_ Steering_Column_Torque : 2|11@0+ (1,-1024) [-1024|1023] "" XXX
  SG_ Torque_Overlay_Status : 6|4@0+ (1,0) [0|15] "" XXX
  SG_ Torque_From_EPS : 19|12@0+ (1,-2048) [-2048|2047] "" XXX
+ SG_ LKAS_ACTIVE : 23|1@0+ (1,0) [0|15] "" XXX
  SG_ EPS_Motor_Torque : 34|11@0+ (1,-1024) [-1024|1023] "" XXX
  SG_ AUTO_PARK_HAS_CONTROL_2 : 51|1@0+ (1,0) [0|1] "" XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
@@ -149,6 +163,15 @@ BO_ 608 PARKSENSE_SIGNAL: 8 XXX
  SG_ IN_REVERSE : 10|1@0+ (1,0) [0|255] "" XXX
  SG_ AUTO_PARK_HAS_CONTROL_1 : 16|1@0+ (1,0) [0|255] "" XXX
  SG_ HUMAN_HAS_CONTROL : 17|1@0+ (1,0) [0|3] "" XXX
+
+BO_ 625 ACC_1: 8 XXX
+ SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
+ SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
+ SG_ ACC_TORQ_REQ : 39|1@0+ (1,0) [0|1] "" XXX
+ SG_ ACC_TORQ : 38|15@0+ (1,-7767) [-7767|24999] "NM" XXX
+ SG_ FORWARD_1 : 7|16@0+ (1,0) [0|65535] "" XXX
+ SG_ FORWARD_2 : 23|16@0+ (1,0) [0|65535] "" XXX
+ SG_ FORWARD_3 : 48|4@1+ (1,0) [0|3] "" XXX
 
 BO_ 653 BRAKE_MODULE: 2 XXX
  SG_ BRAKE_PRESSURE : 15|8@0+ (1,0) [0|255] "" XXX
@@ -351,12 +374,6 @@ BO_ 940 NEW_MSG_3ac: 8 XXX
 BO_ 941 NEW_MSG_3ad: 8 XXX
  SG_ INCREASING_1 : 36|5@0+ (1,0) [0|31] "" XXX
  SG_ INCREASING_2 : 63|8@0+ (1,0) [0|255] "" XXX
-
-BO_ 625 ACC_1: 8 XXX
- SG_ SPEED : 31|8@0+ (1,0) [0|255] "km/h" XXX
- SG_ ACCEL_PERHAPS : 39|16@0+ (1,0) [0|255] "" XXX
- SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
- SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
 
 BO_ 268 ACC_10c: 8 XXX
  SG_ BRAKE_PERHAPS : 48|1@0+ (1,0) [0|3] "" XXX

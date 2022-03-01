@@ -16,7 +16,7 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
   #    msg = b'\x00\x00\x00\x03\x00\x00\x00\x00'
   #  return make_can_msg(0x2a6, msg, 0)
     
-  lkasdisabled = CS.lkasdisabled
+  #lkasdisabled = CS.lkasdisabled
   color = 1  # default values are for park or neutral in 2017 are 0 0, but trying 1 1 for 2019
   lines = 1
   alerts = 0
@@ -49,10 +49,10 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
       color = 1  # control off, display white.
       lines = 0
       alerts = 7
-  if CS.lkasdisabled == 1:
-    color = 0
-    lines = 0
-    alerts = 0
+  #if CS.lkasdisabled == 1:
+    #color = 0
+    #lines = 0
+    #alerts = 0
 
   if hud_alert in [VisualAlert.ldw]: #possible use this instead
     color = 4
@@ -72,7 +72,7 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
       "CAR_MODEL": carmodel,  # byte 1
       "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
       "LKAS_ALERTS": alerts,  # byte 3, last 4 bits
-      "LKAS_Disabled":lkasdisabled,
+      #"LKAS_Disabled":lkasdisabled,
     }
 
   else:
@@ -81,7 +81,7 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
       "CAR_MODEL": CS.lkas_car_model,  # byte 1
       "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
       "LKAS_ALERTS": alerts,  # byte 3, last 4 bits 
-      "LKAS_Disabled":lkasdisabled,
+     # "LKAS_Disabled":lkasdisabled,
       }
 
   
@@ -90,7 +90,7 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
 
 
 def create_lkas_command(packer, apply_steer, moving_fast, frame):
-  # LKAS_COMMAND Lane-keeping signal to turn the wheel.
+  # LKAS_COMMAND 0x292 (658) Lane-keeping signal to turn the wheel.
   values = {
     "LKAS_STEERING_TORQUE": apply_steer,
     "LKAS_CONTROL_BIT": int(moving_fast),
@@ -98,15 +98,22 @@ def create_lkas_command(packer, apply_steer, moving_fast, frame):
   }
   return packer.make_can_msg("LKAS_COMMAND", 0, values)
 
+#def create_lkas_heartbit(packer, value, lkasHeartbit):
+  # LKAS_HEARTBIT (697) LKAS heartbeat
+  #values = lkasHeartbit.copy()  # forward what we parsed
+  #values["LKAS_DISABLED"] = value
+  #return packer.make_can_msg("LKAS_HEARTBIT", 0, values)
 
-def create_wheel_buttons(packer, CS, fingerprint, cancel = False, acc_resume = False):
-  # Cruise_Control_Buttons Message sent to cancel ACC.
-  frame = CS.ccbuttoncounter + 1
+def create_wheel_buttons_command(packer, counter, buttons,fingerprint):
+  # WHEEL_BUTTONS (571) Message sent
   values = {
-    "ACC_Cancel": cancel,
-    "COUNTER": frame,
-    "ACC_Resume": acc_resume,
+    "COUNTER": counter % 0x10,
   }
+
+  for b in buttons:
+    if b is not None:
+      values[b] = 1
+  
   if fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
     bus = 2
   else:

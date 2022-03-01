@@ -1,12 +1,15 @@
+# flake8: noqa
+
 from selfdrive.car import dbc_dict
 from cereal import car
+from common.cached_params import CachedParams
 Ecu = car.CarParams.Ecu
-
+cachedParams = CachedParams()
 
 class CarControllerParams:
-  #STEER_MAX = 261         # 262 faults in Chrysler 360 faults in ram
-  #STEER_DELTA_UP = 14      # 3 is stock. 100 is fine. 200 is too much it seems
-  #STEER_DELTA_DOWN = 14   # no faults on the way down it seems
+  #STEER_MAX = 261         # 262 faults
+  #STEER_DELTA_UP = 3      # 3 is stock. 100 is fine. 200 is too much it seems
+  #STEER_DELTA_DOWN = 3    # no faults on the way down it seems
   STEER_ERROR_MAX = 100
 
 class CAR:
@@ -243,15 +246,15 @@ FINGERPRINTS = {
 
 
 DBC = {
-  CAR.PACIFICA_2017_HYBRID: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.PACIFICA_2018: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.PACIFICA_2020: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.PACIFICA_2018_HYBRID: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.PACIFICA_2019_HYBRID: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.JEEP_CHEROKEE: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.JEEP_CHEROKEE_2019: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_pacifica_2017_hybrid_private_fusion'),
-  CAR.RAM_1500: dbc_dict('chrysler_ram_1500', None),
-  CAR.RAM_2500: dbc_dict('chrysler_ram_2500', None),
+  CAR.PACIFICA_2017_HYBRID: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_jvepilot', 'chrysler_pacifica_2017_hybrid_private_fusion'),
+  CAR.PACIFICA_2018: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_jvepilot', 'chrysler_pacifica_2017_hybrid_private_fusion'),
+  CAR.PACIFICA_2020: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_jvepilot', 'chrysler_pacifica_2017_hybrid_private_fusion'),
+  CAR.PACIFICA_2018_HYBRID: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_jvepilot', 'chrysler_pacifica_2017_hybrid_private_fusion'),
+  CAR.PACIFICA_2019_HYBRID: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_jvepilot', 'chrysler_pacifica_2017_hybrid_private_fusion'),
+  CAR.JEEP_CHEROKEE: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_jvepilot', 'chrysler_pacifica_2017_hybrid_private_fusion'),
+  CAR.JEEP_CHEROKEE_2019: dbc_dict('chrysler_pacifica_2017_hybrid', 'chrysler_jvepilot', 'chrysler_pacifica_2017_hybrid_private_fusion'),
+  CAR.RAM_1500: dbc_dict('chrysler_ram_1500', None, None),
+  CAR.RAM_2500: dbc_dict('chrysler_ram_2500', None, None),
 }
 
 STEER_MAX_LOOKUP = {
