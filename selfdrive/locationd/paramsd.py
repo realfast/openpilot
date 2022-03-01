@@ -90,7 +90,7 @@ class ParamsLearner:
       self.speed = msg.vEgo
 
       in_linear_region = abs(self.steering_angle) < 45 or not self.steering_pressed
-      steer_angle_good = abs(self.steering_angle) > 5
+      steer_angle_good = abs(self.steering_angle) > 3
       self.active = self.speed > 5 and in_linear_region and steer_angle_good
 
       if self.active:
