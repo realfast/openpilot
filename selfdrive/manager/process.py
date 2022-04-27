@@ -69,14 +69,16 @@ class ManagerProcess(ABC):
   unkillable = False
   daemon = False
   sigkill = False
-  persistent = False
+  onroad = True
+  offroad = False
   driverview = False
+  notcar = False
   proc: Optional[Process] = None
   enabled = True
   name = ""
 
   last_watchdog_time = 0
-  watchdog_max_dt = None
+  watchdog_max_dt: Optional[int] = None
   watchdog_seen = False
   shutting_down = False
 
@@ -182,13 +184,15 @@ class ManagerProcess(ABC):
 
 
 class NativeProcess(ManagerProcess):
-  def __init__(self, name, cwd, cmdline, enabled=True, persistent=False, driverview=False, unkillable=False, sigkill=False, watchdog_max_dt=None):
+  def __init__(self, name, cwd, cmdline, enabled=True, onroad=True, offroad=False, driverview=False, notcar=False, unkillable=False, sigkill=False, watchdog_max_dt=None):
     self.name = name
     self.cwd = cwd
     self.cmdline = cmdline
     self.enabled = enabled
-    self.persistent = persistent
+    self.onroad = onroad
+    self.offroad = offroad
     self.driverview = driverview
+    self.notcar = notcar
     self.unkillable = unkillable
     self.sigkill = sigkill
     self.watchdog_max_dt = watchdog_max_dt
@@ -199,7 +203,7 @@ class NativeProcess(ManagerProcess):
   def start(self) -> None:
     # In case we only tried a non blocking stop we need to stop it before restarting
     if self.shutting_down:
-        self.stop()
+      self.stop()
 
     if self.proc is not None:
       return
@@ -213,12 +217,14 @@ class NativeProcess(ManagerProcess):
 
 
 class PythonProcess(ManagerProcess):
-  def __init__(self, name, module, enabled=True, persistent=False, driverview=False, unkillable=False, sigkill=False, watchdog_max_dt=None):
+  def __init__(self, name, module, enabled=True, onroad=True, offroad=False, driverview=False, notcar=False, unkillable=False, sigkill=False, watchdog_max_dt=None):
     self.name = name
     self.module = module
     self.enabled = enabled
-    self.persistent = persistent
+    self.onroad = onroad
+    self.offroad = offroad
     self.driverview = driverview
+    self.notcar = notcar
     self.unkillable = unkillable
     self.sigkill = sigkill
     self.watchdog_max_dt = watchdog_max_dt
@@ -231,7 +237,7 @@ class PythonProcess(ManagerProcess):
   def start(self) -> None:
     # In case we only tried a non blocking stop we need to stop it before restarting
     if self.shutting_down:
-        self.stop()
+      self.stop()
 
     if self.proc is not None:
       return
@@ -251,7 +257,8 @@ class DaemonProcess(ManagerProcess):
     self.module = module
     self.param_name = param_name
     self.enabled = enabled
-    self.persistent = True
+    self.onroad = True
+    self.offroad = True
 
   def prepare(self) -> None:
     pass
@@ -284,23 +291,29 @@ class DaemonProcess(ManagerProcess):
     pass
 
 
-def ensure_running(procs: ValuesView[ManagerProcess], started: bool, driverview: bool=False, not_run: Optional[List[str]]=None) -> None:
+def ensure_running(procs: ValuesView[ManagerProcess], started: bool, driverview: bool=False, notcar: bool=False,
+                   not_run: Optional[List[str]]=None) -> None:
   if not_run is None:
     not_run = []
 
   for p in procs:
-    if p.name in not_run:
-      p.stop(block=False)
-    elif not p.enabled:
-      p.stop(block=False)
-    elif p.persistent:
-      p.start()
-    elif p.driverview and driverview:
-      p.start()
-    elif started:
+    # Conditions that make a process run
+    run = any((
+      p.offroad and not started,
+      p.onroad and started,
+      p.driverview and driverview,
+      p.notcar and notcar,
+    ))
+
+    # Conditions that block a process from starting
+    run = run and not any((
+      not p.enabled,
+      p.name in not_run,
+    ))
+
+    if run:
       p.start()
     else:
       p.stop(block=False)
 
     p.check_watchdog(started)
-

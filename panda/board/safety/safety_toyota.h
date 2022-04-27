@@ -2,14 +2,14 @@
 const int TOYOTA_MAX_TORQUE = 1500;       // max torque cmd allowed ever
 
 // rate based torque limit + stay within actually applied
-// packet is sent at 100hz, so this limit is 1000/sec
-const int TOYOTA_MAX_RATE_UP = 10;        // ramp up slow
+// packet is sent at 100hz, so this limit is 1500/sec
+const int TOYOTA_MAX_RATE_UP = 15;        // ramp up slow
 const int TOYOTA_MAX_RATE_DOWN = 25;      // ramp down fast
 const int TOYOTA_MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
 // real time torque limit to prevent controls spamming
-// the real time limit is 1500/sec
-const int TOYOTA_MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
+// the real time limit is 1800/sec, a 20% buffer
+const int TOYOTA_MAX_RT_DELTA = 450;      // max delta torque allowed for real time checks
 const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
@@ -18,12 +18,10 @@ const int TOYOTA_MIN_ACCEL = -3500;       // -3.5 m/s2
 
 const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
 
-// Roughly calculated using the offsets in openpilot +5%:
-// In openpilot: ((gas1_norm + gas2_norm)/2) > 15
-// gas_norm1 = ((gain_dbc*gas1) + offset1_dbc)
-// gas_norm2 = ((gain_dbc*gas2) + offset2_dbc)
-// In this safety: ((gas1 + gas2)/2) > THRESHOLD
-const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 845;
+// panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
+// If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
+// Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
+const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
 #define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U) // avg between 2 tracks
 
 const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  // DSU bus 0
@@ -134,7 +132,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int toyota_tx_hook(CANPacket_t *to_send) {
+static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -149,7 +147,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!controls_allowed) {
+      if (!longitudinal_allowed) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }
@@ -160,7 +158,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
-      if (!controls_allowed) {
+      if (!longitudinal_allowed) {
         if (desired_accel != 0) {
           tx = 0;
         }
@@ -248,7 +246,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static const addr_checks* toyota_init(int16_t param) {
+static const addr_checks* toyota_init(uint32_t param) {
   controls_allowed = 0;
   relay_malfunction_reset();
   gas_interceptor_detected = 0;
