@@ -4,9 +4,11 @@ from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_comm
                                                create_wheel_buttons
 from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP, STEER_DELTA_UP, STEER_DELTA_DOWN
 from opendbc.can.packer import CANPacker
+from common.op_params import opParams, STOCK_DELTA_DOWN, STOCK_DELTA_UP, STOCK_STEER_MAX
 
 class CarController():
-  def __init__(self, dbc_name, CP, VM):
+  def __init__(self, dbc_name, CP, VM, OP=None):
+    self.CP = CP
     self.apply_steer_last = 0
     self.ccframe = 0
     self.prev_frame = -1
@@ -19,14 +21,21 @@ class CarController():
     self.lkaslast_frame = 0.
     self.gone_fast_yet_previous = False
     #self.CarControllerParams = CarControllerParams
-    CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
-    CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
-    CarControllerParams.STEER_DELTA_DOWN = STEER_DELTA_DOWN.get(CP.carFingerprint, 1.) 
+    # CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
+    # CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
+    # CarControllerParams.STEER_DELTA_DOWN = STEER_DELTA_DOWN.get(CP.carFingerprint, 1.) 
+    if not OP:
+      OP = opParams()
+    self.op_params = OP
 
     self.packer = CANPacker(dbc_name)
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
+    CarControllerParams.STEER_DELTA_UP = self.op_params.get(STOCK_DELTA_UP)
+    CarControllerParams.STEER_DELTA_DOWN = self.op_params.get(STOCK_DELTA_DOWN)
+    CarControllerParams.STEER_MAX= self.op_params.get(STOCK_STEER_MAX)
+
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     frame = CS.lkas_counter
     if self.prev_frame == frame:
@@ -39,22 +48,22 @@ class CarController():
                                                    CS.out.steeringTorqueEps, CarControllerParams)
     self.steer_rate_limited = new_steer != apply_steer
 
-    #moving_fast = CS.out.vEgo > CS.CP.minSteerSpeed  # for status message
+    #moving_fast = CS.out.vEgo > self.CP.minSteerSpeed  # for status message
     #lkas_active = moving_fast and enabled
 
     if self.car_fingerprint not in (CAR.RAM_1500, CAR.RAM_2500):
-      if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.5):  # for command high bit
+      if CS.out.vEgo > (self.CP.minSteerSpeed - 0.5):  # for command high bit
         self.gone_fast_yet = True
       elif self.car_fingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
-        if CS.out.vEgo < (CS.CP.minSteerSpeed - 3.0):
+        if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
           self.gone_fast_yet = False  # < 14.5m/s stock turns off this bit, but fine down to 13.5
           
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
-      if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
+      if CS.out.vEgo > (self.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
+      elif CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
         self.gone_fast_yet = False   
-      #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
+      #self.gone_fast_yet = CS.out.vEgo > self.CP.minSteerSpeed
 
     if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
         self.lkaslast_frame = self.lkasframe
