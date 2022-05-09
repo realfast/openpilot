@@ -1,13 +1,14 @@
+#ifdef HALF_AS_FLOAT
+#define half float
+#define half3 float3
+#else
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#endif
 
-const half black_level = 42.0;
-
-const __constant half3 color_correction[3] = {
-  // post wb CCM
-  (half3)(1.82717181, -0.31231438, 0.07307673),
-  (half3)(-0.5743977, 1.36858544, -0.53183455),
-  (half3)(-0.25277411, -0.05627105, 1.45875782),
-};
+// post wb CCM
+const __constant half3 color_correction_0 = (half3)(1.82717181, -0.31231438, 0.07307673);
+const __constant half3 color_correction_1 = (half3)(-0.5743977, 1.36858544, -0.53183455);
+const __constant half3 color_correction_2 = (half3)(-0.25277411, -0.05627105, 1.45875782);
 
 // tone mapping params
 const half cpk = 0.75;
@@ -27,29 +28,29 @@ half mf(half x, half cp) {
 }
 
 half3 color_correct(half3 rgb) {
-  half3 ret = (0,0,0);
+  half3 ret = (half3)(0.0, 0.0, 0.0);
   half cpx = 0.01;
-  ret += (half)rgb.x * color_correction[0];
-  ret += (half)rgb.y * color_correction[1];
-  ret += (half)rgb.z * color_correction[2];
+  ret += (half)rgb.x * color_correction_0;
+  ret += (half)rgb.y * color_correction_1;
+  ret += (half)rgb.z * color_correction_2;
   ret.x = mf(ret.x, cpx);
   ret.y = mf(ret.y, cpx);
   ret.z = mf(ret.z, cpx);
-  ret = clamp(0.0h, 255.0h, ret*255.0h);
+  ret = clamp(0.0, 255.0, ret*255.0);
   return ret;
 }
 
-half val_from_10(const uchar * source, int gx, int gy) {
-  // parse 10bit
-  int start = gy * FRAME_STRIDE + (5 * (gx / 4));
-  int offset = gx % 4;
-  uint major = (uint)source[start + offset] << 2;
-  uint minor = (source[start + 4] >> (2 * offset)) & 3;
-  half pv = (half)(major + minor);
+inline half val_from_10(const uchar * source, int gx, int gy, half black_level) {
+  // parse 12bit
+  int start = gy * FRAME_STRIDE + (3 * (gx / 2)) + (FRAME_STRIDE * FRAME_OFFSET);
+  int offset = gx % 2;
+  uint major = (uint)source[start + offset] << 4;
+  uint minor = (source[start + 2] >> (4 * offset)) & 0xf;
+  half pv = (half)((major + minor)/4);
 
   // normalize
-  pv = max(0.0h, pv - black_level);
-  pv *= 0.00101833h; // /= (1024.0f - black_level);
+  pv = max((half)0.0, pv - black_level);
+  pv /= (1024.0f - black_level);
 
   // correct vignetting
   if (CAM_NUM == 1) { // fcamera
@@ -69,7 +70,7 @@ half val_from_10(const uchar * source, int gx, int gy) {
     pv = s * pv;
   }
 
-  pv = clamp(0.0h, 1.0h, pv);
+  pv = clamp((half)0.0, (half)1.0, pv);
   return pv;
 }
 
@@ -89,7 +90,8 @@ half phi(half x) {
 
 __kernel void debayer10(const __global uchar * in,
                         __global uchar * out,
-                        __local half * cached
+                        __local half * cached,
+                        float black_level
                        )
 {
   const int x_global = get_global_id(0);
@@ -102,38 +104,36 @@ __kernel void debayer10(const __global uchar * in,
 
   int out_idx = 3 * x_global + 3 * y_global * RGB_WIDTH;
 
-  half pv = val_from_10(in, x_global, y_global);
+  half pv = val_from_10(in, x_global, y_global, black_level);
   cached[localOffset] = pv;
-
-  // don't care
-  if (x_global < 1 || x_global >= RGB_WIDTH - 1 || y_global < 1 || y_global >= RGB_HEIGHT - 1) {
-    return;
-  }
 
   // cache padding
   int localColOffset = -1;
   int globalColOffset = -1;
 
+  const int x_global_mod = (x_global == 0 || x_global == RGB_WIDTH - 1) ? -1: 1;
+  const int y_global_mod = (y_global == 0 || y_global == RGB_HEIGHT - 1) ? -1: 1;
+
   // cache padding
   if (x_local < 1) {
     localColOffset = x_local;
     globalColOffset = -1;
-    cached[(y_local + 1) * localRowLen + x_local] = val_from_10(in, x_global-1, y_global);
+    cached[(y_local + 1) * localRowLen + x_local] = val_from_10(in, x_global-x_global_mod, y_global, black_level);
   } else if (x_local >= get_local_size(0) - 1) {
     localColOffset = x_local + 2;
     globalColOffset = 1;
-    cached[localOffset + 1] = val_from_10(in, x_global+1, y_global);
+    cached[localOffset + 1] = val_from_10(in, x_global+x_global_mod, y_global, black_level);
   }
 
   if (y_local < 1) {
-    cached[y_local * localRowLen + x_local + 1] = val_from_10(in, x_global, y_global-1);
+    cached[y_local * localRowLen + x_local + 1] = val_from_10(in, x_global, y_global-y_global_mod, black_level);
     if (localColOffset != -1) {
-      cached[y_local * localRowLen + localColOffset] = val_from_10(in, x_global+globalColOffset, y_global-1);
+      cached[y_local * localRowLen + localColOffset] = val_from_10(in, x_global+(x_global_mod*globalColOffset), y_global-y_global_mod, black_level);
     }
   } else if (y_local >= get_local_size(1) - 1) {
-    cached[(y_local + 2) * localRowLen + x_local + 1] = val_from_10(in, x_global, y_global+1);
+    cached[(y_local + 2) * localRowLen + x_local + 1] = val_from_10(in, x_global, y_global+y_global_mod, black_level);
     if (localColOffset != -1) {
-      cached[(y_local + 2) * localRowLen + localColOffset] = val_from_10(in, x_global+globalColOffset, y_global+1);
+      cached[(y_local + 2) * localRowLen + localColOffset] = val_from_10(in, x_global+(x_global_mod*globalColOffset), y_global+y_global_mod, black_level);
     }
   }
 
@@ -198,7 +198,7 @@ __kernel void debayer10(const __global uchar * in,
     }
   }
 
-  rgb = clamp(0.0h, 1.0h, rgb);
+  rgb = clamp(0.0, 1.0, rgb);
   rgb = color_correct(rgb);
 
   out[out_idx + 0] = (uchar)(rgb.z);
