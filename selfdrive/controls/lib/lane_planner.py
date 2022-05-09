@@ -5,6 +5,7 @@ from common.numpy_fast import interp
 from common.realtime import DT_MDL
 from selfdrive.hardware import TICI
 from selfdrive.swaglog import cloudlog
+from common.op_params import opParams, DEVICE_OFFSET
 
 
 TRAJECTORY_SIZE = 33
@@ -20,7 +21,10 @@ else:
 
 
 class LanePlanner:
-  def __init__(self, wide_camera=False):
+  def __init__(self, wide_camera=False, OP=None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
     self.ll_t = np.zeros((TRAJECTORY_SIZE,))
     self.ll_x = np.zeros((TRAJECTORY_SIZE,))
     self.lll_y = np.zeros((TRAJECTORY_SIZE,))
@@ -48,8 +52,9 @@ class LanePlanner:
       self.ll_t = (np.array(lane_lines[1].t) + np.array(lane_lines[2].t))/2
       # left and right ll x is the same
       self.ll_x = lane_lines[1].x
-      self.lll_y = np.array(lane_lines[1].y) + self.camera_offset
-      self.rll_y = np.array(lane_lines[2].y) + self.camera_offset
+      self.device_offset = self.op_params.get(DEVICE_OFFSET)
+      self.lll_y = np.array(lane_lines[1].y) + (self.camera_offset + self.device_offset)
+      self.rll_y = np.array(lane_lines[2].y) + (self.camera_offset + self.device_offset)
       self.lll_prob = md.laneLineProbs[1]
       self.rll_prob = md.laneLineProbs[2]
       self.lll_std = md.laneLineStds[1]

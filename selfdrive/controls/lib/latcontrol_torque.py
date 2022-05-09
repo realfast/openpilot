@@ -5,6 +5,7 @@ from common.numpy_fast import interp
 from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
+from common.op_params import opParams, MAX_TORQUE, FRICTION #LAT_KP_BP, LAT_KP_V, LAT_KI_BP, LAT_KI_V, LAT_KD_BP, LAT_KD_V, LAT_KF
 
 # At higher speeds (25+mph) we can assume:
 # Lateral acceleration achieved by a specific car correlates to
@@ -23,14 +24,21 @@ JERK_THRESHOLD = 0.2
 
 
 class LatControlTorque(LatControl):
-  def __init__(self, CP, CI):
-    super().__init__(CP, CI)
-    self.CP = CP
-    self.pid = PIDController(CP.lateralTuning.torque.kp, CP.lateralTuning.torque.ki,
-                             k_f=CP.lateralTuning.torque.kf, pos_limit=self.steer_max, neg_limit=-self.steer_max)
+  def __init__(self, CP, CI, OP=None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
+    super().__init__(CP,CI)
+    kp = 1.0 / self.op_params.get(MAX_TORQUE)
+    ki = 0.5 / self.op_params.get(MAX_TORQUE)
+    kf = 1.0 / self.op_params.get(MAX_TORQUE)
+    kd = 0
+    # self.pid = PIDController(CP.lateralTuning.torque.kp, CP.lateralTuning.torque.ki,
+    #                         k_f=CP.lateralTuning.torque.kf, pos_limit=1.0, neg_limit=-1.0)
+    self.pid = PIDController(kp, ki, kf, kd, pos_limit=1.0, neg_limit=-1.0, isLateral=True)
     self.get_steer_feedforward = CI.get_steer_feedforward_function()
     self.use_steering_angle = CP.lateralTuning.torque.useSteeringAngle
-    self.friction = CP.lateralTuning.torque.friction
+    self.friction = self.op_params.get(FRICTION)
 
   def reset(self):
     super().reset()
@@ -38,6 +46,7 @@ class LatControlTorque(LatControl):
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
     pid_log = log.ControlsState.LateralTorqueState.new_message()
+    kf = 1.0 / self.op_params.get(MAX_TORQUE)
 
     if CS.vEgo < MIN_STEER_SPEED or not active:
       output_torque = 0.0
@@ -60,8 +69,9 @@ class LatControlTorque(LatControl):
 
       ff = desired_lateral_accel - params.roll * ACCELERATION_DUE_TO_GRAVITY
       # convert friction into lateral accel units for feedforward
+      self.friction = self.op_params.get(FRICTION)
       friction_compensation = interp(desired_lateral_jerk, [-JERK_THRESHOLD, JERK_THRESHOLD], [-self.friction, self.friction])
-      ff += friction_compensation / self.CP.lateralTuning.torque.kf
+      ff += friction_compensation / kf
       output_torque = self.pid.update(error,
                                       override=CS.steeringPressed, feedforward=ff,
                                       speed=CS.vEgo,

@@ -2,14 +2,21 @@ import numpy as np
 from numbers import Number
 
 from common.numpy_fast import clip, interp
+from common.op_params import opParams, MAX_TORQUE
 
 
 class PIDController():
-  def __init__(self, k_p, k_i, k_f=0., k_d=0., pos_limit=1e308, neg_limit=-1e308, rate=100):
+  def __init__(self,  k_p, k_i, k_f=0., k_d=0., pos_limit=1e308, neg_limit=-1e308, rate=100, isLateral=False, OP=None):
+    self.is_lateral = isLateral
+    if OP is None:
+      OP = opParams()  
+    self.op_params = OP
     self._k_p = k_p
     self._k_i = k_i
     self._k_d = k_d
     self.k_f = k_f   # feedforward gain
+    if isLateral:
+      self.pidList = [k_p,k_i,k_d,k_f]
     if isinstance(self._k_p, Number):
       self._k_p = [[0], [self._k_p]]
     if isinstance(self._k_i, Number):
@@ -25,6 +32,12 @@ class PIDController():
     self.speed = 0.0
 
     self.reset()
+
+  def _update_params(self):
+    self._k_p = 2.0 / self.op_params.get(MAX_TORQUE)
+    self._k_i = 0.5 / self.op_params.get(MAX_TORQUE)
+    self._k_d = 0
+    self.k_f = 1.0 / self.op_params.get(MAX_TORQUE)
 
   @property
   def k_p(self):
@@ -50,16 +63,26 @@ class PIDController():
     self.control = 0
 
   def update(self, error, error_rate=0.0, speed=0.0, override=False, feedforward=0., freeze_integrator=False):
-    self.speed = speed
+    if(self.is_lateral):
+      self._update_params()
+      self.p = float(error) * self._k_p
+      self.f = feedforward * self.k_f
+      self.d = error_rate * self._k_d
+    
+    else:
+      self.p = float(error) * self.k_p
+      self.f = feedforward * self.k_f
+      self.d = error_rate * self.k_d
 
-    self.p = float(error) * self.k_p
-    self.f = feedforward * self.k_f
-    self.d = error_rate * self.k_d
+    self.speed = speed
 
     if override:
       self.i -= self.i_unwind_rate * float(np.sign(self.i))
     else:
-      i = self.i + error * self.k_i * self.i_rate
+      if (self.is_lateral):
+        i = self.i + error * self._k_i * self.i_rate
+      else:
+        i = self.i + error * self.k_i * self.i_rate
       control = self.p + i + self.d + self.f
 
       # Update when changing i will move the control away from the limits

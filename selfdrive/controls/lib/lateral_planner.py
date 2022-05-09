@@ -8,16 +8,20 @@ from selfdrive.controls.lib.lane_planner import LanePlanner, TRAJECTORY_SIZE
 from selfdrive.controls.lib.desire_helper import DesireHelper
 import cereal.messaging as messaging
 from cereal import log
+from common.op_params import opParams, STEER_RATE_COST
 
 
 class LateralPlanner:
-  def __init__(self, CP, use_lanelines=True, wide_camera=False):
+  def __init__(self, CP, use_lanelines=True, wide_camera=False, OP=None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
     self.use_lanelines = use_lanelines
     self.LP = LanePlanner(wide_camera)
     self.DH = DesireHelper()
 
     self.last_cloudlog_t = 0
-    self.steer_rate_cost = CP.steerRateCost
+    self.steer_rate_cost = self.op_params.get(STEER_RATE_COST) #CP.steerRateCost
     self.solution_invalid_cnt = 0
 
     self.path_xyz = np.zeros((TRAJECTORY_SIZE, 3))
@@ -34,6 +38,7 @@ class LateralPlanner:
     self.lat_mpc.reset(x0=self.x0)
 
   def update(self, sm):
+    self.steer_rate_cost = self.op_params.get(STEER_RATE_COST)
     v_ego = sm['carState'].vEgo
     measured_curvature = sm['controlsState'].curvature
 
