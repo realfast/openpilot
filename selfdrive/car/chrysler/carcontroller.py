@@ -4,7 +4,7 @@ from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_comm
                                                create_wheel_buttons
 from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP, STEER_DELTA_UP, STEER_DELTA_DOWN
 from opendbc.can.packer import CANPacker
-from common.op_params import opParams, STOCK_DELTA_DOWN, STOCK_DELTA_UP, STOCK_STEER_MAX
+from common.op_params import opParams, STOCK_DELTA_UP_DOWN, STOCK_STEER_MAX #STOCK_DELTA_DOWN, STOCK_DELTA_UP, 
 
 class CarController():
   def __init__(self, dbc_name, CP, VM, OP=None):
@@ -32,8 +32,8 @@ class CarController():
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
-    CarControllerParams.STEER_DELTA_UP = self.op_params.get(STOCK_DELTA_UP)
-    CarControllerParams.STEER_DELTA_DOWN = self.op_params.get(STOCK_DELTA_DOWN)
+    CarControllerParams.STEER_DELTA_UP = self.op_params.get(STOCK_DELTA_UP_DOWN)
+    CarControllerParams.STEER_DELTA_DOWN = self.op_params.get(STOCK_DELTA_UP_DOWN)
     CarControllerParams.STEER_MAX= self.op_params.get(STOCK_STEER_MAX)
 
     # this seems needed to avoid steering faults and to force the sync with the EPS counter

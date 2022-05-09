@@ -57,7 +57,7 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
       # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.015,]]
-      MAX_TORQUE = 1.5
+      MAX_TORQUE = 1.3
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
       ret.lateralTuning.torque.kp = 1.0 / MAX_TORQUE

@@ -30,8 +30,8 @@ class LatControlTorque(LatControl):
     self.op_params = OP
     super().__init__(CP,CI)
     kp = 1.0 / self.op_params.get(MAX_TORQUE)
-    ki = 0.5 / self.op_params.get(MAX_TORQUE)
     kf = 1.0 / self.op_params.get(MAX_TORQUE)
+    ki = 0.1 / self.op_params.get(MAX_TORQUE)
     kd = 0
     # self.pid = PIDController(CP.lateralTuning.torque.kp, CP.lateralTuning.torque.ki,
     #                         k_f=CP.lateralTuning.torque.kf, pos_limit=1.0, neg_limit=-1.0)
