@@ -3,7 +3,7 @@ from opendbc.can.packer import CANPacker
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_wheel_buttons
 from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP, STEER_DELTA_UP, STEER_DELTA_DOWN
-from common.op_params import opParams, STOCK_DELTA_UP_DOWN, STOCK_STEER_MAX #STOCK_DELTA_DOWN, STOCK_DELTA_UP, 
+from common.op_params import opParams, STOCK_STEER_MAX, STOCK_DELTA_DOWN, STOCK_DELTA_UP#, STOCK_DELTA_UP_DOWN
 
 
 class CarController:
@@ -24,8 +24,8 @@ class CarController:
     self.packer = CANPacker(dbc_name)
 
   def update(self, CC, CS):
-    CarControllerParams.STEER_DELTA_UP = self.op_params.get(STOCK_DELTA_UP_DOWN)
-    CarControllerParams.STEER_DELTA_DOWN = self.op_params.get(STOCK_DELTA_UP_DOWN)
+    CarControllerParams.STEER_DELTA_UP = self.op_params.get(STOCK_DELTA_UP)
+    CarControllerParams.STEER_DELTA_DOWN = self.op_params.get(STOCK_DELTA_DOWN)
     CarControllerParams.STEER_MAX= self.op_params.get(STOCK_STEER_MAX)
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     # if self.prev_lkas_frame == CS.lkas_counter:

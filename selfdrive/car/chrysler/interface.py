@@ -26,7 +26,7 @@ class CarInterface(CarInterfaceBase):
 
     if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
       ret.wheelbase = 2.91  # in meters
-      ret.steerRatio = 12.7 #  2020 17.9:1 (V-6 4x2); 16.5:1 on SRT and Trackhawk; 16.7:1 (all other vehicles)  https://s3.amazonaws.com/chryslermedia.iconicweb.com/mediasite/specs/2020_JP_Grand_Cherokee_SPmar9cqpguibpb9l0c26hemi38d.pdf
+      ret.steerRatio = 16.7 #  2020 17.9:1 (V-6 4x2); 16.5:1 on SRT and Trackhawk; 16.7:1 (all other vehicles)  https://s3.amazonaws.com/chryslermedia.iconicweb.com/mediasite/specs/2020_JP_Grand_Cherokee_SPmar9cqpguibpb9l0c26hemi38d.pdf
       ret.steerActuatorDelay = 0.2  # in seconds
 
     ret.centerToFront = ret.wheelbase * 0.44
@@ -57,13 +57,13 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
       # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.015,]]
-      MAX_LAT_ACCEL = 1.3
+      MAX_LAT_ACCEL = 1.2
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
       ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.001
+      ret.lateralTuning.torque.friction = 0.05
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 0.5  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
