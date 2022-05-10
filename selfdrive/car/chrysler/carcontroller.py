@@ -28,8 +28,8 @@ class CarController:
     CarControllerParams.STEER_DELTA_DOWN = self.op_params.get(STOCK_DELTA_UP_DOWN)
     CarControllerParams.STEER_MAX= self.op_params.get(STOCK_STEER_MAX)
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
-    if self.prev_lkas_frame == CS.lkas_counter:
-      return car.CarControl.Actuators.new_message(), []
+    # if self.prev_lkas_frame == CS.lkas_counter:
+    #   return car.CarControl.Actuators.new_message(), []
 
     actuators = CC.actuators
 
@@ -51,7 +51,7 @@ class CarController:
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (self.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      if CS.out.vEgoRaw < (self.CP.minSteerSpeed - 1):
+      if CS.out.vEgoRaw < (self.CP.minSteerSpeed - .5):
           self.gone_fast_yet = False  
 
     lkas_active = moving_fast and CC.enabled
@@ -75,8 +75,9 @@ class CarController:
         can_sends.append(create_lkas_hud(self.packer, lkas_active,
                                          CC.hudControl.visualAlert, self.hud_count, CS, self.car_fingerprint))
         self.hud_count += 1
-
-    can_sends.append(create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, CS.lkas_counter))
+        
+    if self.prev_lkas_frame != CS.lkas_counter:
+      can_sends.append(create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, CS.lkas_counter))
 
     self.frame += 1
     self.prev_lkas_frame = CS.lkas_counter
