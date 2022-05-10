@@ -114,4 +114,4 @@ class CarInterface(CarInterfaceBase):
       return car.CarControl.Actuators.new_message(), []  # if we haven't seen a frame 220, then do not update.
 
 
-    return self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
+    return self.CC.update(c, self.CS)
