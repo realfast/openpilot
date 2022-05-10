@@ -51,7 +51,7 @@ class CarController:
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (self.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      if CS.out.vEgo < (self.CP.minSteerSpeed - 1):
+      if CS.out.vEgoRaw < (self.CP.minSteerSpeed - 1):
           self.gone_fast_yet = False  
 
     lkas_active = moving_fast and CC.enabled
