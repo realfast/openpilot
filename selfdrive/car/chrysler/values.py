@@ -10,7 +10,7 @@ class CarControllerParams:
   #STEER_MAX = 261         # 262 faults in Chrysler 360 faults in ram
   #STEER_DELTA_UP = 14      # 3 is stock. 100 is fine. 200 is too much it seems
   #STEER_DELTA_DOWN = 14   # no faults on the way down it seems
-  STEER_ERROR_MAX = 100
+  STEER_ERROR_MAX = 300
 
 class CAR:
   PACIFICA_2017_HYBRID = "CHRYSLER PACIFICA HYBRID 2017"
@@ -287,8 +287,8 @@ STEER_DELTA_UP = {
     CAR.PACIFICA_2019_HYBRID: 3,
     CAR.JEEP_CHEROKEE: 3,
     CAR.JEEP_CHEROKEE_2019: 3,
-    CAR.RAM_1500: 12,
-    CAR.RAM_2500: 360,
+    CAR.RAM_1500: 6,
+    CAR.RAM_2500: 6,
   }
 
 STEER_DELTA_DOWN = {
@@ -299,8 +299,8 @@ STEER_DELTA_DOWN = {
     CAR.PACIFICA_2019_HYBRID: 3,
     CAR.JEEP_CHEROKEE: 3,
     CAR.JEEP_CHEROKEE_2019: 3,
-    CAR.RAM_1500: 12,
-    CAR.RAM_2500: 360,
+    CAR.RAM_1500: 6,
+    CAR.RAM_2500: 6,
   }
 
 

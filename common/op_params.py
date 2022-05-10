@@ -176,7 +176,7 @@ class opParams:
                         
                         SHOW_RATE_PARAMS: Param(False, [bool], live=True),
                         ENABLE_RATE_PARAMS: Param(False, [bool], live=True, depends_on=SHOW_RATE_PARAMS),
-                        STOCK_DELTA_UP_DOWN: Param(360, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
+                        STOCK_DELTA_UP_DOWN: Param(6, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
                         #STOCK_DELTA_UP: Param(360, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
                         #STOCK_DELTA_DOWN: Param(360, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
                         STOCK_STEER_MAX: Param(363, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
