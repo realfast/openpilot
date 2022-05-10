@@ -1,16 +1,16 @@
 const int CHRYSLER_MAX_STEER = 261;
 const int CHRYSLER_MAX_RT_DELTA = 112;        // max delta torque allowed for real time checks
-const uint32_t CHRYSLER_RT_INTERVAL = 250000;  // 250ms between real time checks
-const int CHRYSLER_MAX_RATE_UP = 3;
-const int CHRYSLER_MAX_RATE_DOWN = 3;
+const uint32_t CHRYSLER_RT_INTERVAL = 250000; // 250ms between real time checks
+const int CHRYSLER_MAX_RATE_UP = 6;           //Must be double of limits set in op
+const int CHRYSLER_MAX_RATE_DOWN = 6;         //Must be double of limits set in op
 const int CHRYSLER_MAX_TORQUE_ERROR = 100;    // max torque cmd in excess of torque motor
-const int CHRYSLER_GAS_THRSLD = 7.7;  // 7% more than 2m/s changed from wheel rpm to km/h 
-const int CHRYSLER_STANDSTILL_THRSLD = 3.6;  // about 1m/s changed from wheel rpm to km/h 
+const int CHRYSLER_GAS_THRSLD = 7.7;          // 7% more than 2m/s changed from wheel rpm to km/h 
+const int CHRYSLER_STANDSTILL_THRSLD = 3.6;   // about 1m/s changed from wheel rpm to km/h 
 const int RAM_MAX_STEER = 363; 
-const int RAM_MAX_RT_DELTA = 336;        // since 3 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
-const int RAM_MAX_RATE_UP = 9;
-const int RAM_MAX_RATE_DOWN = 9;
-const int RAM_MAX_TORQUE_ERROR = 300;    // since 3 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
+const int RAM_MAX_RT_DELTA = 224;             // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
+const int RAM_MAX_RATE_UP = 12;               //Must be double of limits set in op
+const int RAM_MAX_RATE_DOWN = 12;             //Must be double of limits set in op  
+const int RAM_MAX_TORQUE_ERROR = 200;         // since 2 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 
 
 // Safety-relevant CAN messages for Chrysler/Jeep platforms
