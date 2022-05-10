@@ -39,12 +39,12 @@ class CarInterface(CarInterfaceBase):
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.12,0.12], [0.,0.0001]]
       # ret.steerActuatorDelay = 0.15
       # ret.steerRateCost = 0.7  # may need tuning
-      MAX_TORQUE = 2.0
+      MAX_LAT_ACCEL = 2.0
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_TORQUE
-      ret.lateralTuning.torque.kf = 1.0 / MAX_TORQUE
-      ret.lateralTuning.torque.ki = 0.1 / MAX_TORQUE
+      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.friction = 0.001
       ret.steerActuatorDelay = 0.16
       ret.steerRateCost = 1.0
@@ -57,12 +57,12 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
       # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.015,]]
-      MAX_TORQUE = 1.3
+      MAX_LAT_ACCEL = 1.3
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_TORQUE
-      ret.lateralTuning.torque.kf = 1.0 / MAX_TORQUE
-      ret.lateralTuning.torque.ki = 0.1 / MAX_TORQUE
+      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.friction = 0.001
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 0.5  # may need tuning

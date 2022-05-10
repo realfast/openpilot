@@ -2,7 +2,7 @@ import numpy as np
 from numbers import Number
 
 from common.numpy_fast import clip, interp
-from common.op_params import opParams, MAX_TORQUE
+from common.op_params import opParams, MAX_LAT_ACCEL
 
 
 class PIDController():
@@ -34,10 +34,10 @@ class PIDController():
     self.reset()
 
   def _update_params(self):
-    self._k_p = 2.0 / self.op_params.get(MAX_TORQUE)
-    self._k_i = 0.5 / self.op_params.get(MAX_TORQUE)
+    self._k_p = 1.0 / self.op_params.get(MAX_LAT_ACCEL)
+    self._k_i = 0.1 / self.op_params.get(MAX_LAT_ACCEL)
     self._k_d = 0
-    self.k_f = 1.0 / self.op_params.get(MAX_TORQUE)
+    self.k_f = 1.0 / self.op_params.get(MAX_LAT_ACCEL)
 
   @property
   def k_p(self):

@@ -5,7 +5,7 @@ from common.numpy_fast import interp
 from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
-from common.op_params import opParams, MAX_TORQUE, FRICTION #LAT_KP_BP, LAT_KP_V, LAT_KI_BP, LAT_KI_V, LAT_KD_BP, LAT_KD_V, LAT_KF
+from common.op_params import opParams, MAX_LAT_ACCEL, FRICTION #LAT_KP_BP, LAT_KP_V, LAT_KI_BP, LAT_KI_V, LAT_KD_BP, LAT_KD_V, LAT_KF
 
 # At higher speeds (25+mph) we can assume:
 # Lateral acceleration achieved by a specific car correlates to
@@ -29,9 +29,9 @@ class LatControlTorque(LatControl):
       OP = opParams()
     self.op_params = OP
     super().__init__(CP,CI)
-    kp = 1.0 / self.op_params.get(MAX_TORQUE)
-    kf = 1.0 / self.op_params.get(MAX_TORQUE)
-    ki = 0.1 / self.op_params.get(MAX_TORQUE)
+    kp = 1.0 / self.op_params.get(MAX_LAT_ACCEL)
+    kf = 1.0 / self.op_params.get(MAX_LAT_ACCEL)
+    ki = 0.1 / self.op_params.get(MAX_LAT_ACCEL)
     kd = 0
     # self.pid = PIDController(CP.lateralTuning.torque.kp, CP.lateralTuning.torque.ki,
     #                         k_f=CP.lateralTuning.torque.kf, pos_limit=1.0, neg_limit=-1.0)
@@ -46,7 +46,7 @@ class LatControlTorque(LatControl):
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
     pid_log = log.ControlsState.LateralTorqueState.new_message()
-    kf = 1.0 / self.op_params.get(MAX_TORQUE)
+    kf = 1.0 / self.op_params.get(MAX_LAT_ACCEL)
 
     if CS.vEgo < MIN_STEER_SPEED or not active:
       output_torque = 0.0
