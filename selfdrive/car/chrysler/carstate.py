@@ -62,7 +62,7 @@ class CarState(CarStateBase):
     self.accresume = cp.vl["Cruise_Control_Buttons"]["ACC_Resume"]
     self.cruiseonoff = cp.vl["Cruise_Control_Buttons"]["Cruise_OnOff"]
     self.acconoff = cp.vl["Cruise_Control_Buttons"]["ACC_OnOff"]
-    self.ccbuttoncounter = cp.vl["Cruise_Control_Buttons"]["COUNTER"]
+    self.button_counter = cp.vl["Cruise_Control_Buttons"]["COUNTER"]
     self.cruise = cp.vl["Cruise_Control_Buttons"]
 
 
