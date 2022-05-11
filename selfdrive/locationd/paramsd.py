@@ -27,6 +27,7 @@ class ParamsLearner:
     self.kf.filter.set_global("center_to_rear", CP.wheelbase - CP.centerToFront)
     self.kf.filter.set_global("stiffness_front", CP.tireStiffnessFront)
     self.kf.filter.set_global("stiffness_rear", CP.tireStiffnessRear)
+    self.steerRatio = CP.steerRatio
 
     self.active = False
 
@@ -78,7 +79,7 @@ class ParamsLearner:
         # the respective estimate STD. Otherwise the STDs keep increasing, causing rapid changes in the
         # states in longer routes (especially straight stretches).
         stiffness = float(self.kf.x[States.STIFFNESS])
-        steer_ratio = float(self.kf.x[States.STEER_RATIO])
+        steer_ratio = self.steerRatio #float(self.kf.x[States.STEER_RATIO])
         self.kf.predict_and_observe(t, ObservationKind.STIFFNESS, np.array([[stiffness]]))
         self.kf.predict_and_observe(t, ObservationKind.STEER_RATIO, np.array([[steer_ratio]]))
 
@@ -179,7 +180,7 @@ def main(sm=None, pm=None):
       liveParameters = msg.liveParameters
       liveParameters.posenetValid = True
       liveParameters.sensorValid = True
-      liveParameters.steerRatio = float(x[States.STEER_RATIO])
+      liveParameters.steerRatio = CP.steerRatio #float(x[States.STEER_RATIO])
       liveParameters.stiffnessFactor = float(x[States.STIFFNESS])
       liveParameters.roll = float(x[States.ROAD_ROLL])
       liveParameters.angleOffsetAverageDeg = angle_offset_average
