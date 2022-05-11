@@ -15,6 +15,21 @@ class CarState(CarStateBase):
   def update(self, cp, cp_cam):
 
     ret = car.CarState.new_message() 
+
+    # lock info 
+    ret.doorOpen = any([cp.vl["BCM_1"]["Driver_Door_Ajar"],
+                        cp.vl["BCM_1"]["Passenger_Door_Ajar"],
+                        cp.vl["BCM_1"]["Left_Rear_Door_Ajar"],
+                        cp.vl["BCM_1"]["Right_Rear_Door_Ajar"]])
+    ret.seatbeltUnlatched = cp.vl["ORC_1"]['Driver_Seatbelt_Status'] == 1 #1 is unbuckled
+
+    # brake pedal
+    ret.brakePressed = cp.vl["ESP_1"]['Brake_Pedal_State'] ==1  # Physical brake pedal switch
+    ret.brake = 0
+
+    # gas pedal
+    ret.gas = cp.vl["ECM_5"]["Accelerator_Position"]
+    ret.gasPressed = ret.gas > 1e-5 
   
   # car speed
     ret.vEgoRaw = cp.vl["ESP_8"]["Vehicle_Speed"] * CV.KPH_TO_MS
@@ -29,14 +44,11 @@ class CarState(CarStateBase):
     )
     #ret.aEgo = cp.vl["ESP_4"]["Acceleration"] #m/s2
     #ret.yawRate = cp.vl["ESP_4"]["Yaw_Rate"] #deg/s
-    
-  # gas pedal
-    ret.gas = cp.vl["ECM_5"]["Accelerator_Position"]
-    ret.gasPressed = ret.gas > 1e-5
-  
-  # brake pedal
-    ret.brakePressed = cp.vl["ESP_1"]['Brake_Pedal_State'] ==1  # Physical brake pedal switch
-    ret.brake = 0
+
+    # button presses
+    ret.leftBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 1)
+    ret.rightBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 2)
+    ret.genericToggle = bool(cp.vl["Steering_Column_Commands"]["High_Beam_Lever_Status"])
 
   # steering wheel  
     ret.steeringAngleDeg = cp.vl["Steering_Column_Angle_Status"]["Steering_Wheel_Angle"]
@@ -46,9 +58,13 @@ class CarState(CarStateBase):
     ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
     ret.espDisabled = (cp.vl["Center_Stack_1"]["Traction_Button"] == 1) #button is pressed. This doesn't mean ESP is diabled.
     self.frame = int(cp.vl["EPS_2"]["COUNTER"])
+    # steer_state = cp.vl["EPS_2"]["LKAS_STATE"]
+    # ret.steerFaultPermanent = steer_state == 4 or (steer_state == 0 and ret.vEgo > self.CP.minSteerSpeed)
+
+    # gear
+    ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
 
   # cruise state  
-    #self.steer_command_bit = cp_cam.vl["LKAS_COMMAND"]['LKAS_CONTROL_BIT'] 
     self.lkas_counter = cp_cam.vl["DAS_3"]["COUNTER"]
     self.lanelines = cp_cam.vl["DAS_6"]["LKAS_LANE_LINES"]
     self.iconcolor = cp_cam.vl["DAS_6"]["LKAS_ICON_COLOR"]
@@ -102,21 +118,6 @@ class CarState(CarStateBase):
       self.dashboard = cp_cam.vl["DAS_4"]
       ret.steerFaultPermanent  = cp_cam.vl["LKAS_COMMAND"]["LKAS_ERROR"]==1 # TODO: Find another bit to determine the steer error
 
-
-  # gear
-    ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
-
-  # button presses
-    ret.leftBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 1)
-    ret.rightBlinker = (cp.vl["Steering_Column_Commands"]["Turn_Signal_Status"] == 2)
-    ret.genericToggle = bool(cp.vl["Steering_Column_Commands"]["High_Beam_Lever_Status"])
- 
-  # lock info 
-    ret.doorOpen = any([cp.vl["BCM_1"]["Driver_Door_Ajar"],
-                        cp.vl["BCM_1"]["Passenger_Door_Ajar"],
-                        cp.vl["BCM_1"]["Left_Rear_Door_Ajar"],
-                        cp.vl["BCM_1"]["Right_Rear_Door_Ajar"]])
-    ret.seatbeltUnlatched = cp.vl["ORC_1"]['Driver_Seatbelt_Status'] == 1 #1 is unbuckled
 
   # blindspot sensors
     if self.CP.enableBsm:
@@ -211,7 +212,7 @@ class CarState(CarStateBase):
         ("Center_Stack_2", 1),
         ]
 
-    return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
 
   @staticmethod
   def get_cam_can_parser(CP):
@@ -245,4 +246,4 @@ class CarState(CarStateBase):
         ("DAS_4", 50),
         ]
 
-    return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)

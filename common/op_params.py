@@ -174,12 +174,12 @@ class opParams:
                         STEER_RATE_COST: Param(0.5, VT.number, live=True),
                         DEVICE_OFFSET: Param(0.0, VT.number, live=True),
                         
-                        SHOW_RATE_PARAMS: Param(False, [bool], live=True),
-                        ENABLE_RATE_PARAMS: Param(False, [bool], live=True, depends_on=SHOW_RATE_PARAMS),
+                        #SHOW_RATE_PARAMS: Param(False, [bool], live=True),
+                        #ENABLE_RATE_PARAMS: Param(False, [bool], live=True, depends_on=SHOW_RATE_PARAMS),
                         #STOCK_DELTA_UP_DOWN: Param(6, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
-                        STOCK_DELTA_UP: Param(25, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
-                        STOCK_DELTA_DOWN: Param(50, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
-                        STOCK_STEER_MAX: Param(363, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
+                        #STOCK_DELTA_UP: Param(25, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
+                        #STOCK_DELTA_DOWN: Param(50, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
+                        #STOCK_STEER_MAX: Param(363, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
 }
 
     self._params_file = '/data/op_params.json'
@@ -334,12 +334,12 @@ ENABLE_INDI_BREAKPOINTS = 'enable_indi_breakpoints'
 MAX_LAT_ACCEL = 'max_lat_accel'
 FRICTION = 'friction'
 
-SHOW_RATE_PARAMS = 'show_rate_params'
-ENABLE_RATE_PARAMS = 'enable_rate_params'
+#SHOW_RATE_PARAMS = 'show_rate_params'
+#ENABLE_RATE_PARAMS = 'enable_rate_params'
 #STOCK_DELTA_UP_DOWN = 'stock_delta_up_down'
-STOCK_DELTA_UP = 'stock_delta_up'
-STOCK_DELTA_DOWN = 'stock_delta_down'
-STOCK_STEER_MAX = 'stock_steer_max'
+# STOCK_DELTA_UP = 'stock_delta_up'
+# STOCK_DELTA_DOWN = 'stock_delta_down'
+# STOCK_STEER_MAX = 'stock_steer_max'
 STEER_ACT_DELAY = 'steer_act_delay'
 STEER_RATIO = 'steer ratio'
 STEER_RATE_COST = 'steer_rate_cost'

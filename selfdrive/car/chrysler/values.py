@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Dict, List, Union
 
 from selfdrive.car import dbc_dict
@@ -5,12 +6,11 @@ from selfdrive.car.docs_definitions import CarInfo
 from cereal import car
 Ecu = car.CarParams.Ecu
 
-
 class CarControllerParams:
   #STEER_MAX = 261         # 262 faults in Chrysler 360 faults in ram
-  #STEER_DELTA_UP = 14      # 3 is stock. 100 is fine. 200 is too much it seems
-  #STEER_DELTA_DOWN = 14   # no faults on the way down it seems
-  STEER_ERROR_MAX = 300
+  #STEER_DELTA_UP = 3      # 3 is stock. 100 is fine. 200 is too much it seems
+  #STEER_DELTA_DOWN = 3   # no faults on the way down it seems
+  STEER_ERROR_MAX = 250
 
 class CAR:
   PACIFICA_2017_HYBRID = "CHRYSLER PACIFICA HYBRID 2017"
@@ -31,6 +31,20 @@ CAR_INFO: Dict[str, Union[CarInfo, List[CarInfo]]] = {
   CAR.PACIFICA_2020: CarInfo("Chrysler Pacifica 2020", "Adaptive Cruise"),
   CAR.JEEP_CHEROKEE: CarInfo("Jeep Grand Cherokee 2016-18", "Adaptive Cruise", "https://www.youtube.com/watch?v=eLR9o2JkuRk"),
   CAR.JEEP_CHEROKEE_2019: CarInfo("Jeep Grand Cherokee 2019-20", "Adaptive Cruise", "https://www.youtube.com/watch?v=jBe4lWnRSu4"),
+}
+
+@dataclass
+class ChryslerCarInfo(CarInfo):
+  package: str = "Adaptive Cruise"
+
+
+CAR_INFO: Dict[str, Union[ChryslerCarInfo, List[ChryslerCarInfo]]] = {
+  CAR.PACIFICA_2017_HYBRID: ChryslerCarInfo("Chrysler Pacifica Hybrid 2017-18"),
+  CAR.PACIFICA_2019_HYBRID: ChryslerCarInfo("Chrysler Pacifica Hybrid 2019-21"),
+  CAR.PACIFICA_2018: ChryslerCarInfo("Chrysler Pacifica 2017-18"),
+  CAR.PACIFICA_2020: ChryslerCarInfo("Chrysler Pacifica 2020"),
+  CAR.JEEP_CHEROKEE: ChryslerCarInfo("Jeep Grand Cherokee 2016-18", video_link="https://www.youtube.com/watch?v=eLR9o2JkuRk"),
+  CAR.JEEP_CHEROKEE_2019: ChryslerCarInfo("Jeep Grand Cherokee 2019-20", video_link="https://www.youtube.com/watch?v=jBe4lWnRSu4"),
 }
 
 # Unique CAN messages:
@@ -276,7 +290,7 @@ STEER_MAX_LOOKUP = {
     CAR.JEEP_CHEROKEE: 261,
     CAR.JEEP_CHEROKEE_2019: 261,
     CAR.RAM_1500: 350,
-    CAR.RAM_2500: 363,
+    CAR.RAM_2500: 360,
   }
 
 STEER_DELTA_UP = {
@@ -287,8 +301,8 @@ STEER_DELTA_UP = {
     CAR.PACIFICA_2019_HYBRID: 3,
     CAR.JEEP_CHEROKEE: 3,
     CAR.JEEP_CHEROKEE_2019: 3,
-    CAR.RAM_1500: 6,
-    CAR.RAM_2500: 6,
+    CAR.RAM_1500: 12,
+    CAR.RAM_2500: 14,
   }
 
 STEER_DELTA_DOWN = {
@@ -299,9 +313,9 @@ STEER_DELTA_DOWN = {
     CAR.PACIFICA_2019_HYBRID: 3,
     CAR.JEEP_CHEROKEE: 3,
     CAR.JEEP_CHEROKEE_2019: 3,
-    CAR.RAM_1500: 6,
-    CAR.RAM_2500: 6,
+    CAR.RAM_1500: 12,
+    CAR.RAM_2500: 14,
   }
 
 
-STEER_THRESHOLD = 140
+STEER_THRESHOLD = 120

@@ -106,6 +106,19 @@ class Request:
   bus: int = 1
 
 REQUESTS: List[Request] = [
+  # Chrysler / FCA / Stellantis
+  (
+    "chrysler",
+    [CHRYSLER_VERSION_REQUEST],
+    [CHRYSLER_VERSION_RESPONSE],
+    CHRYSLER_RX_OFFSET,
+  ),
+  (
+    "chrysler",
+    [CHRYSLER_VERSION_REQUEST],
+    [CHRYSLER_VERSION_RESPONSE],
+    DEFAULT_RX_OFFSET,
+  ),
   # Subaru
   Request(
     "subaru",
@@ -187,19 +200,6 @@ REQUESTS: List[Request] = [
     [TESTER_PRESENT_REQUEST, UDS_VERSION_REQUEST],
     [TESTER_PRESENT_RESPONSE, UDS_VERSION_RESPONSE],
     bus=0,
-  ),
-    # Chrysler / FCA / Stellantis
-  (
-    "chrysler",
-    [CHRYSLER_VERSION_REQUEST],
-    [CHRYSLER_VERSION_RESPONSE],
-    CHRYSLER_RX_OFFSET,
-  ),
-  (
-    "chrysler",
-    [CHRYSLER_VERSION_REQUEST],
-    [CHRYSLER_VERSION_RESPONSE],
-    DEFAULT_RX_OFFSET,
   ),
 ]
 
