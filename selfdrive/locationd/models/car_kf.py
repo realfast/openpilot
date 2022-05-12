@@ -32,7 +32,6 @@ class States():
   # Vehicle model params
   STIFFNESS_FRONT = _slice(1)  # [-]
   STIFFNESS_REAR = _slice(1)  # [-]
-  STEER_RATIO = _slice(1)  # [-]
   ANGLE_OFFSET = _slice(1)  # [rad]
   ANGLE_OFFSET_FAST = _slice(1)  # [rad]
 
@@ -48,7 +47,6 @@ class CarKalman(KalmanFilter):
   initial_x = np.array([
     1.0,
     1.0,
-    15.0,
     0.0,
     0.0,
 
@@ -62,7 +60,6 @@ class CarKalman(KalmanFilter):
   Q = np.diag([
     (.005 / 100)**2,
     (.005 / 100)**2,
-    (.05  / 100)**2,
     math.radians(0.002)**2,
     math.radians(0.25)**2, # wind is likely in here / not modeled
 
@@ -76,7 +73,6 @@ class CarKalman(KalmanFilter):
   P_initial = np.diag([
     (2 / 100)**2,
     (2 / 100)**2,
-    .1**2,
     math.radians(0.02)**2,
     math.radians(0.08)**2,
 
@@ -100,6 +96,7 @@ class CarKalman(KalmanFilter):
     'center_to_rear',
     'stiffness_front',
     'stiffness_rear',
+    'steer_ratio',
   ]
 
   @staticmethod
@@ -112,7 +109,7 @@ class CarKalman(KalmanFilter):
 
     # globals
     global_vars = [sp.Symbol(name) for name in CarKalman.global_vars]
-    m, j, aF, aR, cF_orig, cR_orig = global_vars
+    m, j, aF, aR, cF_orig, cR_orig, sr = global_vars
 
     # make functions and jacobians with sympy
     # state variables
@@ -129,7 +126,6 @@ class CarKalman(KalmanFilter):
     theta = state[States.ROAD_ROLL, :][0, 0]
     sa = state[States.STEER_ANGLE, :][0, 0]
 
-    sr = state[States.STEER_RATIO, :][0, 0]
     u, v = state[States.VELOCITY, :]
     r = state[States.YAW_RATE, :][0, 0]
 
@@ -173,11 +169,10 @@ class CarKalman(KalmanFilter):
 
     gen_code(generated_dir, name, f_sym, dt, state_sym, obs_eqs, dim_state, dim_state, global_vars=global_vars)
 
-  def __init__(self, generated_dir, steer_ratio=15, stiffness_front=1, stiffness_rear=1, angle_offset=0, P_initial=None):  # pylint: disable=super-init-not-called
+  def __init__(self, generated_dir, stiffness_front=1, stiffness_rear=1, angle_offset=0, P_initial=None):  # pylint: disable=super-init-not-called
     dim_state = self.initial_x.shape[0]
     dim_state_err = self.P_initial.shape[0]
     x_init = self.initial_x
-    x_init[States.STEER_RATIO] = steer_ratio
     x_init[States.STIFFNESS_FRONT] = stiffness_front
     x_init[States.STIFFNESS_REAR] = stiffness_rear
     x_init[States.ANGLE_OFFSET] = angle_offset
