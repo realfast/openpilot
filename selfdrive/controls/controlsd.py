@@ -17,7 +17,7 @@ from selfdrive.car.car_helpers import get_car, get_startup_event, get_one_can
 from selfdrive.controls.lib.lane_planner import CAMERA_OFFSET
 from selfdrive.controls.lib.drive_helpers import update_v_cruise, initialize_v_cruise
 from selfdrive.controls.lib.drive_helpers import get_lag_adjusted_curvature
-from selfdrive.controls.lib.longcontrol import LongControl
+from selfdrive.controls.lib.longcontrol import LongControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.latcontrol_pid import LatControlPID
 from selfdrive.controls.lib.latcontrol_indi import LatControlINDI
 from selfdrive.controls.lib.latcontrol_angle import LatControlAngle
@@ -699,9 +699,10 @@ class Controls:
 
     steer_angle_without_offset = math.radians(CS.steeringAngleDeg - params.angleOffsetDeg)
     curvature = -self.VM.calc_curvature(steer_angle_without_offset, CS.vEgo, params.roll)
-    if self.CP.lateralTuning.which() == 'torque':
-      if not self.CP.lateralTuning.torque.useSteeringAngle:
-        curvature = self.sm['liveLocationKalman'].angularVelocityCalibrated.value[2] / CS.vEgo
+    if CS.vEgo > MIN_STEER_SPEED:
+      if self.CP.lateralTuning.which() == 'torque':
+        if not self.CP.lateralTuning.torque.useSteeringAngle:
+          curvature = self.sm['liveLocationKalman'].angularVelocityCalibrated.value[2] / CS.vEgo
     # controlsState
     dat = messaging.new_message('controlsState')
     dat.valid = CS.canValid
