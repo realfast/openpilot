@@ -4,7 +4,6 @@ from common.numpy_fast import clip
 from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from common.realtime import DT_CTRL, DT_MDL
 from cereal import log
-from selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
 
 LOW_SPEED_FACTOR = 200
 
@@ -43,20 +42,10 @@ class LatControlTorque(LatControl):
       pid_log.active = False
       self.reset()
     else:
-      pid_log.active = True
-      
       if self.use_steering_angle:
         actual_curvature = -VM.calc_curvature(math.radians(CS.steeringAngleDeg - params.angleOffsetDeg), CS.vEgo, params.roll)
       else:
         actual_curvature = llk.angularVelocityCalibrated.value[2] / CS.vEgo
-        
-        # sign of roll should be correct but it was backwards in the EKF so some of the signs are wonky
-        output_accel = desired_curv * CS.vEgo**2 - params.roll * ACCELERATION_DUE_TO_GRAVITY
-        output_accel = clip(output_accel, -3, 3)
-        
-        pid_log.output = output_accel
-        return output_accel, 0.0, pid_log
-          
       # desired curvature is actual curvature from MPC step. 
       # desired - actual curvature is error since last MPC step. 
       # desired + desired_rate*MDL is the real target for the current time step
