@@ -88,7 +88,7 @@ class CarInterface(CarInterfaceBase):
     # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
     # mass and CG position, so all cars will have approximately similar dyn behaviors
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
-    ret.tireStiffnessFront, ret.tireStiffnessRear = ret.tireStiffnessFront*stiffness_front, ret.tireStiffnessRear*stiffness_rear
+    ret.tireStiffnessFront, ret.tireStiffnessRear = ret.tireStiffnessFront*front_stiffness, ret.tireStiffnessRear*rear_stiffness
 
     ret.enableBsm = 720 in fingerprint[0]
 
