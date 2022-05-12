@@ -130,7 +130,7 @@ def main(sm=None, pm=None):
     }
     cloudlog.info("Parameter learner resetting to default values")
 
-  learner = ParamsLearner(CP, params['stiffnessFront'], params['stiffnessRear'], math.radians(params['angleOffsetAverageDeg']))
+  learner = ParamsLearner(CP, 1.0, 1.0, math.radians(params['angleOffsetAverageDeg']))
   angle_offset_average = params['angleOffsetAverageDeg']
   angle_offset = angle_offset_average
 
