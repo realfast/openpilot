@@ -23,6 +23,9 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 0.7
     ret.steerLimitTimer = 0.4
     ret.minSteerSpeed = 3.8  # m/s
+    
+    front_stiffness = 1.0
+    rear_stiffness = 1.0
 
     if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
       ret.wheelbase = 2.91  # in meters
@@ -53,6 +56,9 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 14.5
 
     if candidate in (CAR.RAM_2500):
+      
+      front_stiffness = 0.6 # want to change these so that front / rear stiffness ratio is learned at ~1.0
+      rear_stiffness = 0.36
       ret.wheelbase = 3.785  # in meters
       ret.steerRatio = 18.0  # just a guess
       ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
@@ -82,6 +88,7 @@ class CarInterface(CarInterfaceBase):
     # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
     # mass and CG position, so all cars will have approximately similar dyn behaviors
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
+    ret.tireStiffnessFront, ret.tireStiffnessRear = ret.tireStiffnessFront*stiffness_front, ret.tireStiffnessRear*stiffness_rear
 
     ret.enableBsm = 720 in fingerprint[0]
 
