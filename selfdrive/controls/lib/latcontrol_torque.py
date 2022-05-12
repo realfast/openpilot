@@ -9,9 +9,9 @@ class LatControlTorque(LatControl):
   def __init__(self, CP, CI):
     super().__init__(CP, CI)
     
-    p = 6.0 / CP.lateralTuning.torque.maxLatAccel
-    i = 9.0 / CP.lateralTuning.torque.maxLatAccel
-    d = 1.0 / CP.lateralTuning.torque.maxLatAccel
+    p = 3.0 / CP.lateralTuning.torque.maxLatAccel
+    i = 4.5 / CP.lateralTuning.torque.maxLatAccel
+    d = 0.25 / CP.lateralTuning.torque.maxLatAccel
     gains = [i, p, d]
     N = 10 # Filter coefficient. corner frequency in rad/s. 20 = ~3.18hz
     Z = [[[1, 1], [2, -2]], [[1], [1]], [[2, -2], [1-2j, 1+2j]]] # Trapezoidal IPD
@@ -31,7 +31,7 @@ class LatControlTorque(LatControl):
       output_torque = 0.0
       self.reset()
     else:
-      error = -(desired_curvature_rate) * (CS.vEgo**2 + 200)
+      error = -(desired_curvature_rate) * (CS.vEgo**2)
       output_torque = self.pid.update(error, last_actuators.steer)
       output_torque = clip(output_torque, -self.steer_max, self.steer_max)
       
