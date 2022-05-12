@@ -33,7 +33,7 @@ class LatControlTorque(LatControl):
     
     # logging desired angle
     angle_steers_des_no_offset = math.degrees(VM.get_steer_from_curvature(-desired_curv, CS.vEgo, params.roll))
-    angle_steers_des = angle_steers_des_no_offset + params.angleOffsetAverageDeg
+    angle_steers_des = angle_steers_des_no_offset + params.angleOffsetDeg
     pid_log.steeringAngleDeg = float(CS.steeringAngleDeg)
     pid_log.steeringAngleDesiredDeg = angle_steers_des
 
@@ -43,7 +43,7 @@ class LatControlTorque(LatControl):
       self.reset()
     else:
       if self.use_steering_angle:
-        actual_curvature = -VM.calc_curvature(math.radians(CS.steeringAngleDeg - params.angleOffsetAverageDeg), CS.vEgo, params.roll)
+        actual_curvature = -VM.calc_curvature(math.radians(CS.steeringAngleDeg - params.angleOffsetDeg), CS.vEgo, params.roll)
       else:
         actual_curvature = llk.angularVelocityCalibrated.value[2] / CS.vEgo
       # desired curvature is actual curvature from MPC step. 
