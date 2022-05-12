@@ -700,7 +700,7 @@ class Controls:
     steer_angle_without_offset = math.radians(CS.steeringAngleDeg - params.angleOffsetDeg)
     curvature = -self.VM.calc_curvature(steer_angle_without_offset, CS.vEgo, params.roll)
     if self.CP.lateralTuning.which() == 'torque':
-      if not self.CP.lateralTuning.useSteeringAngle:
+      if not self.CP.lateralTuning.torque.useSteeringAngle:
         curvature = self.sm['liveLocationKalman'].angularVelocityCalibrated.value[2] / CS.vEgo
     # controlsState
     dat = messaging.new_message('controlsState')
