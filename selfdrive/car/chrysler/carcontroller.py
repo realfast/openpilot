@@ -28,7 +28,7 @@ class CarController:
   def update(self, CC, CS):
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     if self.prev_lkas_frame == CS.lkas_counter:
-      new_actuators = actuators.copy()
+      new_actuators = CC.actuators.copy()
       return new_actuators, []
 
     actuators = CC.actuators
