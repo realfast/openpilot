@@ -17,9 +17,9 @@ class CarController:
     self.gone_fast_yet = False
     self.steer_rate_limited = False
 
-    if not OP:
-      OP = opParams()
-    self.op_params = OP
+    #if not OP:
+      #OP = opParams()
+    #self.op_params = OP
 
     self.packer = CANPacker(dbc_name)
 
