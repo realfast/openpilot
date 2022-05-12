@@ -3,11 +3,10 @@ from opendbc.can.packer import CANPacker
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_wheel_buttons
 from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP, STEER_DELTA_UP, STEER_DELTA_DOWN
-#from common.op_params import opParams, STOCK_STEER_MAX, STOCK_DELTA_DOWN, STOCK_DELTA_UP#, STOCK_DELTA_UP_DOWN
 
 
 class CarController:
-  def __init__(self, dbc_name, CP, VM, OP=None):
+  def __init__(self, dbc_name, CP, VM):
     self.CP = CP
     self.apply_steer_last = 0
     self.frame = 0
@@ -16,17 +15,17 @@ class CarController:
     self.car_fingerprint = CP.carFingerprint
     self.gone_fast_yet = False
     self.steer_rate_limited = False
-
-    #if not OP:
-      #OP = opParams()
-    #self.op_params = OP
+    self.lkasdisabled = 0
+    self.lkaslast_frame = 0.
+    self.gone_fast_yet_previous = False
+    #self.CarControllerParams = CarControllerParams
+    CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
+    CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
+    CarControllerParams.STEER_DELTA_DOWN = STEER_DELTA_DOWN.get(CP.carFingerprint, 1.) 
 
     self.packer = CANPacker(dbc_name)
 
   def update(self, CC, CS):
-    # CarControllerParams.STEER_DELTA_UP = self.op_params.get(STOCK_DELTA_UP)
-    # CarControllerParams.STEER_DELTA_DOWN = self.op_params.get(STOCK_DELTA_DOWN)
-    # CarControllerParams.STEER_MAX= self.op_params.get(STOCK_STEER_MAX)
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     if self.prev_lkas_frame == CS.lkas_counter:
       return car.CarControl.Actuators.new_message(), []
