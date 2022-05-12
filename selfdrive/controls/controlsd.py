@@ -24,7 +24,7 @@ from selfdrive.controls.lib.latcontrol_angle import LatControlAngle
 from selfdrive.controls.lib.latcontrol_torque import LatControlTorque
 from selfdrive.controls.lib.events import Events, ET
 from selfdrive.controls.lib.alertmanager import AlertManager, set_offroad_alert
-from selfdrive.controls.lib.vehicle_model import VehicleModel
+from selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY, VehicleModel
 from selfdrive.locationd.calibrationd import Calibration
 from selfdrive.hardware import HARDWARE, TICI
 from selfdrive.manager.process_config import managed_processes
@@ -699,7 +699,10 @@ class Controls:
 
     steer_angle_without_offset = math.radians(CS.steeringAngleDeg - params.angleOffsetDeg)
     curvature = -self.VM.calc_curvature(steer_angle_without_offset, CS.vEgo, params.roll)
-
+    if CS.vEgo > self.CP.minSteerSpeed:
+      if self.CP.lateralTuning.which() == 'torque':
+        if not self.CP.lateralTuning.torque.useSteeringAngle:
+          curvature = self.sm['liveLocationKalman'].angularVelocityCalibrated.value[2] / CS.vEgo
     # controlsState
     dat = messaging.new_message('controlsState')
     dat.valid = CS.canValid
