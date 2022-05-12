@@ -42,10 +42,11 @@ class CarInterface(CarInterfaceBase):
       MAX_LAT_ACCEL = 2.0
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.001
+      # ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.friction = 0.001
+      ret.torque.maxLatAccel = MAX_LAT_ACCEL
       ret.steerActuatorDelay = 0.16
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
@@ -60,10 +61,11 @@ class CarInterface(CarInterfaceBase):
       MAX_LAT_ACCEL = 1.2
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.05
+      # ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.friction = 0.001
+      ret.torque.maxLatAccel = MAX_LAT_ACCEL
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 0.5  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)

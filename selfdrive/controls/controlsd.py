@@ -535,9 +535,10 @@ class Controls:
 
     # Update VehicleModel
     params = self.sm['liveParameters']
-    x = max(params.stiffnessFactor, 0.1)
+    x = max(params.stiffnessFront, 0.1)
+    y = max(params.stiffnessRear, 0.1)
     sr = max(params.steerRatio, 0.1)
-    self.VM.update_params(x, sr)
+    self.VM.update_params(sr, x, y)
 
     lat_plan = self.sm['lateralPlan']
     long_plan = self.sm['longitudinalPlan']
@@ -697,7 +698,7 @@ class Controls:
     # Curvature & Steering angle
     params = self.sm['liveParameters']
 
-    steer_angle_without_offset = math.radians(CS.steeringAngleDeg - params.angleOffsetDeg)
+    steer_angle_without_offset = math.radians(CS.steeringAngleDeg - params.angleOffsetAverageDeg)
     curvature = -self.VM.calc_curvature(steer_angle_without_offset, CS.vEgo, params.roll)
 
     # controlsState

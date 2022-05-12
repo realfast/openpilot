@@ -176,9 +176,9 @@ void ConsoleUI::updateStatus() {
   write_item(0, 25, "TIME:  ", format_seconds(replay->currentSeconds()), suffix.c_str(), true);
 
   auto p = sm["liveParameters"].getLiveParameters();
-  write_item(1, 0, "STIFFNESS: ", util::string_format("%.2f %%", p.getStiffnessFactor() * 100), "  ");
+  write_item(1, 0, "STIFFNESS FRONT: ", util::string_format("%.2f %%", p.getStiffnessFront() * 100), "  ");
   write_item(1, 25, "SPEED: ", util::string_format("%.2f", sm["carState"].getCarState().getVEgo()), " m/s");
-  write_item(2, 0, "STEER RATIO: ", util::string_format("%.2f", p.getSteerRatio()), "");
+  write_item(2, 0, "STIFFNESS REAR: ", util::string_format("%.2f", p.getStiffnessRear()), "");
   auto angle_offsets = util::string_format("%.2f|%.2f", p.getAngleOffsetAverageDeg(), p.getAngleOffsetDeg());
   write_item(2, 25, "ANGLE OFFSET(AVG|INSTANT): ", angle_offsets, " deg");
 
