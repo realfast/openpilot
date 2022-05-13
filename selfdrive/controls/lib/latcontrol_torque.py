@@ -10,8 +10,8 @@ class LatControlTorque(LatControl):
     super().__init__(CP, CI)
     
     p = 1.0 / CP.lateralTuning.torque.maxLatAccel
-    i = 1.5 / CP.lateralTuning.torque.maxLatAccel
-    d = 0.16 / CP.lateralTuning.torque.maxLatAccel
+    i = 2.0 / CP.lateralTuning.torque.maxLatAccel
+    d = 0.08 / CP.lateralTuning.torque.maxLatAccel
     gains = [i, p, d]
     N = 10 # Filter coefficient. corner frequency in rad/s. 20 = ~3.18hz
     Z = [[[1, 1], [2, -2]], [[1], [1]], [[2, -2], [1-2j, 1+2j]]] # Trapezoidal IPD
