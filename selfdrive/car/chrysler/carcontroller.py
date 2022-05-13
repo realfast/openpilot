@@ -9,6 +9,7 @@ class CarController:
   def __init__(self, dbc_name, CP, VM):
     self.CP = CP
     self.apply_steer_last = 0
+    self.apply_steer = 0
     self.frame = 0
     self.prev_lkas_frame = -1
     self.hud_count = 0
@@ -29,7 +30,7 @@ class CarController:
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     if self.prev_lkas_frame == CS.lkas_counter:
       new_actuators = CC.actuators.copy()
-      new_actuators.steer = apply_steer / CarControllerParams.STEER_MAX
+      new_actuators.steer = self.apply_steer / CarControllerParams.STEER_MAX
       return new_actuators, []
 
     actuators = CC.actuators
@@ -37,9 +38,9 @@ class CarController:
     # *** compute control surfaces ***
     # steer torque
     new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
-    apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
+    self.apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
                                                    CS.out.steeringTorqueEps, CarControllerParams)
-    self.steer_rate_limited = new_steer != apply_steer
+    self.steer_rate_limited = new_steer != self.apply_steer
 
     #moving_fast = CS.out.vEgo > self.CP.minSteerSpeed  # for status message
 
@@ -71,9 +72,9 @@ class CarController:
     lkas_active = self.gone_fast_yet and CC.enabled
 
     if not lkas_active or self.gone_fast_yet_previous == False:
-      apply_steer = 0
+      self.apply_steer = 0
 
-    self.apply_steer_last = apply_steer
+    self.apply_steer_last = self.apply_steer
 
     self.gone_fast_yet_previous = self.gone_fast_yet
 
@@ -94,12 +95,12 @@ class CarController:
         can_sends.append(create_lkas_hud(self.packer, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS, self.car_fingerprint))
         self.hud_count += 1
 
-    can_sends.append(create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, CS.lkas_counter))
+    can_sends.append(create_lkas_command(self.packer, int(self.apply_steer), self.gone_fast_yet, CS.lkas_counter))
 
     self.frame += 1
     self.prev_lkas_frame = CS.lkas_counter
 
     new_actuators = actuators.copy()
-    new_actuators.steer = apply_steer / CarControllerParams.STEER_MAX
+    new_actuators.steer = self.apply_steer / CarControllerParams.STEER_MAX
 
     return new_actuators, can_sends
