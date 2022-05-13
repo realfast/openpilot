@@ -66,7 +66,7 @@ class CarInterface(CarInterfaceBase):
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.015,]]
       MAX_LAT_ACCEL = 1.2
       ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = False
+      ret.lateralTuning.torque.useSteeringAngle = True
       # ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
       # ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
       # ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
