@@ -46,19 +46,19 @@ class CarController:
 
     if self.car_fingerprint not in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (self.CP.minSteerSpeed - 0.5):  # for command high bit
-        self.gone_fast_yet = True
+        self.gone_fast_yet = 1 #2 means LKAS enabled
       elif self.car_fingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
         if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
-          self.gone_fast_yet = False  # < 14.5m/s stock turns off this bit, but fine down to 13.5
+          self.gone_fast_yet = 0  # < 14.5m/s stock turns off this bit, but fine down to 13.5
           
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (self.CP.minSteerSpeed):  # for command high bit
-        self.gone_fast_yet = True
+        self.gone_fast_yet = 2 #2 means LKAS enabled
       elif CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
-        self.gone_fast_yet = False   
+        self.gone_fast_yet = 0   
       #self.gone_fast_yet = CS.out.vEgo > self.CP.minSteerSpeed
 
-    if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
+    if self.gone_fast_yet_previous > 0 and self.gone_fast_yet == 0:
         self.lkaslast_frame = self.frame
 
     #lkas_active = moving_fast and CC.enabled
@@ -67,11 +67,11 @@ class CarController:
     #  gone_fast_yet = False
 
     if (CS.out.steerFaultPermanent is True) or (CS.lkasdisabled is 1) or (self.frame-self.lkaslast_frame<400):#If the LKAS Control bit is toggled too fast it can create and LKAS error
-      self.gone_fast_yet = False
+      self.gone_fast_yet = 0
 
     lkas_active = self.gone_fast_yet and CC.enabled
 
-    if not lkas_active or self.gone_fast_yet_previous == False:
+    if not lkas_active or self.gone_fast_yet_previous == 0:
       self.apply_steer = 0
 
     self.apply_steer_last = self.apply_steer

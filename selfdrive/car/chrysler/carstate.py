@@ -116,7 +116,7 @@ class CarState(CarStateBase):
       self.autoHighBeamBit = cp_cam.vl["DAS_6"]['Auto_High_Beam'] #Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       #ret.cruiseState.speedOffset = ret.cruiseState.speed - ret.vEgo
       self.dashboard = cp_cam.vl["DAS_4"]
-      ret.steerFaultPermanent  = cp_cam.vl["LKAS_COMMAND"]["LKAS_ERROR"]==1 # TODO: Find another bit to determine the steer error
+      ret.steerFaultTemporary  = cp.vl["EPS_3"]["DASM_FAULT"]==1 # TODO: Find another bit to determine the steer error
 
 
   # blindspot sensors
@@ -164,6 +164,7 @@ class CarState(CarStateBase):
       ("Right_Rear_Door_Ajar", "BCM_1"),#Passenger Rear Door
       ("Driver_Seatbelt_Status", "ORC_1"), #Driver Sear Belt
       ("COUNTER", "EPS_2"),#EPS Counter  
+      ("DASM_FAULT", "EPS_3"),#EPS Fault  
     ]
 
     checks = [
@@ -176,6 +177,7 @@ class CarState(CarStateBase):
       ("ECM_5", 50),
       ("Steering_Column_Angle_Status", 100),
       ("EPS_2", 100),
+      ("EPS_3", 100),
       ("Center_Stack_1", 1),
       ("Steering_Column_Commands", 10),
       ("Cruise_Control_Buttons", 50),
@@ -220,7 +222,7 @@ class CarState(CarStateBase):
       # sig_name, sig_address, default
       ("LKAS_CONTROL_BIT", "LKAS_COMMAND"),
       ("COUNTER", "LKAS_COMMAND"),
-      ("LKAS_ERROR", "LKAS_COMMAND"),
+      ("DASM_FAULT", "LKAS_COMMAND"),
       ("LKAS_LANE_LINES", "DAS_6"),
       ("LKAS_ICON_COLOR", "DAS_6"),
       ("LKAS_Disabled", "DAS_6"),
