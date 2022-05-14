@@ -4,14 +4,18 @@ from selfdrive.controls.lib.discrete import DiscreteController
 from common.realtime import DT_CTRL
 from common.numpy_fast import clip
 from cereal import log
+from common.op_params import opParams, MAX_LAT_ACCEL, LAT_KP_V, LAT_KI_V, LAT_KD_V
 
 class LatControlTorque(LatControl):
-  def __init__(self, CP, CI):
+  def __init__(self, CP, CI, OP=None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
     super().__init__(CP, CI)
     
-    p = 1.0 / CP.lateralTuning.torque.maxLatAccel
-    i = 2.0 / CP.lateralTuning.torque.maxLatAccel
-    d = 0.08 / CP.lateralTuning.torque.maxLatAccel
+    p = self.op_params.get(LAT_KP_V) / self.op_params.get(MAX_LAT_ACCEL)
+    i = self.op_params.get(LAT_KI_V) / self.op_params.get(MAX_LAT_ACCEL)
+    d = self.op_params.get(LAT_KD_V) / self.op_params.get(MAX_LAT_ACCEL)
     gains = [i, p, d]
     N = 10 # Filter coefficient. corner frequency in rad/s. 20 = ~3.18hz
     Z = [[[1, 1], [2, -2]], [[1], [1]], [[2, -2], [1-2j, 1+2j]]] # Trapezoidal IPD
