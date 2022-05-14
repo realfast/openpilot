@@ -94,6 +94,14 @@ BO_ 544 EPS_2: 8 XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
 
+BO_ 545 EPS_3: 8 XXX
+ SG_ DASM_FAULT : 34|1@0+ (1,0) [0|1] "" XXX
+ SG_ Activation_Status : 48|3@1+ (1,0) [0|1] "" XXX
+ SG_ Driver_Override : 35|1@0+ (1,0) [0|1] "" XXX
+ SG_ Hands_on_Wheel : 51|1@0+ (1,0) [0|1] "" XXX
+ SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
+ SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
+
 BO_ 559 ECM_5: 8 XXX
  SG_ Accelerator_Position : 0|8@1+ (0.4,0) [0|100] "%" XXX
 
@@ -120,8 +128,8 @@ BO_ 629 DAS_6: 8 XXX
 
 BO_ 630 LKAS_COMMAND: 8 XXX
  SG_ LKAS_STEERING_TORQUE : 10|11@0+ (1,-1024) [0|1] "" XXX
- SG_ LKAS_CONTROL_BIT : 25|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_ERROR : 51|1@0+ (1,0) [0|1] "" XXX
+ SG_ LKAS_CONTROL_BIT : 24|3@1+ (1,0) [0|1] "" XXX
+ SG_ DASM_FAULT : 51|1@0+ (1,0) [0|1] "" XXX
  SG_ COUNTER : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
 
@@ -153,7 +161,7 @@ BO_ 820 BCM_1: 8 XXX
 CM_ SG_ 258 Steering_Wheel_Angle "540 deg total negative values indicate right turn, positive values indicate left turn";
 CM_ SG_ 500 ACC_Engaged "SENT BY FORWARD CAMERA 1 = ACTIVE, 3 = ENGAGED, 0 = DISENGAGED/OFF";
 CM_ SG_ 630 LKAS_COMMAND "SENT BY FORWARD CAMERA";
-CM_ SG_ 630 LKAS_CONTROL_BIT "appears to be the lkas takeover indicator";
+CM_ SG_ 630 LKAS_CONTROL_BIT "0=IDLE, 1=HAS 2=LKAS 3=ABSD, 4=TJA, 7=SNA";
 CM_ SG_ 629 Auto_High_Beam "1 = HIGH BEAMS OK 0 = HIGH BEAMS OFF ";
 CM_ SG_ 629 LKAS_LANE_LINES "9 = LEFT CAUTION, 11 = VERY LEFT CAUTION 10 = RIGHT CAUTION, 14 = VERY RIGHT, 4 = NO LINES DETECTED, 3 = LINES DETECTED, SYSTEM ACTIVE";
 CM_ SG_ 464 Driver_Seatbelt_Status "1 unbuckled 0 buckled";
