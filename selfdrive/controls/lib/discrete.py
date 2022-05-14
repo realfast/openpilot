@@ -33,7 +33,11 @@ class DiscreteController():
 
     return float(self.u[0])
   
-  def update_gains(self):
+  def update_gains(self, gains):
+    self.gains = np.array(gains)
+    self._update_gains()
+
+  def _update_gains(self):
     b = [0]
     for i in range(len(self.c)):
       b = P.polyadd(b, self.gains[i]*self.c[i])
@@ -57,7 +61,7 @@ class DiscreteController():
     for i in range(len(c)):
       self.c[i] = np.append(np.repeat([0], maxlen-len(c[i])), c[i])
     self.ku = np.array([i / self.a[0] for i in self.a])
-    self.update_gains()
+    self._update_gains()
     
     if self.a[0] == 0 or len(self.a) < len(self.b):
       raise ValueError("Controller is non-causal. Output depends on future value. e.g. Forward Euler PID")
