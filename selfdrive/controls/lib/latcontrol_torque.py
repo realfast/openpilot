@@ -35,10 +35,7 @@ class LatControlTorque(LatControl):
     i = self.op_params.get(LAT_KI_V) / self.op_params.get(MAX_LAT_ACCEL)
     d = self.op_params.get(LAT_KD_V) / self.op_params.get(MAX_LAT_ACCEL)
     gains = [i, p, d]
-    N = 10 # Filter coefficient. corner frequency in rad/s. 20 = ~3.18hz
-    Z = [[[1, 1], [2, -2]], [[1], [1]], [[2, -2], [1-2j, 1+2j]]] # Trapezoidal IPD
-    T = [[[1, 0], [1    ]], [[1], [1]], [[1    ], [1   , (1/N)*1j]]] # Trapezoidal IPD
-    self.pid = DiscreteController(gains, Z, T, rate=(1 / DT_CTRL))
+    self.pid.update_gains(gains)
 
     pid_log = log.ControlsState.LateralTorqueState.new_message()
     if CS.vEgo < MIN_STEER_SPEED or not active:
