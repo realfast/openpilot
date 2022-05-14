@@ -94,7 +94,7 @@ class CarController:
         can_sends.append(create_lkas_hud(self.packer, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS, self.car_fingerprint))
         self.hud_count += 1
 
-    can_sends.append(create_lkas_command(self.packer, int(self.apply_steer), self.gone_fast_yet, CS.lkas_counter))
+    can_sends.append(create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, CS.lkas_counter))
 
     self.frame += 1
     self.prev_lkas_frame = CS.lkas_counter
