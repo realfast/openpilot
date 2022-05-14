@@ -35,7 +35,7 @@ class LatControlTorque(LatControl):
     i = self.op_params.get(LAT_KI_V) / self.op_params.get(MAX_LAT_ACCEL)
     d = self.op_params.get(LAT_KD_V) / self.op_params.get(MAX_LAT_ACCEL)
     gains = [i, p, d]
-    self.pid.update_gains(gains)
+    self.pid.update_gains()
 
     pid_log = log.ControlsState.LateralTorqueState.new_message()
     if CS.vEgo < MIN_STEER_SPEED or not active:
