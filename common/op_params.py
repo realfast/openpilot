@@ -164,7 +164,7 @@ class opParams:
                         # LAT_KP_BP: Param([0., 25.,], [list, float, int], live=True),
                          LAT_KP_V: Param(2, VT.number, live=True),
                         # LAT_KI_BP: Param([0.,25.], [list, float, int], live=True),
-                         LAT_KI_V: Param(4, VT.number, live=True),
+                         LAT_KI_V: Param(4.5, VT.number, live=True),
                         # LAT_KD_BP: Param([0.,25.], [list, float, int], live=True),
                          LAT_KD_V: Param(.1, VT.number, live=True),
                         # LAT_KF: Param(6e-6, VT.number, live=True),

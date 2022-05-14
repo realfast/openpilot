@@ -87,17 +87,17 @@ class LateralPlanner:
 
     #  Check for infeasible MPC solution
     mpc_nans = np.isnan(self.lat_mpc.x_sol[:, 3]).any()
+    if self.lat_mpc.cost > 20000. or mpc_nans:
+      self.solution_invalid_cnt += 1
+    else:
+      self.solution_invalid_cnt = 0
     t = sec_since_boot()
-    if mpc_nans or self.lat_mpc.solution_status != 0:
+    if mpc_nans or self.lat_mpc.solution_status != 0 or self.solution_invalid_cnt !=0:
       self.reset_mpc()
       if t > self.last_cloudlog_t + 5.0:
         self.last_cloudlog_t = t
         cloudlog.warning("Lateral mpc - nan: True")
 
-    if self.lat_mpc.cost > 20000. or mpc_nans:
-      self.solution_invalid_cnt += 1
-    else:
-      self.solution_invalid_cnt = 0
 
   def publish(self, sm, pm):
     plan_solution_valid = self.solution_invalid_cnt < 2
