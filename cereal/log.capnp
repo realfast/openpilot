@@ -654,6 +654,8 @@ struct ControlsState @0x97ff69c53601abf1 {
     saturated @7 :Bool;
     actualLateralAccel @9 :Float32;
     desiredLateralAccel @10 :Float32;
+    steeringAngleDeg @11 :Float32;
+    steeringAngleDesiredDeg @12 :Float32;
    }
 
   struct LateralLQRState {
@@ -1690,6 +1692,16 @@ struct LiveParametersData {
   stiffnessFactorStd @12 :Float32;
   steerRatioStd @13 :Float32;
   roll @14 :Float32;
+  stiffnessFront @15 :Float32;
+  stiffnessRear @16 :Float32;
+  stiffnessFrontStd @17 :Float32;
+  stiffnessRearStd @18 :Float32;
+  frontRatio @19 :Float32;
+  massRatio @20 :Float32;
+  momentRatio @21 :Float32;
+  frontRatioStd @22 :Float32;
+  massStd @23 :Float32;
+  momentStd @24 :Float32;
 }
 
 struct LiveMapDataDEPRECATED {

@@ -537,8 +537,9 @@ class Controls:
 
     # Update VehicleModel
     params = self.sm['liveParameters']
-    x = max(params.stiffnessFactor, 0.1)
-    self.VM.update_params(x)
+    x = max(params.stiffnessFront, 0.1)
+    y = max(params.stiffnessRear, 0.1)
+    self.VM.update_params(x, y)
 
     lat_plan = self.sm['lateralPlan']
     long_plan = self.sm['longitudinalPlan']
@@ -573,8 +574,7 @@ class Controls:
       desired_curvature, desired_curvature_rate = get_lag_adjusted_curvature(self.CP, CS.vEgo,
                                                                              lat_plan.psis,
                                                                              lat_plan.curvatures,
-                                                                             lat_plan.curvatureRates,
-                                                                             self.opParams)
+                                                                             lat_plan.curvatureRates)
       actuators.steer, actuators.steeringAngleDeg, lac_log = self.LaC.update(CC.latActive, CS, self.VM, params,
                                                                              self.last_actuators, desired_curvature,
                                                                              desired_curvature_rate, self.sm['liveLocationKalman'])
@@ -699,7 +699,7 @@ class Controls:
     # Curvature & Steering angle
     params = self.sm['liveParameters']
 
-    steer_angle_without_offset = math.radians(CS.steeringAngleDeg - params.angleOffsetDeg)
+    steer_angle_without_offset = math.radians(CS.steeringAngleDeg - params.angleOffsetAverageDeg)
     curvature = -self.VM.calc_curvature(steer_angle_without_offset, CS.vEgo, params.roll)
 
     # controlsState

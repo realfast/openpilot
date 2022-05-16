@@ -23,6 +23,9 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 0.7
     ret.steerLimitTimer = 0.4
     ret.minSteerSpeed = 3.8  # m/s
+    
+    front_stiffness = 1.0
+    rear_stiffness = 1.0
 
     if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
       ret.wheelbase = 2.91  # in meters
@@ -39,20 +42,27 @@ class CarInterface(CarInterfaceBase):
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.12,0.12], [0.,0.0001]]
       # ret.steerActuatorDelay = 0.15
       # ret.steerRateCost = 0.7  # may need tuning
-      MAX_LAT_ACCEL = 2.0
+      MAX_LAT_ACCEL = 2.6
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
       ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.kd = 0 #5.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.001
-      ret.steerActuatorDelay = 0.16
+      ret.lateralTuning.torque.friction = 0.05
+      ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
       ret.minSteerSpeed = 14.5
 
+    # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
+    # mass and CG position, so all cars will have approximately similar dyn behaviors
+    ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
+
     if candidate in (CAR.RAM_2500):
+      
+      front_stiffness = 0.6 # want to change these so that front / rear stiffness ratio is learned at ~1.0
+      rear_stiffness = 0.36
       ret.wheelbase = 3.785  # in meters
       ret.steerRatio = 15.61  # just a guess
       ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
@@ -70,6 +80,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRateCost = 0.5  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
       ret.minSteerSpeed = 16.0
+      ret.tireStiffnessFront, ret.tireStiffnessRear = ret.tireStiffnessFront*front_stiffness, ret.tireStiffnessRear*rear_stiffness
 
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
@@ -78,10 +89,6 @@ class CarInterface(CarInterfaceBase):
 
     # starting with reasonable value for civic and scaling by mass and wheelbase
     ret.rotationalInertia = scale_rot_inertia(ret.mass, ret.wheelbase)
-
-    # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
-    # mass and CG position, so all cars will have approximately similar dyn behaviors
-    ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
 
     ret.enableBsm = 720 in fingerprint[0]
 

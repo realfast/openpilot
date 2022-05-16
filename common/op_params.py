@@ -170,8 +170,8 @@ class opParams:
                         # LAT_KF: Param(6e-6, VT.number, live=True),
                         MAX_LAT_ACCEL: Param(1.2, VT.number, live=True),
                         FRICTION: Param(0.05, VT.number, live=True),
-                        STEER_ACT_DELAY: Param(0.1, VT.number, live=True),
-                        STEER_RATE_COST: Param(0.5, VT.number, live=True),
+                        # STEER_ACT_DELAY: Param(0.1, VT.number, live=True),
+                        # STEER_RATE_COST: Param(0.5, VT.number, live=True),
                         DEVICE_OFFSET: Param(0.0, VT.number, live=True),
                         
                         #SHOW_RATE_PARAMS: Param(False, [bool], live=True),
@@ -340,7 +340,7 @@ FRICTION = 'friction'
 # STOCK_DELTA_UP = 'stock_delta_up'
 # STOCK_DELTA_DOWN = 'stock_delta_down'
 # STOCK_STEER_MAX = 'stock_steer_max'
-STEER_ACT_DELAY = 'steer_act_delay'
-STEER_RATIO = 'steer ratio'
-STEER_RATE_COST = 'steer_rate_cost'
+# STEER_ACT_DELAY = 'steer_act_delay'
+# STEER_RATIO = 'steer ratio'
+# STEER_RATE_COST = 'steer_rate_cost'
 DEVICE_OFFSET = 'device_offset'

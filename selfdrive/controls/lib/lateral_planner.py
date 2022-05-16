@@ -1,28 +1,24 @@
 import numpy as np
-from common.realtime import sec_since_boot, DT_MDL
-from common.numpy_fast import interp
+from common.realtime import sec_since_boot
 from selfdrive.swaglog import cloudlog
-from selfdrive.controls.lib.lateral_mpc_lib.lat_mpc import LateralMpc
-from selfdrive.controls.lib.drive_helpers import CONTROL_N, MPC_COST_LAT, LAT_MPC_N, CAR_ROTATION_RADIUS
+from selfdrive.controls.lib.lateral_mpc_lib.lat_mpc import LateralMpc, X_DIM
+from selfdrive.controls.lib.drive_helpers import CONTROL_N, MPC_COST_LAT, LAT_MPC_N
 from selfdrive.controls.lib.lane_planner import LanePlanner, TRAJECTORY_SIZE
 from selfdrive.controls.lib.desire_helper import DesireHelper
 import cereal.messaging as messaging
 from cereal import log
-from common.op_params import opParams, STEER_RATE_COST
 
 
 class LateralPlanner:
-  def __init__(self, CP, use_lanelines=True, wide_camera=False, OP=None):
-    if OP is None:
-      OP = opParams()
-    self.op_params = OP
+  def __init__(self, CP, use_lanelines=True, wide_camera=False):
     self.use_lanelines = use_lanelines
     self.LP = LanePlanner(wide_camera)
     self.DH = DesireHelper()
 
     self.last_cloudlog_t = 0
-    self.steer_rate_cost = self.op_params.get(STEER_RATE_COST) #CP.steerRateCost
+    self.steer_rate_cost = CP.steerRateCost
     self.solution_invalid_cnt = 0
+    self.r = CP.wheelbase
 
     self.path_xyz = np.zeros((TRAJECTORY_SIZE, 3))
     self.path_xyz_stds = np.ones((TRAJECTORY_SIZE, 3))
@@ -31,14 +27,13 @@ class LateralPlanner:
     self.y_pts = np.zeros(TRAJECTORY_SIZE)
 
     self.lat_mpc = LateralMpc()
-    self.reset_mpc(np.zeros(4))
+    self.reset_mpc(np.zeros(X_DIM))
 
-  def reset_mpc(self, x0=np.zeros(4)):
+  def reset_mpc(self, x0=np.zeros(X_DIM)):
     self.x0 = x0
     self.lat_mpc.reset(x0=self.x0)
 
   def update(self, sm):
-    self.steer_rate_cost = self.op_params.get(STEER_RATE_COST)
     v_ego = sm['carState'].vEgo
     measured_curvature = sm['controlsState'].curvature
 
@@ -47,8 +42,12 @@ class LateralPlanner:
     self.LP.parse_model(md)
     if len(md.position.x) == TRAJECTORY_SIZE and len(md.orientation.x) == TRAJECTORY_SIZE:
       self.path_xyz = np.column_stack([md.position.x, md.position.y, md.position.z])
+      self.speed_forward = np.linalg.norm(np.column_stack([md.velocity.x, md.velocity.y, md.velocity.z]), axis=1)
       self.t_idxs = np.array(md.position.t)
       self.plan_yaw = list(md.orientation.z)
+      self.yaw_rate = np.array(md.orientationRate.z)
+      self.lateral_acceleration = self.yaw_rate * self.speed_forward
+      self.lateral_jerk = np.gradient(self.lateral_acceleration, self.t_idxs)
     if len(md.position.xStd) == TRAJECTORY_SIZE:
       self.path_xyz_stds = np.column_stack([md.position.xStd, md.position.yStd, md.position.zStd])
 
@@ -64,43 +63,42 @@ class LateralPlanner:
     # Calculate final driving path and set MPC costs
     if self.use_lanelines:
       d_path_xyz = self.LP.get_d_path(v_ego, self.t_idxs, self.path_xyz)
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
     else:
       d_path_xyz = self.path_xyz
-      path_cost = np.clip(abs(self.path_xyz[0, 1] / self.path_xyz_stds[0, 1]), 0.5, 1.5) * MPC_COST_LAT.PATH
-      # Heading cost is useful at low speed, otherwise end of plan can be off-heading
-      heading_cost = interp(v_ego, [5.0, 10.0], [MPC_COST_LAT.HEADING, 0.0])
-      self.lat_mpc.set_weights(path_cost, heading_cost, self.steer_rate_cost)
+    self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, MPC_COST_LAT.LAT_JERK)
 
-    y_pts = np.interp(v_ego * self.t_idxs[:LAT_MPC_N + 1], np.linalg.norm(d_path_xyz, axis=1), d_path_xyz[:, 1])
-    heading_pts = np.interp(v_ego * self.t_idxs[:LAT_MPC_N + 1], np.linalg.norm(self.path_xyz, axis=1), self.plan_yaw)
+    distance_forward = ((self.speed_forward[1:] + self.speed_forward[:-1]) / 2) * (self.t_idxs[1:] - self.t_idxs[:-1])
+    distance_forward = np.cumsum(np.insert(distance_forward, 0, 0))
+    y_pts = np.interp(v_ego * self.t_idxs[:LAT_MPC_N + 1], distance_forward, d_path_xyz[:, 1])
+    heading_pts = np.interp(v_ego * self.t_idxs[:LAT_MPC_N + 1], distance_forward, self.plan_yaw)
+    jerk_pts = np.interp(v_ego * self.t_idxs[:LAT_MPC_N + 1], distance_forward, self.lateral_jerk)
     self.y_pts = y_pts
+    self.jerk_pts = jerk_pts
 
     assert len(y_pts) == LAT_MPC_N + 1
     assert len(heading_pts) == LAT_MPC_N + 1
     # self.x0[4] = v_ego
-    p = np.array([v_ego, CAR_ROTATION_RADIUS])
+    self.x0[3] = measured_curvature
+    p = np.array([v_ego, self.r])
     self.lat_mpc.run(self.x0,
                      p,
                      y_pts,
-                     heading_pts)
-    # init state for next
-    self.x0[3] = interp(DT_MDL, self.t_idxs[:LAT_MPC_N + 1], self.lat_mpc.x_sol[:, 3])
+                     heading_pts, 
+                     jerk_pts)
 
     #  Check for infeasible MPC solution
     mpc_nans = np.isnan(self.lat_mpc.x_sol[:, 3]).any()
-    t = sec_since_boot()
-    if mpc_nans or self.lat_mpc.solution_status != 0:
-      self.reset_mpc()
-      self.x0[3] = measured_curvature
-      if t > self.last_cloudlog_t + 5.0:
-        self.last_cloudlog_t = t
-        cloudlog.warning("Lateral mpc - nan: True")
-
     if self.lat_mpc.cost > 20000. or mpc_nans:
       self.solution_invalid_cnt += 1
     else:
       self.solution_invalid_cnt = 0
+    t = sec_since_boot()
+    if mpc_nans or self.lat_mpc.solution_status != 0 or self.solution_invalid_cnt !=0:
+      self.reset_mpc()
+      if t > self.last_cloudlog_t + 5.0:
+        self.last_cloudlog_t = t
+        cloudlog.warning("Lateral mpc - nan: True")
+
 
   def publish(self, sm, pm):
     plan_solution_valid = self.solution_invalid_cnt < 2
@@ -113,7 +111,7 @@ class LateralPlanner:
     lateralPlan.dPathPoints = self.y_pts.tolist()
     lateralPlan.psis = self.lat_mpc.x_sol[0:CONTROL_N, 2].tolist()
     lateralPlan.curvatures = self.lat_mpc.x_sol[0:CONTROL_N, 3].tolist()
-    lateralPlan.curvatureRates = [float(x) for x in self.lat_mpc.u_sol[0:CONTROL_N - 1]] + [0.0]
+    lateralPlan.curvatureRates = [float(x) for x in self.lat_mpc.u_sol[0:CONTROL_N - 1]] + [float(self.jerk_pts[CONTROL_N-1]/(self.speed_forward[CONTROL_N-1]**2))]
     lateralPlan.lProb = float(self.LP.lll_prob)
     lateralPlan.rProb = float(self.LP.rll_prob)
     lateralPlan.dProb = float(self.LP.d_prob)
