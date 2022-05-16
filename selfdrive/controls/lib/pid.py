@@ -36,7 +36,7 @@ class PIDController():
   def _update_params(self):
     self._k_p = 1.0 / self.op_params.get(MAX_LAT_ACCEL)
     self._k_i = 0.1 / self.op_params.get(MAX_LAT_ACCEL)
-    self._k_d = 5.0 / self.op_params.get(MAX_LAT_ACCEL)
+    self._k_d = 0 # 5.0 / self.op_params.get(MAX_LAT_ACCEL)
     self.k_f = 1.0 / self.op_params.get(MAX_LAT_ACCEL)
 
   @property

@@ -45,7 +45,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kd = 5.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.kd = 0 #5.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.friction = 0.001
       ret.steerActuatorDelay = 0.16
       ret.steerRateCost = 1.0
@@ -64,7 +64,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kd = 5.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.kd = 0 #5.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.friction = 0.05
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 0.5  # may need tuning
