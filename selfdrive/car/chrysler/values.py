@@ -7,7 +7,7 @@ class CarControllerParams:
   #STEER_MAX = 261         # 262 faults in Chrysler 360 faults in ram
   #STEER_DELTA_UP = 14      # 3 is stock. 100 is fine. 200 is too much it seems
   #STEER_DELTA_DOWN = 14   # no faults on the way down it seems
-  STEER_ERROR_MAX = 100
+  STEER_ERROR_MAX = 250
 
 class CAR:
   PACIFICA_2017_HYBRID = "CHRYSLER PACIFICA HYBRID 2017"

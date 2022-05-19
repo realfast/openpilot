@@ -1,21 +1,19 @@
 from cereal import car
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, \
-                                               create_wheel_buttons
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_wheel_buttons
 from selfdrive.car.chrysler.values import CAR, CarControllerParams, STEER_MAX_LOOKUP, STEER_DELTA_UP, STEER_DELTA_DOWN
 from opendbc.can.packer import CANPacker
 
 class CarController():
   def __init__(self, dbc_name, CP, VM):
     self.apply_steer_last = 0
-    self.ccframe = 0
+    self.lkasframe = 0
     self.prev_frame = -1
     self.hud_count = 0
     self.car_fingerprint = CP.carFingerprint
     self.gone_fast_yet = False
     self.steer_rate_limited = False
     self.lkasdisabled = 0
-    self.lkasframe = 0
     self.lkaslast_frame = 0.
     self.gone_fast_yet_previous = False
     #self.CarControllerParams = CarControllerParams
@@ -30,7 +28,9 @@ class CarController():
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     frame = CS.lkas_counter
     if self.prev_frame == frame:
-      return car.CarControl.Actuators.new_message(), []
+      new_actuators = actuators.copy()
+      new_actuators.steer = self.apply_steer_last / CarControllerParams.STEER_MAX
+      return new_actuators, []
 
     # *** compute control surfaces ***
     # steer torque
@@ -88,7 +88,7 @@ class CarController():
 
     # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
     # frame is 100Hz (0.01s period)
-    if (self.ccframe % 25 == 0):  # 0.25s period
+    if (self.lkasframe % 25 == 0):  # 0.25s period
       if (CS.lkas_car_model != -1):
         new_msg = create_lkas_hud(
             self.packer, lkas_active, hud_alert, self.hud_count, CS, self.car_fingerprint)
@@ -98,7 +98,6 @@ class CarController():
     new_msg = create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, frame)
     can_sends.append(new_msg)
 
-    self.ccframe += 1
     self.prev_frame = frame
     self.lkasframe += 1
 

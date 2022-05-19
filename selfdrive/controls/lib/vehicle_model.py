@@ -18,6 +18,7 @@ import numpy as np
 from numpy.linalg import solve
 
 from cereal import car
+from common.params import Params
 
 ACCELERATION_DUE_TO_GRAVITY = 9.8
 
