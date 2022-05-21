@@ -168,7 +168,7 @@ class opParams:
                         # LAT_KD_BP: Param([0.,25.], [list, float, int], live=True),
                         # LAT_KD_V: Param([0., 0.001], [list, float, int], live=True),
                         # LAT_KF: Param(6e-6, VT.number, live=True),
-                        MAX_LAT_ACCEL: Param(1.2, VT.number, live=True),
+                        MAX_LAT_ACCEL: Param(2.6, VT.number, live=True),
                         FRICTION: Param(0.05, VT.number, live=True),
                         # STEER_ACT_DELAY: Param(0.1, VT.number, live=True),
                         # STEER_RATE_COST: Param(0.5, VT.number, live=True),
