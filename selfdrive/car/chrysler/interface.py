@@ -42,7 +42,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
       ret.minSteerSpeed = 14.5
-      set_torque_tune(ret.lateralTuning, MAX_LAT_ACCEL, 
+      set_torque_tune(ret.lateralTuning, MAX_LAT_ACCEL, FRICTION)
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.785  # in meters
@@ -55,9 +55,6 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
       ret.minSteerSpeed = 16.0
       set_torque_tune(ret.lateralTuning, MAX_LAT_ACCEL, FRICTION)
-
-
-FRICTION)
 
 
     # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
