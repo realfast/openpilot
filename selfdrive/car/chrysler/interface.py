@@ -24,6 +24,7 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 0.7
     ret.steerLimitTimer = 0.4
     ret.minSteerSpeed = 3.8  # m/s
+    stiffnessFactor = 1.0
 
     if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
       ret.wheelbase = 2.91  # in meters
@@ -41,24 +42,25 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 14.5
+      ret.minSteerSpeed = 0.5
       set_torque_tune(ret.lateralTuning, MAX_LAT_ACCEL, FRICTION)
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.785  # in meters
+      stiffnessFactor = 0.23
       ret.steerRatio = 15.61  # just a guess
       ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
       MAX_LAT_ACCEL = 1.2
-      FRICTION = .05
+      FRICTION = .11
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 1.0  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
-      ret.minSteerSpeed = 16.0
+      ret.minSteerSpeed = 0.5
       set_torque_tune(ret.lateralTuning, MAX_LAT_ACCEL, FRICTION)
 
     # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
     # mass and CG position, so all cars will have approximately similar dyn behaviors
-    ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
+    ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront, stiffnessFactor)
 
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
@@ -74,7 +76,7 @@ class CarInterface(CarInterfaceBase):
 
   # returns a car.CarState
   def _update(self, c):
-    ret = self.CS.update(self.cp, self.cp_cam)
+    ret = self.CS.update(self.cp, self.cp_cam, self.cp_eps)
 
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
@@ -82,7 +84,7 @@ class CarInterface(CarInterfaceBase):
     events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
 
     # Low speed steer alert hysteresis logic
-    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.5):
+    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.25):
       self.low_speed_alert = True
     elif ret.vEgo > (self.CP.minSteerSpeed):
       self.low_speed_alert = False
@@ -96,4 +98,4 @@ class CarInterface(CarInterfaceBase):
   # pass in a car.CarControl
   # to be called @ 100hz
   def apply(self, c):
-    return self.CC.update(c, self.CS)
+    return self.CC.update(c, self.CS, self.low_speed_alert)

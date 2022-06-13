@@ -43,7 +43,8 @@ class CarInterfaceBase(ABC):
       self.cp_adas = self.CS.get_adas_can_parser(CP)
       self.cp_body = self.CS.get_body_can_parser(CP)
       self.cp_loopback = self.CS.get_loopback_can_parser(CP)
-      self.can_parsers = [self.cp, self.cp_cam, self.cp_adas, self.cp_body, self.cp_loopback]
+      self.cp_eps = self.CS.get_eps_can_parser(CP)
+      self.can_parsers = [self.cp, self.cp_cam, self.cp_adas, self.cp_body, self.cp_loopback, self.cp_eps]
 
     self.CC = None
     if CarController is not None:

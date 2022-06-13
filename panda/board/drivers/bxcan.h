@@ -196,7 +196,10 @@ void can_rx(uint8_t can_number) {
       to_send.bus = to_push.bus;
       to_send.data_len_code = to_push.data_len_code;
       (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.data_len_code]);
-      can_send(&to_send, bus_fwd_num, true);
+      can_send(&to_send, (bus_fwd_num & 0xF), true);//Grab the low 4 bits and forward to that bus
+      if (bus_fwd_num > 0xF){ //if a value is stored in the high 4 bits create a second forward
+        can_send(&to_send, ((bus_fwd_num >> 4) & 0x0F), true);//Grab the high 4 bits and forward to that bus
+      }
     }
 
     can_rx_errs += safety_rx_hook(&to_push) ? 0U : 1U;

@@ -40,12 +40,12 @@ const int RAM_MAX_TORQUE_ERROR = 400;         // since 2 x the rate up from chrs
 #define Cruise_Control_Buttons_HD  570  // Cruise control buttons
 #define Center_Stack_2_HD          650  // Center Stack buttons
 
-const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3},{LKAS_COMMAND, 0, 6}, {DAS_6, 0, 8},
-  {Cruise_Control_Buttons_RAM, 2, 3}, {LKAS_COMMAND_RAM, 0, 8}, {DAS_6_RAM, 0, 8},
-  {Cruise_Control_Buttons_HD, 2, 3}, {LKAS_COMMAND_HD, 0, 8}, {DAS_6_HD, 0, 8}};
+const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3}, {Cruise_Control_Buttons, 2, 3},{LKAS_COMMAND, 0, 6}, {LKAS_COMMAND, 1, 6},{DAS_6, 0, 8}, {ESP_8, 1, 8},
+  {Cruise_Control_Buttons_RAM, 2, 3}, {Cruise_Control_Buttons_RAM, 0, 3}, {LKAS_COMMAND_RAM, 0, 8}, {LKAS_COMMAND_RAM, 1, 8}, {DAS_6_RAM, 0, 8}, {DAS_6_RAM, 1, 8}, {ESP_8_RAM, 1, 8},
+  {Cruise_Control_Buttons_HD, 2, 3}, {Cruise_Control_Buttons_HD, 0, 3},{LKAS_COMMAND_HD, 0, 8}, {LKAS_COMMAND_HD, 1, 8}, {DAS_6_HD, 0, 8}, {DAS_6_HD, 1, 8}};
 
 AddrCheckStruct chrysler_addr_checks[] = {
-  {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, {EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
+  {.msg = {{EPS_2, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, {EPS_2_RAM, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
   {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_1_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // brake pressed
   {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ESP_8_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},  // vehicle Speed
   {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, {ECM_5_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}}, // gas pedal
@@ -271,16 +271,37 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
-  // forward CAN 0 -> 2 so stock LKAS camera sees messages
-  if (bus_num == 0U && (addr != Center_Stack_2_RAM)) {//Ram and HD share the same
-    bus_fwd = 2;
+  // forward CAN 0 & 1 -> 2 so stock LKAS camera sees messages
+  if (bus_num == 0U){
+    if ((addr == ESP_8) || (addr == ESP_8_RAM)) {
+      bus_fwd = 2;
+    }
+    else if (addr == Center_Stack_2_RAM){
+      bus_fwd = 1;
+    }
+    else {//Ram and HD share the same
+      //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
+      //Bus 0 will be ignored if put in the high 4 bits
+      bus_fwd = 0x21; //Sends to bus 2 and bus 1
+    }
   }
 
   // forward all messages from camera except LKAS_COMMAND and LKAS_HUD
-  if ((bus_num == 2U) && (addr != LKAS_COMMAND) && (addr != DAS_6) 
+  if (bus_num == 2U) {
+    if ((addr != LKAS_COMMAND) && (addr != DAS_6) 
     && (addr != LKAS_COMMAND_RAM) && (addr != DAS_6_RAM)
     && (addr != LKAS_COMMAND_HD) && (addr != DAS_6_HD)){
-    bus_fwd = 0;
+      //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
+      //Bus 0 will be ignored if put in the high 4 bits
+      bus_fwd = 0x10;//Sends to bus 1 and bus 0
+    }
+  }
+
+  //forward CAN1->CAN2
+  if (bus_num == 1U){
+    //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
+    //Bus 0 will be ignored if put in the high 4 bits
+    bus_fwd = 0x20;//Sends to bus 2 and bus 0
   }
 
   return bus_fwd;
