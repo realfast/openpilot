@@ -52,7 +52,7 @@ class CarController():
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.3):
+      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
         self.gone_fast_yet = False   
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
