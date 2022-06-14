@@ -6,7 +6,7 @@ const int CHRYSLER_MAX_RATE_DOWN = 3;
 const int CHRYSLER_MAX_TORQUE_ERROR = 100;    // max torque cmd in excess of torque motor
 const int CHRYSLER_GAS_THRSLD = 7.7;  // 7% more than 2m/s changed from wheel rpm to km/h 
 const int CHRYSLER_STANDSTILL_THRSLD = 3.6;  // about 1m/s changed from wheel rpm to km/h 
-const int RAM_MAX_STEER = 365; 
+const int RAM_MAX_STEER = 360; 
 const int RAM_MAX_RT_DELTA = 560;        // since 3 x the rate up from chrsyler, 3x this also NEEDS CONFIRMED
 const int RAM_MAX_RATE_UP = 15;
 const int RAM_MAX_RATE_DOWN = 15;
@@ -31,18 +31,18 @@ const int RAM_MAX_TORQUE_ERROR = 400;    // since 3 x the rate up from chrsyler,
 #define DAS_3_RAM                  153  // ACC engagement states from DASM
 #define DAS_6_RAM                  250  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_RAM           166  // LKAS controls from DASM 
-#define Cruise_Control_Buttons_RAM 177  // Cruise control buttons
+#define CRUISE_BUTTONS_RAM         177  // Cruise control buttons
 #define Center_Stack_2_RAM         650  // Center Stack buttons
 
 // Safety-relevant CAN messages for the 5th gen RAM HD platform
 #define DAS_6_HD                   629  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_HD            630  // LKAS controls from DASM 
-#define Cruise_Control_Buttons_HD  570  // Cruise control buttons
+#define CRUISE_BUTTONS_HD          570  // Cruise control buttons
 #define Center_Stack_2_HD          650  // Center Stack buttons
 
 const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3},{LKAS_COMMAND, 0, 6}, {DAS_6, 0, 8},
-  {Cruise_Control_Buttons_RAM, 2, 3}, {LKAS_COMMAND_RAM, 0, 8}, {DAS_6_RAM, 0, 8},
-  {Cruise_Control_Buttons_HD, 2, 3}, {LKAS_COMMAND_HD, 0, 8}, {DAS_6_HD, 0, 8}};
+  {CRUISE_BUTTONS_RAM, 2, 3}, {LKAS_COMMAND_RAM, 0, 8}, {DAS_6_RAM, 0, 8},
+  {CRUISE_BUTTONS_HD, 2, 3}, {LKAS_COMMAND_HD, 0, 8}, {DAS_6_HD, 0, 8}};
 
 AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, {EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
@@ -158,7 +158,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
 
   if (!msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]))) {
-    tx = 0;
+    // tx = 0;
   }
 
   // LKA STEER Chrysler/Jeep
@@ -203,7 +203,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
-      tx = 0;
+      // tx = 0;
     }
   }
 
@@ -249,18 +249,18 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
-      tx = 0;
+      // tx = 0;
     }
   }
 
   
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM) || (addr == Cruise_Control_Buttons_HD)) {
-    if ((GET_BYTE(to_send, 0) != 1U) || ((GET_BYTE(to_send, 1) & 1U) == 1U)) {
-      tx = 0;
-    }
-  }
+  // if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM) || (addr == Cruise_Control_Buttons_HD)) {
+  //   if ((GET_BYTE(to_send, 0) != 1U) || ((GET_BYTE(to_send, 1) & 1U) == 1U)) {
+  //     tx = 0;
+  //   }
+  // }
 
   return tx;
 }
@@ -270,9 +270,8 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
-
-  // forward CAN 0 -> 2 so stock LKAS camera sees messages
-  if (bus_num == 0U && (addr != Center_Stack_2_RAM)) {//Ram and HD share the same
+  // forward to camera
+  if ((bus_num == 0U) && (addr != CRUISE_BUTTONS_RAM) && (addr != CRUISE_BUTTONS_HD) && (addr != Center_Stack_2_RAM)) {
     bus_fwd = 2;
   }
 

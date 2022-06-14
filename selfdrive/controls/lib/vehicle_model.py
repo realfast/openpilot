@@ -18,7 +18,6 @@ import numpy as np
 from numpy.linalg import solve
 
 from cereal import car
-from common.params import Params
 
 ACCELERATION_DUE_TO_GRAVITY = 9.8
 
@@ -30,22 +29,22 @@ class VehicleModel:
       CP: Car Parameters
     """
     # for math readability, convert long names car params into short names
-    self.m = CP.mass
-    self.j = CP.rotationalInertia
-    self.l = CP.wheelbase
-    self.aF = CP.centerToFront
-    self.aR = CP.wheelbase - CP.centerToFront
-    self.chi = CP.steerRatioRear
+    self.m: float = CP.mass
+    self.j: float = CP.rotationalInertia
+    self.l: float = CP.wheelbase
+    self.aF: float = CP.centerToFront
+    self.aR: float = CP.wheelbase - CP.centerToFront
+    self.chi: float = CP.steerRatioRear
+    self.sR: float = CP.steerRatio
 
-    self.cF_orig = CP.tireStiffnessFront
-    self.cR_orig = CP.tireStiffnessRear
-    self.update_params(1.0, CP.steerRatio)
+    self.cF_orig: float = CP.tireStiffnessFront
+    self.cR_orig: float = CP.tireStiffnessRear
+    self.update_params(1.0)  
 
-  def update_params(self, stiffness_factor: float, steer_ratio: float) -> None:
+  def update_params(self, stiffness_factor: float) -> None:
     """Update the vehicle model with a new stiffness factor and steer ratio"""
-    self.cF = stiffness_factor * self.cF_orig
-    self.cR = stiffness_factor * self.cR_orig
-    self.sR = steer_ratio
+    self.cF: float = stiffness_factor * self.cF_orig
+    self.cR: float = stiffness_factor * self.cR_orig
 
   def steady_state_sol(self, sa: float, u: float, roll: float) -> np.ndarray:
     """Returns the steady state solution.
@@ -222,7 +221,7 @@ def dyn_ss_sol(sa: float, u: float, roll: float, VM: VehicleModel) -> np.ndarray
   """
   A, B = create_dyn_state_matrices(u, VM)
   inp = np.array([[sa], [roll]])
-  return -solve(A, B) @ inp
+  return -solve(A, B) @ inp  # type: ignore
 
 
 def calc_slip_factor(VM):

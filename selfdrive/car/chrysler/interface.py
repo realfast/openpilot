@@ -1,78 +1,80 @@
 #!/usr/bin/env python3
 from cereal import car
-from selfdrive.car.chrysler.values import CAR
+from panda import Panda
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
+from selfdrive.car.chrysler.values import CAR, DBC, RAM_HD, RAM_DT
 from selfdrive.car.interfaces import CarInterfaceBase
 
+GearShifter = car.CarState.GearShifter
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
-  def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=None):
+  def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=None, disable_radar=False):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "chrysler"
-    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
 
-    # Speed conversion:              20, 45 mph
-    ret.wheelbase = 3.089  # in meters for Pacifica Hybrid 2017
-    ret.steerRatio = 16.2  # Pacifica 16.2 AWD 15.7 https://s3.amazonaws.com/chryslermedia.iconicweb.com/mediasite/specs/2021_CH_Pacifica_Specificationsq2sglr6p0lk07r8c4g3v16c97t.pdf
-    ret.mass = 2242. + STD_CARGO_KG  # kg curb weight Pacifica Hybrid 2017
-    ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[9., 20.], [9., 20.]]
-    ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15, 0.30], [0.03, 0.05]]
-    ret.lateralTuning.pid.kf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
+    ret.radarOffCan = DBC[candidate]['radar'] is None
+
     ret.steerActuatorDelay = 0.1
-    ret.steerRateCost = 0.7
     ret.steerLimitTimer = 0.4
-    ret.minSteerSpeed = 3.8  # m/s
 
-    if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
-      ret.wheelbase = 2.91  # in meters
-      ret.steerRatio = 16.7 #  2020 17.9:1 (V-6 4x2); 16.5:1 on SRT and Trackhawk; 16.7:1 (all other vehicles)  https://s3.amazonaws.com/chryslermedia.iconicweb.com/mediasite/specs/2020_JP_Grand_Cherokee_SPmar9cqpguibpb9l0c26hemi38d.pdf
-      ret.steerActuatorDelay = 0.2  # in seconds
+    # safety config
+    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
+    if candidate in RAM_HD:
+      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD
+    elif candidate in RAM_DT:
+      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_DT
+
+    ret.minSteerSpeed = 3.8  # m/s
+    ret.minEnableSpeed = 3.8
+    if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
+      # TODO: allow 2019 cars to steer down to 13 m/s if already engaged.
+      ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
+
+    # Chrysler
+    if candidate in (CAR.PACIFICA_2017_HYBRID, CAR.PACIFICA_2018, CAR.PACIFICA_2018_HYBRID, CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020):
+      ret.mass = 2242. + STD_CARGO_KG
+      ret.wheelbase = 3.089
+      ret.steerRatio = 16.2  # Pacifica Hybrid 2017
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[9., 20.], [9., 20.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15, 0.30], [0.03, 0.05]]
+      ret.lateralTuning.pid.kf = 0.00006
+
+    # Jeep
+    elif candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
+      ret.mass = 1778 + STD_CARGO_KG
+      ret.wheelbase = 2.71
+      ret.steerRatio = 16.7
+      ret.steerActuatorDelay = 0.2
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[9., 20.], [9., 20.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15, 0.30], [0.03, 0.05]]
+      ret.lateralTuning.pid.kf = 0.00006
+
+    # Ram
+    elif candidate == CAR.RAM_1500:
+      ret.steerActuatorDelay = 0.2
+      ret.wheelbase = 3.67
+      ret.steerRatio = 16.3
+      ret.mass = 2493. + STD_CARGO_KG
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 2.5, 0.05) #maxlataccel 2.5 Friction 0.05
+      ret.minSteerSpeed = 0.5
+      if car_fw is not None:
+        for fw in car_fw:
+          if fw.ecu == 'eps':
+            ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else 14.6
+
+    elif candidate == CAR.RAM_HD:
+      ret.steerActuatorDelay = 0.2
+      ret.wheelbase = 3.785
+      ret.steerRatio = 15.61
+      ret.mass = 3405. + STD_CARGO_KG
+      ret.minSteerSpeed = 16
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.4, 0.05, 1.0, False) #maxlataccel 1.4 Friction 0.05
+
+    else:
+      raise ValueError(f"Unsupported car: {candidate}")
 
     ret.centerToFront = ret.wheelbase * 0.44
-
-    if candidate in (CAR.RAM_1500):
-      ret.wheelbase = 3.88  # 2021 Ram 1500
-      ret.steerRatio = 16.3  # Overall Ratio from https://s3.amazonaws.com/chryslermedia.iconicweb.com/mediasite/specs/2019_Ram_1500_SP160igecpp6jn85geq3o0r4cs90.pdf
-      ret.mass = 2493. + STD_CARGO_KG  # kg curb weight 2021 Ram 1500
-      # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.,25.], [0.,25.]]
-      # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.12,0.12], [0.,0.0001]]
-      # ret.steerActuatorDelay = 0.15
-      # ret.steerRateCost = 0.7  # may need tuning
-      MAX_LAT_ACCEL = 2.6
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.05
-      ret.steerActuatorDelay = 0.1
-      ret.steerRateCost = 1.0
-      ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 14.5
-
-    if candidate in (CAR.RAM_2500):
-      ret.wheelbase = 3.785  # in meters
-      ret.steerRatio = 16.5  # just a guess
-      ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
-      # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
-      # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.015,]]
-      MAX_LAT_ACCEL = 1.2
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.05
-      ret.steerActuatorDelay = 0.1
-      ret.steerRateCost = 0.5  # may need tuning
-      ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
-      ret.minSteerSpeed = 16.0
-
-
-    if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
-      # TODO allow 2019 cars to steer down to 13 m/s if already engaged.
-      ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
 
     # starting with reasonable value for civic and scaling by mass and wheelbase
     ret.rotationalInertia = scale_rot_inertia(ret.mass, ret.wheelbase)
@@ -85,43 +87,29 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  # returns a car.CarState
-  def update(self, c, can_strings):
-    # ******************* do can recv *******************
-    self.cp.update_strings(can_strings)
-    self.cp_cam.update_strings(can_strings)
-
+  def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)
-
-    ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
-
-    # speeds
-    ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # events
     events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
 
-    # Low speed steer alert hysteresis logic
-    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.5):
-      self.low_speed_alert = True
-    elif ret.vEgo > (self.CP.minSteerSpeed):
-      self.low_speed_alert = False
+    if self.CP.carFingerprint in RAM_DT:
+      if self.CS.out.vEgo >= self.CP.minEnableSpeed:
+        self.low_speed_alert = False
+      if (self.CP.minEnableSpeed >= 14.5)  and (self.CS.out.gearShifter != GearShifter.drive) :
+        self.low_speed_alert = True
+
+    else:# Low speed steer alert hysteresis logic
+      if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 0.5):
+        self.low_speed_alert = True
+      elif ret.vEgo > (self.CP.minSteerSpeed + 1.):
+        self.low_speed_alert = False
     if self.low_speed_alert:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 
     ret.events = events.to_msg()
 
-    # copy back carState packet to CS
-    self.CS.out = ret.as_reader()
+    return ret
 
-    return self.CS.out
-
-  # pass in a car.CarControl
-  # to be called @ 100hz
   def apply(self, c):
-
-    if (self.CS.frame == -1):
-      return car.CarControl.Actuators.new_message(), []  # if we haven't seen a frame 220, then do not update.
-
-
-    return self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
+    return self.CC.update(c, self.CS)

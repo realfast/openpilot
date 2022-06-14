@@ -1,3 +1,10 @@
+Version 0.8.15 C2 Beta (2022-08-21)
+========================
+* Lkas button disables steering
+* HD support added
+* Cruise control button support updated
+* Steer to 0 for all Ram DT
+
 Version 0.8.13 (2022-02-18)
 ========================
  * Improved driver monitoring
