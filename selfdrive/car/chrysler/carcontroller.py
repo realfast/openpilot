@@ -43,7 +43,7 @@ class CarController():
     #lkas_active = moving_fast and enabled
 
     if self.car_fingerprint not in (CAR.RAM_1500, CAR.RAM_2500):
-      if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.5):  # for command high bit
+      if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
       elif self.car_fingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
         if CS.out.vEgo < (CS.CP.minSteerSpeed - 3.0):
@@ -52,7 +52,7 @@ class CarController():
     elif self.car_fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
         self.gone_fast_yet = True
-      elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
+      elif CS.out.vEgo < (CS.CP.minSteerSpeed):
         self.gone_fast_yet = False   
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
