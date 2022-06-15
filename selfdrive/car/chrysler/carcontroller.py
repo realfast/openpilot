@@ -90,7 +90,8 @@ class CarController():
       self.gone_fast_yet_previous = self.gone_fast_yet
 
       new_msg = create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, frame)
-    can_sends.append(new_msg)
+      can_sends.append(new_msg)
+    
 
     self.prev_frame = frame
     self.lkasframe += 1
