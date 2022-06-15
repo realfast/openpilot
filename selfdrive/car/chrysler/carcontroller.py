@@ -16,6 +16,7 @@ class CarController():
     self.lkasdisabled = 0
     self.lkaslast_frame = 0.
     self.gone_fast_yet_previous = False
+    self.ccbuttoncounterlast = -1
     #self.CarControllerParams = CarControllerParams
     CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
     CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
@@ -77,14 +78,14 @@ class CarController():
     can_sends = []
 
     #*** control msgs ***
-
-    if pcm_cancel_cmd:
-      # TODO: would be better to start from frame_2b3
-      new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=True, acc_resume = False)
-      can_sends.append(new_msg)
-    elif CS.out.cruiseState.standstill:
-      new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=False, acc_resume = True)
-      can_sends.append(new_msg)
+    if (CS.ccbuttoncounter != self.ccbuttoncounterlast):  # 0.25s period
+      if pcm_cancel_cmd:
+        # TODO: would be better to start from frame_2b3
+        new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=True, acc_resume = False)
+        can_sends.append(new_msg)
+      elif CS.out.cruiseState.standstill:
+        new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=False, acc_resume = True)
+        can_sends.append(new_msg)
 
     # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
     # frame is 100Hz (0.01s period)
@@ -100,6 +101,7 @@ class CarController():
 
     self.prev_frame = frame
     self.lkasframe += 1
+    self.ccbuttoncounterlast = CS.ccbuttoncounter
 
     new_actuators = actuators.copy()
     new_actuators.steer = apply_steer / CarControllerParams.STEER_MAX
