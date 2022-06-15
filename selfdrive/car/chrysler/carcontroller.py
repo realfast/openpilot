@@ -16,7 +16,6 @@ class CarController():
     self.lkasdisabled = 0
     self.lkaslast_frame = 0.
     self.gone_fast_yet_previous = False
-    self.ccbuttoncounterlast = -1
     #self.CarControllerParams = CarControllerParams
     CarControllerParams.STEER_MAX = STEER_MAX_LOOKUP.get(CP.carFingerprint, 1.)
     CarControllerParams.STEER_DELTA_UP = STEER_DELTA_UP.get(CP.carFingerprint, 1.) 
@@ -28,17 +27,8 @@ class CarController():
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
     frame = CS.lkas_counter
-    if self.prev_frame == frame:
-      new_actuators = actuators.copy()
-      new_actuators.steer = self.apply_steer_last / CarControllerParams.STEER_MAX
-      return new_actuators, []
 
     # *** compute control surfaces ***
-    # steer torque
-    new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
-    apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
-                                                   CS.out.steeringTorqueEps, CarControllerParams)
-    self.steer_rate_limited = new_steer != apply_steer
 
     #moving_fast = CS.out.vEgo > CS.CP.minSteerSpeed  # for status message
     #lkas_active = moving_fast and enabled
@@ -68,24 +58,16 @@ class CarController():
 
     lkas_active = self.gone_fast_yet and enabled
 
-    if not lkas_active or self.gone_fast_yet_previous == False:
-      apply_steer = 0
-
-    self.apply_steer_last = apply_steer
-
-    self.gone_fast_yet_previous = self.gone_fast_yet
-
     can_sends = []
 
     #*** control msgs ***
-    if (CS.ccbuttoncounter != self.ccbuttoncounterlast):  # 0.25s period
-      if pcm_cancel_cmd:
-        # TODO: would be better to start from frame_2b3
-        new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=True, acc_resume = False)
-        can_sends.append(new_msg)
-      elif CS.out.cruiseState.standstill:
-        new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=False, acc_resume = True)
-        can_sends.append(new_msg)
+    if pcm_cancel_cmd:
+      # TODO: would be better to start from frame_2b3
+      new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=True, acc_resume = False)
+      can_sends.append(new_msg)
+    elif CS.out.cruiseState.standstill:
+      new_msg = create_wheel_buttons(self.packer, CS, self.car_fingerprint, cancel=False, acc_resume = True)
+      can_sends.append(new_msg)
 
     # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
     # frame is 100Hz (0.01s period)
@@ -96,7 +78,18 @@ class CarController():
         can_sends.append(new_msg)
         self.hud_count += 1
 
-    new_msg = create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, frame)
+    if self.prev_frame != frame:
+      # steer torque
+      new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
+      apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
+                                                    CS.out.steeringTorqueEps, CarControllerParams)
+      self.steer_rate_limited = new_steer != apply_steer
+      if not lkas_active or self.gone_fast_yet_previous == False:
+        apply_steer = 0
+      self.apply_steer_last = apply_steer
+      self.gone_fast_yet_previous = self.gone_fast_yet
+
+      new_msg = create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, frame)
     can_sends.append(new_msg)
 
     self.prev_frame = frame
@@ -104,6 +97,6 @@ class CarController():
     self.ccbuttoncounterlast = CS.ccbuttoncounter
 
     new_actuators = actuators.copy()
-    new_actuators.steer = apply_steer / CarControllerParams.STEER_MAX
+    new_actuators.steer = self.apply_steer_last  / CarControllerParams.STEER_MAX
 
     return new_actuators, can_sends
