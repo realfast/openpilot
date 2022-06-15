@@ -49,7 +49,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 2
+      ret.minSteerSpeed = 0.5
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.785  # in meters
