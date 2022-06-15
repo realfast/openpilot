@@ -257,11 +257,11 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM) || (addr == Cruise_Control_Buttons_HD)) {
-    if ((GET_BYTE(to_send, 0) != 1U) || ((GET_BYTE(to_send, 1) & 1U) == 1U)) {
-      tx = 0;
-    }
-  }
+  // if ((addr == Cruise_Control_Buttons) || (addr == Cruise_Control_Buttons_RAM) || (addr == Cruise_Control_Buttons_HD)) {
+  //   if ((GET_BYTE(to_send, 0) != 1U) || ((GET_BYTE(to_send, 1) & 1U) == 1U)) {
+  //     tx = 0;
+  //   }
+  // }
 
   return tx;
 }
