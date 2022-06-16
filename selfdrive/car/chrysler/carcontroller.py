@@ -65,10 +65,10 @@ class CarController():
     #*** control msgs ***
     if pcm_cancel_cmd: 
       # TODO: would be better to start from frame_2b3
-      self.ccframe = (self.ccframe + 1) % 0x1
+      self.ccframe = (self.ccframe + 1) % 0x2
       can_sends.append(create_wheel_buttons(self.packer, CS.ccbuttoncounter + self.ccframe + 1, self.car_fingerprint, cancel=True, acc_resume = False))
     elif CS.out.cruiseState.standstill:
-      self.ccframe = (self.ccframe + 1) % 0x1
+      self.ccframe = (self.ccframe + 1) % 0x2
       can_sends.append(create_wheel_buttons(self.packer, CS.ccbuttoncounter + self.ccframe + 1, self.car_fingerprint, cancel=False, acc_resume = True))
     else:
       self.ccframe = 0
