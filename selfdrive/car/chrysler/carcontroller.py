@@ -95,7 +95,6 @@ class CarController():
 
     self.prev_frame = frame
     self.lkasframe += 1
-    self.ccbuttoncounterlast = CS.ccbuttoncounter
 
     new_actuators = actuators.copy()
     new_actuators.steer = self.apply_steer_last  / CarControllerParams.STEER_MAX
