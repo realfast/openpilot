@@ -7,7 +7,7 @@ from selfdrive.car.interfaces import CarInterfaceBase
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
-  def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=None):
+  def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=[]):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "chrysler"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
@@ -49,7 +49,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.1
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
-      ret.minSteerSpeed = 0.5
+      ret.minSteerSpeed = 14.5
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.785  # in meters
@@ -68,6 +68,12 @@ class CarInterface(CarInterfaceBase):
       ret.steerRateCost = 0.5  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
       ret.minSteerSpeed = 16.0
+
+    eps_s0 = False 
+    for fw in car_fw:
+      if fw.ecu == "eps" and b"68312176AE" in fw.fwVersion:
+        eps_s0 = True
+        ret.minSteerSpeed = 0.5
 
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
