@@ -7,6 +7,7 @@ const int CHRYSLER_MAX_TORQUE_ERROR = 80;      // max torque cmd in excess of to
 const int CHRYSLER_STANDSTILL_THRSLD = 10;     // about 1m/s
 const int CHRYSLER_RAM_STANDSTILL_THRSLD = 3;  // about 1m/s changed from wheel rpm to km/h
 
+const int CHRYSLER_RAM_MAX_STEER = 350;
 const int CHRYSLER_RAM_MAX_RATE_UP = 6;
 const int CHRYSLER_RAM_MAX_RATE_DOWN = 6;
 
@@ -196,7 +197,8 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     if (controls_allowed) {
       // *** global torque limit check ***
-      violation |= max_limit_check(desired_torque, CHRYSLER_MAX_STEER, -CHRYSLER_MAX_STEER);
+      const int max_steer = chrysler_ram ? CHRYSLER_RAM_MAX_STEER : CHRYSLER_MAX_STEER;
+      violation |= max_limit_check(desired_torque, max_steer, -max_steer);
 
       // *** torque rate limit check ***
       const int max_rate_up = chrysler_ram ? CHRYSLER_RAM_MAX_RATE_UP : CHRYSLER_MAX_RATE_UP;
