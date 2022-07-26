@@ -4,7 +4,7 @@ from selfdrive.car.chrysler.values import RAM_CARS
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, auto_high_beam):
+def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, CS):
   # LKAS_HUD - Controls what lane-keeping icon is displayed
 
   # == Color ==
@@ -47,7 +47,8 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, au
   }
 
   if CP.carFingerprint in RAM_CARS:
-    values['AUTO_HIGH_BEAM_ON'] = auto_high_beam
+    values['AUTO_HIGH_BEAM_ON'] = CS.auto_high_beam
+    values['LKAS_Disabled'] = CS.lkasdisabled
 
   return packer.make_can_msg("DAS_6", 0, values)
 
@@ -62,9 +63,13 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame):
   return packer.make_can_msg("LKAS_COMMAND", 0, values, frame % 0x10)
 
 
-def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
-  values = {
-    "ACC_Cancel": cancel,
-    "ACC_Resume": resume,
-  }
+def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resume=False):
+  
+  if (cancel == True) or (resume == True):
+    values = {
+      "ACC_Cancel": cancel,
+      "ACC_Resume": resume,
+    }
+  else:
+    values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values, frame % 0x10)
