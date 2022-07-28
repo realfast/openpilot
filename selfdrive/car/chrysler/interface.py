@@ -67,6 +67,7 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 16
       param = Panda.FLAG_CHRYSLER_RAM_HD
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 0, False)
+      ret.openpilotLongitudinalControl = True
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")

@@ -16,6 +16,10 @@ class CarState(CarStateBase):
     self.button_counter = 0
     self.lkas_car_model = -1
 
+    self.engineRpm = None
+    self.torqMin = None
+    self.torqMax = None
+
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
     else:
@@ -78,6 +82,15 @@ class CarState(CarStateBase):
     ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
     ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
     ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
+    self.das_3 = cp_cruise.vl['DAS_3']
+    self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
+    self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
+
+
+    
+    self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
+    self.engineRpm = cp.vl["ECM_1"]["ENGINE_RPM"]
+    self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
 
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
@@ -105,6 +118,21 @@ class CarState(CarStateBase):
       ("COUNTER", "DAS_3"),
       ("ACC_SET_SPEED_KPH", "DAS_4"),
       ("ACC_STATE", "DAS_4"),
+
+      ("ACC_GO", "DAS_3", 0),
+      ("ENGINE_TORQUE_REQUEST", "DAS_3", 0),
+      ("ENGINE_TORQUE_REQUEST_MAX", "DAS_3", 0),
+      ("ACC_DECEL", "DAS_3", 0),
+      ("ACC_DECEL_REQ", "DAS_3", 0),
+      ("ACC_AVAILABLE", "DAS_3", 0),
+      ("DISABLE_FUEL_SHUTOFF", "DAS_3", 0),
+      ("GR_MAX_REQ", "DAS_3", 0),
+      ("STS", "DAS_3", 0),
+      ("COLLISION_BRK_PREP", "DAS_3", 0),
+      ("ACC_BRK_PREP", "DAS_3", 0),
+      ("DISPLAY_REQ", "DAS_3", 0),
+      ("COUNTER", "DAS_3", 0),
+      ("CHECKSUM", "DAS_3", 0),
     ]
     checks = [
       ("DAS_3", 50),
@@ -137,6 +165,11 @@ class CarState(CarStateBase):
       ("EPS_TORQUE_MOTOR", "EPS_2"),
       ("LKAS_STATE", "EPS_2"),
       ("COUNTER", "CRUISE_BUTTONS"),
+
+      ("ENGINE_RPM", "ECM_1", 0),
+      ("ENGINE_TORQUE", "ECM_1", 0),
+      ("ENGINE_TORQ_MIN", "ECM_TRQ", 0),
+      ("ENGINE_TORQ_MAX", "ECM_TRQ", 0),
     ]
 
     checks = [
@@ -150,6 +183,8 @@ class CarState(CarStateBase):
       ("STEERING_LEVERS", 10),
       ("ORC_1", 2),
       ("BCM_1", 1),
+      ("ECM_1", 50),
+      ("ECM_TRQ", 50),
     ]
 
     if CP.enableBsm:
