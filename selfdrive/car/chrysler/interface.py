@@ -50,6 +50,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
       ret.minSteerSpeed = 14.5
+      if car_fw is not None:
+        for fw in car_fw:
+          if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
+            ret.minSteerSpeed = 0.
 
     if candidate in (CAR.RAM_2500):
       ret.wheelbase = 3.785  # in meters
@@ -68,12 +72,6 @@ class CarInterface(CarInterfaceBase):
       ret.steerRateCost = 0.5  # may need tuning
       ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
       ret.minSteerSpeed = 16.0
-
-    eps_s0 = False 
-    for fw in car_fw:
-      if fw.ecu == "eps" and b"68312176AE" in fw.fwVersion:
-        eps_s0 = True
-        ret.minSteerSpeed = 0.5
 
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
@@ -108,9 +106,9 @@ class CarInterface(CarInterfaceBase):
     events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
 
     # Low speed steer alert hysteresis logic
-    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed -0.5):
+    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 0.5):
       self.low_speed_alert = True
-    elif ret.vEgo > (self.CP.minSteerSpeed):
+    elif ret.vEgo > (self.CP.minSteerSpeed + 1.):
       self.low_speed_alert = False
     if self.low_speed_alert:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
