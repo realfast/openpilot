@@ -53,7 +53,7 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 2493. + STD_CARGO_KG
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
-      ret.minSteerSpeed = 14.5
+      ret.minSteerSpeed = 23
       if car_fw is not None:
         for fw in car_fw:
           if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
@@ -83,7 +83,7 @@ class CarInterface(CarInterfaceBase):
 
     # Low speed steer alert hysteresis logic
     if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 0.5):
-      self.low_speed_alert = True
+      self.low_speed_alert = False
     elif ret.vEgo > (self.CP.minSteerSpeed + 1.):
       self.low_speed_alert = False
     if self.low_speed_alert:
