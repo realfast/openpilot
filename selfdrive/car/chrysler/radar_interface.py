@@ -42,7 +42,7 @@ class RadarInterface(RadarInterfaceBase):
     super().__init__(CP)
     self.updated_messages = set()
     self.trigger_msg = LAST_MSG
-    self.no_radar = CP.carFingerprint in (CAR.RAM_1500, CAR.RAM_2500)
+    self.no_radar = CP.carFingerprint in (CAR.RAM_1500)
     if self.no_radar:
       self.rcp = None
     else:

@@ -55,23 +55,6 @@ class CarInterface(CarInterfaceBase):
           if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
             ret.minSteerSpeed = 0.
 
-    if candidate in (CAR.RAM_2500):
-      ret.wheelbase = 3.785  # in meters
-      ret.steerRatio = 16.5  # just a guess
-      ret.mass = 3405. + STD_CARGO_KG  # kg curb weight 2021 Ram 2500
-      # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0.], [0.,]]
-      # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.015,]]
-      MAX_LAT_ACCEL = 1.2
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.05
-      ret.steerActuatorDelay = 0.1
-      ret.steerRateCost = 0.5  # may need tuning
-      ret.centerToFront = ret.wheelbase * 0.38 # calculated from 100% - (front axle weight/total weight)
-      ret.minSteerSpeed = 16.0
 
 
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):

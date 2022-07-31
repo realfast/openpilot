@@ -16,7 +16,7 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
   #    msg = b'\x00\x00\x00\x03\x00\x00\x00\x00'
   #  return make_can_msg(0x2a6, msg, 0)
     
-  lkasdisabled = CS.lkasdisabled
+  # lkasdisabled = CS.lkasdisabled
   color = 1  # default values are for park or neutral in 2017 are 0 0, but trying 1 1 for 2019
   lines = 1
   alerts = 0
@@ -49,10 +49,10 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
       color = 1  # control off, display white.
       lines = 0
       alerts = 7
-  if CS.lkasdisabled == 1:
-    color = 0
-    lines = 0
-    alerts = 0
+ # if CS.lkasdisabled == 1:
+  #  color = 0
+  #  lines = 0
+  #  alerts = 0
 
   if hud_alert in [VisualAlert.ldw]: #possible use this instead
     color = 4
@@ -65,14 +65,14 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
     alerts = 0
     carmodel = 0xf
 
-  if fingerprint in (CAR.RAM_1500, CAR.RAM_2500):
+  if fingerprint in (CAR.RAM_1500):
     values = {
-      "Auto_High_Beam": CS.autoHighBeamBit,
+    #  "Auto_High_Beam": CS.autoHighBeamBit,
       "LKAS_ICON_COLOR": color,  # byte 0, last 2 bits
       "CAR_MODEL": carmodel,  # byte 1
       "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
       "LKAS_ALERTS": alerts,  # byte 3, last 4 bits
-      "LKAS_Disabled":lkasdisabled,
+     # "LKAS_Disabled":lkasdisabled,
     }
 
   else:
@@ -81,7 +81,7 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
       "CAR_MODEL": CS.lkas_car_model,  # byte 1
       "LKAS_LANE_LINES": lines,  # byte 2, last 4 bits
       "LKAS_ALERTS": alerts,  # byte 3, last 4 bits 
-      "LKAS_Disabled":lkasdisabled,
+     # "LKAS_Disabled":lkasdisabled,
       }
 
   
