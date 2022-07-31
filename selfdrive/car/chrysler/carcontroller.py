@@ -14,19 +14,26 @@ class CarController:
     self.last_lkas_falling_edge = 0
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
+    self.minSteer = 0
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
 
   def update(self, CC, CS):
     can_sends = []
-
+    
+    if car_fw is not None:
+      for fw in car_fw:
+        if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
+          self.minSteer = 0.
+        else:
+          self.minSteer = 14.5
     # TODO: can we make this more sane? why is it different for all the cars?
     lkas_control_bit = self.lkas_control_bit_prev
-    if CS.out.vEgo > self.CP.minSteerSpeed:
+    if CS.out.vEgo > self.minSteer:
       lkas_control_bit = True
     elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
-      if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
+      if CS.out.vEgo < (self.minSteerSpeed - 3.0):
         lkas_control_bit = False
     # elif self.CP.carFingerprint in RAM_CARS:
     #   if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
