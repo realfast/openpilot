@@ -53,13 +53,13 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 2493. + STD_CARGO_KG
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
-      ret.minSteerSpeed = 14.5
+      ret.minSteerSpeed = 0.
       if car_fw is not None:
         for fw in car_fw:
           if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
             ret.minSteerSpeed = 0.
           elif fw.ecu == 'eps' and fw.fwVersion in (b"68466110AB"):
-            ret.minSteerSpeed = 1.0
+            ret.minSteerSpeed = 0.
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
