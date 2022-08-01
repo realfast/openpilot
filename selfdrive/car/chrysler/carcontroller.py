@@ -2,7 +2,7 @@ from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons
-from selfdrive.car.chrysler.values import CAR, RAM_CARS, CarControllerParams
+from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_HD, CarControllerParams
 from cereal import car
 
 GearShifter = car.CarState.GearShifter
@@ -35,9 +35,9 @@ class CarController:
     elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
         lkas_control_bit = False
-    # elif self.CP.carFingerprint in RAM_CARS:
-    #   if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
-    #     lkas_control_bit = False
+    elif self.CP.carFingerprint in RAM_HD:
+      if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
+        lkas_control_bit = False
 
     # EPS faults if LKAS re-enables too quickly
     lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
