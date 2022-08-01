@@ -60,7 +60,7 @@ class CarInterface(CarInterfaceBase):
           if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
             ret.steerMinActivation = 0.
           else:
-            ret.steerMinActivation = 14.5
+            ret.steerMinActivation = 14.6
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
