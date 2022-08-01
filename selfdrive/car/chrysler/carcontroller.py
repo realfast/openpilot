@@ -19,7 +19,7 @@ class CarController():
     #self.CarControllerParams = CarControllerParams
 
     self.packer = CANPacker(dbc_name)
-    self.params = CarControllerParams(CP)
+    # self.params = CarControllerParams(CP)
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
@@ -80,9 +80,9 @@ class CarController():
 
     if self.prev_frame != frame:
       # steer torque
-      new_steer = int(round(actuators.steer * self.params.STEER_MAX))
+      new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
-                                                    CS.out.steeringTorqueEps, self.params)
+                                                    CS.out.steeringTorqueEps, CarControllerParams)
       self.steer_rate_limited = new_steer != apply_steer
       if not lkas_active or self.gone_fast_yet_previous == False:
         apply_steer = 0
