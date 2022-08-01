@@ -64,7 +64,9 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 15.61
       ret.mass = 3405. + STD_CARGO_KG
       ret.maxLateralAccel = 1.2
-      ret.minSteerSpeed = 16
+      # ret.minSteerSpeed = 16
+      ret.minSteerSpeed = 0.0
+      ret.steerMinActivation = 16
       param = Panda.FLAG_CHRYSLER_RAM_HD
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 0, False)
 
