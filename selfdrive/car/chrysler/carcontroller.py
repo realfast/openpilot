@@ -1,6 +1,6 @@
 from cereal import car
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_wheel_buttons
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons
 from selfdrive.car.chrysler.values import CAR, CarControllerParams
 from opendbc.can.packer import CANPacker
 
@@ -63,18 +63,18 @@ class CarController():
     
     #*** control msgs ***
     if pcm_cancel_cmd: 
-      can_sends.append(create_wheel_buttons(self.packer, CS.button_counter + 1, 0, cancel=True, acc_resume = False))
-      can_sends.append(create_wheel_buttons(self.packer, CS.button_counter + 1, 2, cancel=True, acc_resume = False))
+      can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=True, acc_resume = False))
+      can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, cancel=True, acc_resume = False))
     elif CS.out.cruiseState.standstill:
-      can_sends.append(create_wheel_buttons(self.packer, CS.button_counter + 1, 0, cancel=False, acc_resume = True))
-      can_sends.append(create_wheel_buttons(self.packer, CS.button_counter + 1, 2, cancel=False, acc_resume = True))
+      can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=False, acc_resume = True))
+      can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, cancel=False, acc_resume = True))
 
     # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
     # frame is 100Hz (0.01s period)
     if (self.lkasframe % 25 == 0):  # 0.25s period
       if (CS.lkas_car_model != -1):
         new_msg = create_lkas_hud(
-            self.packer, lkas_active, hud_alert, self.hud_count, CS, self.car_fingerprint)
+            self.packer, CarControllerParams, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model)
         can_sends.append(new_msg)
         self.hud_count += 1
 
@@ -89,7 +89,7 @@ class CarController():
       self.apply_steer_last = apply_steer
       self.gone_fast_yet_previous = self.gone_fast_yet
 
-      new_msg = create_lkas_command(self.packer, int(apply_steer), self.gone_fast_yet, frame)
+      new_msg = create_lkas_command(self.packer, CarControllerParams, int(apply_steer), self.gone_fast_yet, frame)
       can_sends.append(new_msg)
     
 
