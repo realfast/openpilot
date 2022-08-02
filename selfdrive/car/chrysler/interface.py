@@ -39,14 +39,14 @@ class CarInterface(CarInterfaceBase):
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.12,0.12], [0.,0.0001]]
       # ret.steerActuatorDelay = 0.15
       # ret.steerRateCost = 0.7  # may need tuning
-      MAX_LAT_ACCEL = 2.6
+      MAX_LAT_ACCEL = 2.5
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
       ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.friction = 0.05
-      ret.steerActuatorDelay = 0.1
+      ret.steerActuatorDelay = 0.2
       ret.steerRateCost = 1.0
       ret.centerToFront = ret.wheelbase * 0.4 # just a guess
       ret.minSteerSpeed = 14.5
