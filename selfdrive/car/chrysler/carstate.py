@@ -1,5 +1,5 @@
 from cereal import car
-from common.conversions import Conversions as CV
+from selfdrive.config import Conversions as CV
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
@@ -185,7 +185,7 @@ class CarState(CarStateBase):
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
+    return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
 
   @staticmethod
   def get_cam_can_parser(CP):
@@ -204,4 +204,4 @@ class CarState(CarStateBase):
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)
+    return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)
