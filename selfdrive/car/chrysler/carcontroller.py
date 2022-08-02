@@ -33,18 +33,18 @@ class CarController():
 
     if self.car_fingerprint not in (CAR.RAM_1500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.5):  # for command high bit
-        self.gone_fast_yet = True
+        self.gone_fast_yet = 2
       elif self.car_fingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
         if CS.out.vEgo < (CS.CP.minSteerSpeed - 3.0):
-          self.gone_fast_yet = False  # < 14.5m/s stock turns off this bit, but fine down to 13.5
+          self.gone_fast_yet = 0  # < 14.5m/s stock turns off this bit, but fine down to 13.5
           
     elif self.car_fingerprint in (CAR.RAM_1500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
-        self.gone_fast_yet = True
+        self.gone_fast_yet = 2
       elif CS.CP.minSteerSpeed == 0.5:
-        self.gone_fast_yet = True 
+        self.gone_fast_yet = 2 
       elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
-        self.gone_fast_yet = False   
+        self.gone_fast_yet = 0   
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
     if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
