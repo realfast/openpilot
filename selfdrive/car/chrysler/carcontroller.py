@@ -97,6 +97,6 @@ class CarController():
     self.lkasframe += 1
 
     new_actuators = actuators.copy()
-    new_actuators.steer = self.apply_steer_last  / self.params.STEER_MAX
+    new_actuators.steer = self.apply_steer_last  / CarControllerParams.STEER_MAX
 
     return new_actuators, can_sends
