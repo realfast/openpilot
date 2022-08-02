@@ -50,7 +50,7 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model):
   # if CP.carFingerprint in RAM_CARS:
   #   values['AUTO_HIGH_BEAM_ON'] = auto_high_beam
 
-  # return packer.make_can_msg("DAS_6", 0, values)
+  return packer.make_can_msg("DAS_6", 0, values)
 
 
 def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame):
