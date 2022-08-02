@@ -158,7 +158,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
 
   if (!msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]))) {
-    tx = 0;
+    // tx = 0;
   }
 
   // LKA STEER Chrysler/Jeep
@@ -203,7 +203,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
-      tx = 0;
+      // tx = 0;
     }
   }
 
@@ -249,7 +249,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
     }
 
     if (violation) {
-      tx = 0;
+      // tx = 0;
     }
   }
 
