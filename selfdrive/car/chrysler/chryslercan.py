@@ -92,7 +92,7 @@ def create_lkas_hud(packer, lkas_active, hud_alert, hud_count, CS, fingerprint):
 def create_lkas_command(packer, apply_steer, moving_fast, frame):
   # LKAS_COMMAND Lane-keeping signal to turn the wheel.
   values = {
-    "LKAS_STEERING_TORQUE": apply_steer,
+    "STEERING_TORQUE": apply_steer,
     "LKAS_CONTROL_BIT": int(moving_fast),
     "COUNTER": frame % 0x10,
   }
@@ -106,4 +106,4 @@ def create_wheel_buttons(packer, frame, bus, cancel = False, acc_resume = False)
     "COUNTER": frame % 0x10,
     "ACC_Resume": acc_resume,
   }
-  return packer.make_can_msg("Cruise_Control_Buttons", bus, values)
+  return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
