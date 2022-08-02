@@ -74,7 +74,7 @@ class CarController():
     if (self.lkasframe % 25 == 0):  # 0.25s period
       if (CS.lkas_car_model != -1):
         new_msg = create_lkas_hud(
-            self.packer, CarControllerParams, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model)
+            self.packer, CarControllerParams, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam)
         can_sends.append(new_msg)
         self.hud_count += 1
 
