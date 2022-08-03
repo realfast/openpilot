@@ -23,8 +23,8 @@ class CAR:
   RAM_HD = "RAM HD 5TH GEN"
 
 
-class CarControllerParams:
-  def __init__(self, CP):  
+#class CarControllerParams:
+ # def __init__(self, CP):  
 
     # if CP.carFingerprint in RAM_HD:
     #   STEER_DELTA_UP = 14
@@ -32,10 +32,10 @@ class CarControllerParams:
     #   STEER_MAX = 361 # higher than this faults the EPS
     #   self.STEER_ERROR_MAX = 200
     # elif CP.carFingerprint in RAM_CARS:
-    self.STEER_DELTA_UP = 6
-    self.STEER_DELTA_DOWN = 6
-    self.STEER_MAX = 350 # higher than this faults the EPS
-    self.STEER_ERROR_MAX = 80
+STEER_DELTA_UP = 6
+STEER_DELTA_DOWN = 6
+STEER_MAX = 350 # higher than this faults the EPS
+STEER_ERROR_MAX = 80
     # else:
     #   self.STEER_DELTA_UP = 3
     #   self.STEER_DELTA_DOWN = 3
