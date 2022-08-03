@@ -41,7 +41,7 @@ class CarController:
     
 
     # EPS faults if LKAS re-enables too quickly
-    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and CS.out.gearShifter == GearShifter.drive and not CS.steerFaultTemporary and not CS.steerFaultPermanent
+    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and CS.out.gearShifter == GearShifter.drive and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
     lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev
 
     # *** control msgs ***
