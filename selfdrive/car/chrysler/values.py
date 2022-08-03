@@ -1,15 +1,10 @@
 import capnp
-from typing import Dict, List, Optional, Tuple
+from enum import Enum
+from typing import Dict, List, Optional, Tuple, Union
 
 from cereal import car
 from selfdrive.car import dbc_dict
 Ecu = car.CarParams.Ecu
-
-class CarControllerParams:
-  STEER_MAX = 350        # 262 faults in Chrysler 360 faults in ram
-  STEER_DELTA_UP = 12      # 3 is stock. 100 is fine. 200 is too much it seems
-  STEER_DELTA_DOWN = 12   # no faults on the way down it seems
-  STEER_ERROR_MAX = 200
 
 class CAR:
   # Chrysler
@@ -28,24 +23,24 @@ class CAR:
   RAM_HD = "RAM HD 5TH GEN"
 
 
-# class CarControllerParams:
-#   def __init__(self, CP):  
+class CarControllerParams:
+  def __init__(self, CP):  
 
-#     if CP.carFingerprint in RAM_HD:
-#       self.STEER_DELTA_UP = 14
-#       self.STEER_DELTA_DOWN = 14
-#       self.STEER_MAX = 361 # higher than this faults the EPS
-#       self.STEER_ERROR_MAX = 200
-#     elif CP.carFingerprint in RAM_CARS:
-#       self.STEER_DELTA_UP = 6
-#       self.STEER_DELTA_DOWN = 6
-#       self.STEER_MAX = 350 # higher than this faults the EPS
-#       self.STEER_ERROR_MAX = 80
-#     else:
-#       self.STEER_DELTA_UP = 3
-#       self.STEER_DELTA_DOWN = 3
-#       self.STEER_MAX = 261  # higher than this faults the EPS
-#       self.STEER_ERROR_MAX = 80
+    if CP.carFingerprint in RAM_HD:
+      self.STEER_DELTA_UP = 14
+      self.STEER_DELTA_DOWN = 14
+      self.STEER_MAX = 361 # higher than this faults the EPS
+      self.STEER_ERROR_MAX = 200
+    elif CP.carFingerprint in RAM_CARS:
+      self.STEER_DELTA_UP = 6
+      self.STEER_DELTA_DOWN = 6
+      self.STEER_MAX = 350 # higher than this faults the EPS
+      self.STEER_ERROR_MAX = 80
+    else:
+      self.STEER_DELTA_UP = 3
+      self.STEER_DELTA_DOWN = 3
+      self.STEER_MAX = 261  # higher than this faults the EPS
+      self.STEER_ERROR_MAX = 80
 
 STEER_THRESHOLD = 120
 
