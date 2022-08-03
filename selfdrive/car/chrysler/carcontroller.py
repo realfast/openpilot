@@ -10,6 +10,7 @@ class CarController():
     self.lkasframe = 0
     self.prev_frame = -1
     self.hud_count = 0
+    self.frame = 0
     self.car_fingerprint = CP.carFingerprint
     self.gone_fast_yet = False
     self.steer_rate_limited = False
@@ -24,7 +25,6 @@ class CarController():
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
-    frame = CS.lkas_counter
 
     # *** compute control surfaces ***
 
@@ -78,7 +78,7 @@ class CarController():
         can_sends.append(new_msg)
         self.hud_count += 1
 
-    if self.prev_frame != frame:
+    if self.frame % 2 == 0:
       # steer torque
       new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
@@ -95,7 +95,7 @@ class CarController():
 
     self.prev_frame = frame
     self.lkasframe += 1
-
+    self.frame += 1
     new_actuators = actuators.copy()
     new_actuators.steer = self.apply_steer_last  / CarControllerParams.STEER_MAX
 
