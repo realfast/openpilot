@@ -26,21 +26,21 @@ class CAR:
 class CarControllerParams:
   def __init__(self, CP):  
 
-    if CP.carFingerprint in RAM_HD:
-      self.STEER_DELTA_UP = 14
-      self.STEER_DELTA_DOWN = 14
-      self.STEER_MAX = 361 # higher than this faults the EPS
-      self.STEER_ERROR_MAX = 200
-    elif CP.carFingerprint in RAM_CARS:
-      self.STEER_DELTA_UP = 6
-      self.STEER_DELTA_DOWN = 6
-      self.STEER_MAX = 350 # higher than this faults the EPS
-      self.STEER_ERROR_MAX = 80
-    else:
-      self.STEER_DELTA_UP = 3
-      self.STEER_DELTA_DOWN = 3
-      self.STEER_MAX = 261  # higher than this faults the EPS
-      self.STEER_ERROR_MAX = 80
+    # if CP.carFingerprint in RAM_HD:
+    #   STEER_DELTA_UP = 14
+    #   STEER_DELTA_DOWN = 14
+    #   STEER_MAX = 361 # higher than this faults the EPS
+    #   self.STEER_ERROR_MAX = 200
+    # elif CP.carFingerprint in RAM_CARS:
+    STEER_DELTA_UP = 6
+    STEER_DELTA_DOWN = 6
+    STEER_MAX = 350 # higher than this faults the EPS
+    STEER_ERROR_MAX = 80
+    # else:
+    #   self.STEER_DELTA_UP = 3
+    #   self.STEER_DELTA_DOWN = 3
+    #   self.STEER_MAX = 261  # higher than this faults the EPS
+    #   self.STEER_ERROR_MAX = 80
 
 STEER_THRESHOLD = 120
 
