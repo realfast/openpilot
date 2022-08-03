@@ -27,21 +27,21 @@ class CarController:
     # TODO: can we make this more sane? why is it different for all the cars?
     lkas_control_bit = self.lkas_control_bit_prev
 
-    CS.out.gearShifter
-    if CS.out.vEgo >= self.CP.steerMinActivation and CS.out.gearShifter == GearShifter.drive:
+    if CS.out.vEgo >= self.CP.minSteerSpeed:
       lkas_control_bit = True
-    elif CS.out.gearShifter != GearShifter.drive:
-      lkas_control_bit = False
     elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
         lkas_control_bit = False
-    # elif self.CP.carFingerprint in RAM_CARS:
+    elif self.CP.carFingerprint in CAR.RAM_1500:
+      if CS.out.vEgo >= self.CP.steerMinActivation:
+        lkas_control_bit = True
+    # elif self.CP.carFingerprint in RAM_HD:
     #   if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
     #     lkas_control_bit = False
 
     # EPS faults if LKAS re-enables too quickly
-    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
-    lkas_active = CC.latActive and self.lkas_control_bit_prev
+    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and CS.out.gearShifter == GearShifter.drive and not CS.steerFaultTemporary and not CS.steerFaultPermanent
+    lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev
 
     # *** control msgs ***
 
