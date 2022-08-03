@@ -17,7 +17,7 @@ class CarController:
     self.last_button_frame = 0
 
     self.packer = CANPacker(dbc_name)
-    self.params = CarControllerParams(CP)
+    self.params = CarControllerParams
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
