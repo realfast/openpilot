@@ -77,7 +77,7 @@ class CarState(CarStateBase):
     ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
     ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
     ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
-    ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
+    #ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
 
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
