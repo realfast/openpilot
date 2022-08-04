@@ -51,12 +51,12 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.3
       ret.mass = 2493. + STD_CARGO_KG
       ret.minSteerSpeed = 0.5
-      if car_fw is not None:
-        for fw in car_fw:
-          if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
-            ret.steerMinActivation = 0.
-          else:
-            ret.steerMinActivation = 14.6
+      # if car_fw is not None:
+      #   for fw in car_fw:
+      #     if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
+      #       ret.steerMinActivation = 0.
+      #     else:
+      #       ret.steerMinActivation = 14.6
       param = Panda.FLAG_CHRYSLER_RAM_DT
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 

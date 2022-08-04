@@ -35,9 +35,9 @@ class CarController:
     elif self.CP.carFingerprint in CAR.RAM_HD:
       if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
         lkas_control_bit = False
-    elif self.CP.carFingerprint in CAR.RAM_1500:
-      if CS.out.vEgo >= self.CP.steerMinActivation:
-        lkas_control_bit = True
+    # elif self.CP.carFingerprint in CAR.RAM_1500:
+    #   if CS.out.vEgo >= self.CP.steerMinActivation:
+    #     lkas_control_bit = True
     
 
     # EPS faults if LKAS re-enables too quickly
