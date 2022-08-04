@@ -83,7 +83,7 @@ class CarInterface(CarInterfaceBase):
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
 
     # speeds
-    #ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
+    ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # events
     events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
@@ -106,5 +106,9 @@ class CarInterface(CarInterfaceBase):
   # pass in a car.CarControl
   # to be called @ 100hz
   def apply(self, c):
+
+    if (self.CS.frame == -1):
+      return car.CarControl.Actuators.new_message(), []  # if we haven't seen a frame 220, then do not update.
+
 
     return self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
