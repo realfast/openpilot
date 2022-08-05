@@ -16,10 +16,9 @@ class CarController():
     self.lkasdisabled = 0
     self.lkaslast_frame = 0.
     self.gone_fast_yet_previous = False
-    #self.CarControllerParams = CarControllerParams
 
     self.packer = CANPacker(dbc_name)
-    # self.params = CarControllerParams(CP)
+    self.params = CarControllerParams(CP)
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
@@ -74,22 +73,22 @@ class CarController():
     if (self.lkasframe % 25 == 0):  # 0.25s period
       if (CS.lkas_car_model != -1):
         new_msg = create_lkas_hud(
-            self.packer, CarControllerParams, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam)
+            self.packer, self.params, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam)
         can_sends.append(new_msg)
         self.hud_count += 1
 
     if self.prev_frame != frame:
       # steer torque
-      new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
+      new_steer = int(round(actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
-                                                    CS.out.steeringTorqueEps, CarControllerParams)
+                                                    CS.out.steeringTorqueEps, self.params)
       self.steer_rate_limited = new_steer != apply_steer
       if not lkas_active or self.gone_fast_yet_previous == False:
         apply_steer = 0
       self.apply_steer_last = apply_steer
       self.gone_fast_yet_previous = self.gone_fast_yet
 
-      new_msg = create_lkas_command(self.packer, CarControllerParams, int(apply_steer), self.gone_fast_yet, frame)
+      new_msg = create_lkas_command(self.packer, self.params, int(apply_steer), self.gone_fast_yet, frame)
       can_sends.append(new_msg)
     
 
@@ -97,6 +96,6 @@ class CarController():
     self.lkasframe += 1
 
     new_actuators = actuators.copy()
-    new_actuators.steer = self.apply_steer_last  / CarControllerParams.STEER_MAX
+    new_actuators.steer = self.apply_steer_last  / self.params.STEER_MAX
 
     return new_actuators, can_sends
