@@ -61,10 +61,10 @@ class CarController():
     #*** control msgs ***
     if self.frame % 2 == 0:
       if pcm_cancel_cmd: 
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=True, resume = False))
+       # can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=True, resume = False))
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, cancel=True, resume = False))
       elif CS.out.cruiseState.standstill:
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=False, resume = True))
+       # can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=False, resume = True))
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, cancel=False, resume = True))
 
     # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
