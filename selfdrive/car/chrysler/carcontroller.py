@@ -7,8 +7,7 @@ from opendbc.can.packer import CANPacker
 class CarController():
   def __init__(self, dbc_name, CP, VM):
     self.apply_steer_last = 0
-    self.lkasframe = 0
-    self.prev_frame = -1
+    self.frame = 0
     self.hud_count = 0
     self.car_fingerprint = CP.carFingerprint
     self.gone_fast_yet = False
@@ -23,7 +22,6 @@ class CarController():
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
-    frame = CS.lkas_counter
 
     # *** compute control surfaces ***
 
@@ -47,12 +45,12 @@ class CarController():
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
     if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
-        self.lkaslast_frame = self.lkasframe
+        self.lkaslast_frame = self.frame
 
     #if CS.out.steerFaultPermanent is True: #possible fix for LKAS error Plan to test
     #  gone_fast_yet = False
 
-    if (CS.out.steerFaultPermanent is True) or (self.lkasframe-self.lkaslast_frame<400):#If the LKAS Control bit is toggled too fast it can create and LKAS error
+    if (CS.out.steerFaultPermanent is True) or (self.frame-self.lkaslast_frame<400):#If the LKAS Control bit is toggled too fast it can create and LKAS error
       self.gone_fast_yet = False
 
     lkas_active = self.gone_fast_yet and enabled
@@ -61,7 +59,7 @@ class CarController():
 
     
     #*** control msgs ***
-    if self.prev_frame != frame:
+    if self.frame % 2 == 0:
       if pcm_cancel_cmd: 
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=True, resume = False))
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, cancel=True, resume = False))
@@ -71,14 +69,15 @@ class CarController():
 
     # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
     # frame is 100Hz (0.01s period)
-    if (self.lkasframe % 25 == 0):  # 0.25s period
+    if self.frame % 25 == 0:  # 0.25s period
       if (CS.lkas_car_model != -1):
         new_msg = create_lkas_hud(
             self.packer, self.params, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam)
         can_sends.append(new_msg)
         self.hud_count += 1
 
-    if self.prev_frame != frame:
+    # steering
+    if self.frame % 2 == 0:
       # steer torque
       new_steer = int(round(actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
@@ -88,13 +87,12 @@ class CarController():
         apply_steer = 0
       self.apply_steer_last = apply_steer
       self.gone_fast_yet_previous = self.gone_fast_yet
-
-      new_msg = create_lkas_command(self.packer, self.params, int(apply_steer), self.gone_fast_yet, frame)
+      idx = self.frame // 2
+      new_msg = create_lkas_command(self.packer, self.params, int(apply_steer), self.gone_fast_yet, idx)
       can_sends.append(new_msg)
-    
 
-    self.prev_frame = frame
-    self.lkasframe += 1
+    self.frame += 1
+
 
     new_actuators = actuators.copy()
     new_actuators.steer = self.apply_steer_last  / self.params.STEER_MAX
