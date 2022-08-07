@@ -15,6 +15,7 @@ class CarController():
     self.lkasdisabled = 0
     self.lkaslast_frame = 0.
     self.gone_fast_yet_previous = False
+    self.lkas_control_bit_prev = False
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -27,6 +28,7 @@ class CarController():
 
     #moving_fast = CS.out.vEgo > CS.CP.minSteerSpeed  # for status message
     #lkas_active = moving_fast and enabled
+    lkas_control_bit = self.lkas_control_bit_prev
 
     if self.car_fingerprint not in (CAR.RAM_1500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.5):  # for command high bit
@@ -88,6 +90,9 @@ class CarController():
       can_sends.append(create_lkas_command(self.packer, self.car_fingerprint, int(apply_steer), lkas_control_bit, idx))
 
     self.frame += 1
+    if not lkas_control_bit and self.lkas_control_bit_prev:
+      self.last_lkas_falling_edge = self.frame
+    self.lkas_control_bit_prev = lkas_control_bit
 
 
     new_actuators = actuators.copy()
