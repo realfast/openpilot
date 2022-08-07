@@ -5,7 +5,7 @@ from selfdrive.car.chrysler.values import RAM_CARS
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, auto_high_beam):
+def create_lkas_hud(packer, carFingerprint, lkas_active, hud_alert, hud_count, car_model, auto_high_beam):
   # LKAS_HUD - Controls what lane-keeping icon is displayed
 
   # == Color ==
@@ -47,15 +47,15 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, au
     "LKAS_ALERTS": alerts,
   }
 
-  if CP.carFingerprint in RAM_CARS:
+  if carFingerprint in RAM_CARS:
     values['AUTO_HIGH_BEAM_ON'] = auto_high_beam
 
   return packer.make_can_msg("DAS_6", 0, values)
 
 
-def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame):
+def create_lkas_command(packer, carFingerprint, apply_steer, lkas_control_bit, frame):
   # LKAS_COMMAND Lane-keeping signal to turn the wheel
-  enabled_val = 2 if CP.carFingerprint in RAM_CARS else 1
+  enabled_val = 2 if carFingerprint in RAM_CARS else 1
   values = {
     "STEERING_TORQUE": apply_steer,
     "LKAS_CONTROL_BIT": enabled_val if lkas_control_bit else 0,
