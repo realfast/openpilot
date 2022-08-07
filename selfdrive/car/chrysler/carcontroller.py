@@ -71,25 +71,18 @@ class CarController():
     # frame is 100Hz (0.01s period)
     if self.frame % 25 == 0:  # 0.25s period
       if (CS.lkas_car_model != -1):
-        new_msg = create_lkas_hud(
-            self.packer, self.params, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam)
-        can_sends.append(new_msg)
+        can_sends.append(create_lkas_hud(self.packer, self.params, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
         self.hud_count += 1
-
     # steering
-    if self.frame % 2 == 0:
-      # steer torque
-      new_steer = int(round(actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
                                                     CS.out.steeringTorqueEps, self.params)
       self.steer_rate_limited = new_steer != apply_steer
-      if not lkas_active or self.gone_fast_yet_previous == False:
+      if not lkas_active:
         apply_steer = 0
       self.apply_steer_last = apply_steer
       self.gone_fast_yet_previous = self.gone_fast_yet
       idx = self.frame // 2
-      new_msg = create_lkas_command(self.packer, self.params, int(apply_steer), self.gone_fast_yet, idx)
-      can_sends.append(new_msg)
+      can_sends.append(create_lkas_command(self.packer, self.params, int(apply_steer), self.gone_fast_yet, idx))
 
     self.frame += 1
 

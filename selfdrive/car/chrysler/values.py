@@ -5,12 +5,6 @@ from cereal import car
 from selfdrive.car import dbc_dict
 Ecu = car.CarParams.Ecu
 
-# class CarControllerParams:
-#   STEER_MAX = 350        # 262 faults in Chrysler 360 faults in ram
-#   STEER_DELTA_UP = 12      # 3 is stock. 100 is fine. 200 is too much it seems
-#   STEER_DELTA_DOWN = 12   # no faults on the way down it seems
-#   STEER_ERROR_MAX = 200
-
 class CAR:
   # Chrysler
   PACIFICA_2017_HYBRID = "CHRYSLER PACIFICA HYBRID 2017"
@@ -31,11 +25,11 @@ class CAR:
 class CarControllerParams:
   def __init__(self, CP):  
 
-    # if CP.carFingerprint in RAM_HD:
-    #   self.STEER_DELTA_UP = 14
-    #   self.STEER_DELTA_DOWN = 14
-    #   self.STEER_MAX = 361 # higher than this faults the EPS
-    #   self.STEER_ERROR_MAX = 200
+    if CP.carFingerprint in RAM_HD:
+      self.STEER_DELTA_UP = 14
+      self.STEER_DELTA_DOWN = 14
+      self.STEER_MAX = 361 # higher than this faults the EPS
+      self.STEER_ERROR_MAX = 200
     if CP.carFingerprint in RAM_CARS:
       self.STEER_DELTA_UP = 12
       self.STEER_DELTA_DOWN = 12
