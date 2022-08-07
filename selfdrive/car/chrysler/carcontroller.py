@@ -30,30 +30,30 @@ class CarController():
 
     if self.car_fingerprint not in (CAR.RAM_1500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed - 0.5):  # for command high bit
-        self.gone_fast_yet = 2
+        lkas_control_bit = True
       elif self.car_fingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
         if CS.out.vEgo < (CS.CP.minSteerSpeed - 3.0):
-          self.gone_fast_yet = 0  # < 14.5m/s stock turns off this bit, but fine down to 13.5
+          lkas_control_bit = False  # < 14.5m/s stock turns off this bit, but fine down to 13.5
           
     elif self.car_fingerprint in (CAR.RAM_1500):
       if CS.out.vEgo > (CS.CP.minSteerSpeed):  # for command high bit
-        self.gone_fast_yet = 2
+        lkas_control_bit = True
       elif CS.CP.minSteerSpeed == 0.5:
-        self.gone_fast_yet = 2 
+        lkas_control_bit = True
       elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
-        self.gone_fast_yet = 0   
+        lkas_control_bit = False  
       #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
-    if self.gone_fast_yet_previous == True and self.gone_fast_yet == False:
+    if self.gone_fast_yet_previous == True and lkas_control_bit == False:
         self.lkaslast_frame = self.frame
 
     #if CS.out.steerFaultPermanent is True: #possible fix for LKAS error Plan to test
     #  gone_fast_yet = False
 
     if (CS.out.steerFaultPermanent is True) or (self.frame-self.lkaslast_frame<400):#If the LKAS Control bit is toggled too fast it can create and LKAS error
-      self.gone_fast_yet = False
+      lkas_control_bit = False
 
-    lkas_active = self.gone_fast_yet and enabled
+    lkas_active = lkas_control_bit and enabled
 
     can_sends = []
 
@@ -83,9 +83,9 @@ class CarController():
       if not lkas_active:
         apply_steer = 0
       self.apply_steer_last = apply_steer
-      self.gone_fast_yet_previous = self.gone_fast_yet
+      self.gone_fast_yet_previous = lkas_control_bit
       idx = self.frame // 2
-      can_sends.append(create_lkas_command(self.packer, self.params, int(apply_steer), self.gone_fast_yet, idx))
+      can_sends.append(create_lkas_command(self.packer, self.params, int(apply_steer), lkas_control_bit, idx))
 
     self.frame += 1
 
