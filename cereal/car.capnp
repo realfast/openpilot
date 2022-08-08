@@ -422,7 +422,7 @@ struct CarParams {
   maxLateralAccel @68 :Float32;
   steerMinActivation @69 :Float32;
 
-  steerMaxBPDEPRECATED @11 :Float32;
+  steerMaxBPDEPRECATED @11 :List(Float32);
   steerMaxVDEPRECATED @12 :List(Float32);
   gasMaxBPDEPRECATED @13 :List(Float32);
   gasMaxVDEPRECATED @14 :List(Float32);
