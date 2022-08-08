@@ -10,19 +10,21 @@ class CarController():
     self.apply_steer_last = 0
     self.frame = 0
     self.hud_count = 0
+    self.last_lkas_falling_edge = 0
+    self.lkas_control_bit_prev = False
+    self.last_button_frame = 0
     self.car_fingerprint = CP.carFingerprint
-    self.gone_fast_yet = False
     self.steer_rate_limited = False
-    self.lkasdisabled = 0
     self.lkaslast_frame = 0.
     self.gone_fast_yet_previous = False
-    self.lkas_control_bit_prev = False
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
+
+    can_sends = []
     # this seems needed to avoid steering faults and to force the sync with the EPS counter
 
     # *** compute control surfaces ***
@@ -45,20 +47,15 @@ class CarController():
         lkas_control_bit = True
       elif CS.out.vEgo < (CS.CP.minSteerSpeed - 0.5):
         lkas_control_bit = False  
-      #self.gone_fast_yet = CS.out.vEgo > CS.CP.minSteerSpeed
 
     if self.gone_fast_yet_previous == True and lkas_control_bit == False:
         self.lkaslast_frame = self.frame
 
-    #if CS.out.steerFaultPermanent is True: #possible fix for LKAS error Plan to test
-    #  gone_fast_yet = False
 
     if (CS.out.steerFaultPermanent is True) or (self.frame-self.lkaslast_frame<400):#If the LKAS Control bit is toggled too fast it can create and LKAS error
       lkas_control_bit = False
 
     lkas_active = lkas_control_bit and enabled
-
-    can_sends = []
 
     
     #*** control msgs ***
