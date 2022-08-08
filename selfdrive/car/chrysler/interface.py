@@ -21,7 +21,7 @@ class CarInterface(CarInterfaceBase):
     ret.steerLimitTimer = 0.4
 
     ret.minSteerSpeed = 3.8  # m/s
-    ret.steerMinActivation = 3.8
+    ret.minEnableSpeed = 3.8
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       # TODO: allow 2019 cars to steer down to 13 m/s if already engaged.
       ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
@@ -58,9 +58,9 @@ class CarInterface(CarInterfaceBase):
       if car_fw is not None:
         for fw in car_fw:
           if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
-            ret.steerMinActivation = 0.
+            ret.minEnableSpeed = 0.
           else:
-            ret.steerMinActivation = 14.6
+            ret.minEnableSpeed = 14.6
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")

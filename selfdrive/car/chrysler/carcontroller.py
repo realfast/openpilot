@@ -27,7 +27,7 @@ class CarController:
     # TODO: can we make this more sane? why is it different for all the cars?
     lkas_control_bit = self.lkas_control_bit_prev
 
-    if CS.out.vEgo >= self.CP.steerMinActivation:
+    if CS.out.vEgo >= self.CP.minEnableSpeed:
       lkas_control_bit = True
     elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
