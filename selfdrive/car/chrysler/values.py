@@ -158,6 +158,12 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68552788AA',
       b'68552790AA',
     ],
+    (Ecu.engine, 0x7e0, None): [
+      b'68448163AJ',
+      b'68500630AD',
+      b'68539650AD',
+      b'           ', # TODO:some trucks are responding with nothing here
+    ],
     (Ecu.transmission, 0x7e1, None): [
       b'68360078AL',
       b'68360085AL',
