@@ -57,10 +57,8 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 0.5
       if car_fw is not None:
         for fw in car_fw:
-          if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
-            ret.minEnableSpeed = 0.
-          else:
-            ret.minEnableSpeed = 14.6
+          if fw.ecu == 'eps':
+            ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else 14.6
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
