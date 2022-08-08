@@ -6,7 +6,6 @@ from opendbc.can.packer import CANPacker
 
 class CarController():
   def __init__(self, dbc_name, CP, VM):
-    self.CP = CP
     self.apply_steer_last = 0
     self.frame = 0
     self.hud_count = 0
@@ -71,20 +70,21 @@ class CarController():
     # frame is 100Hz (0.01s period)
     if self.frame % 25 == 0:  # 0.25s period
       if (CS.lkas_car_model != -1):
-        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
+        can_sends.append(create_lkas_hud(self.packer, self.car_fingerprint, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
         self.hud_count += 1
     # steering
     if self.frame % 2 == 0:
       # steer torque
       new_steer = int(round(actuators.steer * self.params.STEER_MAX))
-      apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
+      apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last,
+                                                    CS.out.steeringTorqueEps, self.params)
       self.steer_rate_limited = new_steer != apply_steer
       if not lkas_active:
         apply_steer = 0
       self.apply_steer_last = apply_steer
       self.gone_fast_yet_previous = lkas_control_bit
       idx = self.frame // 2
-      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx))
+      can_sends.append(create_lkas_command(self.packer, self.car_fingerprint, int(apply_steer), lkas_control_bit, idx))
 
     self.frame += 1
     if not lkas_control_bit and self.lkas_control_bit_prev:
@@ -93,6 +93,6 @@ class CarController():
 
 
     new_actuators = actuators.copy()
-    new_actuators.steer = self.apply_steer_last / self.params.STEER_MAX
+    new_actuators.steer = self.apply_steer_last  / self.params.STEER_MAX
 
     return new_actuators, can_sends
