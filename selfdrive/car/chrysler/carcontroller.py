@@ -1,8 +1,10 @@
-from cereal import car
+from opendbc.can.packer import CANPacker
+from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, CarControllerParams
 from opendbc.can.packer import CANPacker
+from cereal import car
 
 GearShifter = car.CarState.GearShifter
 
@@ -15,21 +17,19 @@ class CarController():
     self.last_lkas_falling_edge = 0
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
-    self.car_fingerprint = CP.carFingerprint
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
+
+    self.car_fingerprint = CP.carFingerprint
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, hud_alert,
              left_line, right_line, lead, left_lane_depart, right_lane_depart):
 
     can_sends = []
-    # this seems needed to avoid steering faults and to force the sync with the EPS counter
 
-    # *** compute control surfaces ***
 
-    #moving_fast = CS.out.vEgo > CS.CP.minSteerSpeed  # for status message
-    #lkas_active = moving_fast and enabled
+    # TODO: can we make this more sane? why is it different for all the cars?
     lkas_control_bit = self.lkas_control_bit_prev
 
     if CS.out.vEgo >= self.CP.minSteerSpeed:
@@ -43,21 +43,21 @@ class CarController():
 
     # EPS faults if LKAS re-enables too quickly
     lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and CS.out.gearShifter == GearShifter.drive and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
+    lkas_active = enabled and lkas_control_bit and self.lkas_control_bit_prev
 
-    lkas_active = lkas_control_bit and enabled
+    # *** control msgs ***
 
-    
-    #*** control msgs ***
+    # cruise buttons
     if self.frame % 2 == 0:
+      das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
       if pcm_cancel_cmd: 
-       # can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=True, resume = False))
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, cancel=True, resume = False))
+        self.last_button_frame = self.frame
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, cancel=True))
       elif CS.out.cruiseState.standstill:
-       # can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, cancel=False, resume = True))
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, cancel=False, resume = True))
-
-    # LKAS_HEARTBIT is forwarded by Panda so no need to send it here.
-    # frame is 100Hz (0.01s period)
+        self.last_button_frame = self.frame
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, resume=True))
+       
+    # HUD alerts
     if self.frame % 25 == 0:  # 0.25s period
       if (CS.lkas_car_model != -1):
         can_sends.append(create_lkas_hud(self.packer, self.car_fingerprint, lkas_active, hud_alert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
