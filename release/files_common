@@ -109,10 +109,6 @@ selfdrive/car/fw_versions.py
 selfdrive/car/isotp_parallel_query.py
 selfdrive/car/tests/__init__.py
 selfdrive/car/tests/test_car_interfaces.py
-selfdrive/car/torque_data/params.yaml
-selfdrive/car/torque_data/substitute.yaml
-selfdrive/car/torque_data/override.yaml
-
 selfdrive/car/chrysler/__init__.py
 selfdrive/car/chrysler/carstate.py
 selfdrive/car/chrysler/interface.py
