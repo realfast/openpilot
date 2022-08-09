@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from cereal import car
+from panda import Panda
 from selfdrive.car.chrysler.values import CAR
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
@@ -100,8 +101,5 @@ class CarInterface(CarInterfaceBase):
 
     return self.CS.out
 
-  # pass in a car.CarControl
-  # to be called @ 100hz
   def apply(self, c):
-
-    return self.CC.update(c.enabled, self.CS, self.frame, c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert, c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible, c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
+    return self.CC.update(c, self.CS)
