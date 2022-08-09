@@ -8,7 +8,7 @@ from cereal import car
 
 GearShifter = car.CarState.GearShifter
 
-class CarController():
+class CarController:
   def __init__(self, dbc_name, CP, VM):
     self.CP = CP
     self.apply_steer_last = 0
@@ -17,7 +17,7 @@ class CarController():
     self.last_lkas_falling_edge = 0
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
-
+    
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
 
@@ -25,8 +25,8 @@ class CarController():
 
   def update(self, CC, CS):
     can_sends = []
-
-
+    
+    
     # TODO: can we make this more sane? why is it different for all the cars?
     lkas_control_bit = self.lkas_control_bit_prev
 
@@ -37,7 +37,7 @@ class CarController():
         lkas_control_bit = False
     elif self.CP.carFingerprint in RAM_CARS:
       if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
-        lkas_control_bit = False   
+        lkas_control_bit = False    
 
     # EPS faults if LKAS re-enables too quickly
     lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and CS.out.gearShifter == GearShifter.drive and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
@@ -48,20 +48,20 @@ class CarController():
     # cruise buttons
     if self.frame % 2 == 0:
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
-      
+
       # ACC cancellation
-      if CC.cruiseControl.cancel: 
+      if CC.cruiseControl.cancel:
         self.last_button_frame = self.frame
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, cancel=True))
-      
+
       # ACC resume from standstill
       elif CS.out.cruiseState.standstill:
         self.last_button_frame = self.frame
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, resume=True))
-       
+
     # HUD alerts
-    if self.frame % 25 == 0:  # 0.25s period
-      if (CS.lkas_car_model != -1):
+    if self.frame % 25 == 0:
+      if CS.lkas_car_model != -1:
         can_sends.append(create_lkas_hud(self.packer, self.car_fingerprint, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
         self.hud_count += 1
 
