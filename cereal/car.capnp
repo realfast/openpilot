@@ -306,6 +306,8 @@ struct CarControl {
   # must be true for any actuator commands to work
   enabled @0 :Bool;
   active @7 :Bool;
+  latActive @11: Bool;
+  longActive @12: Bool;
 
   # Actuator commands as computed by controlsd
   actuators @6 :Actuators;
@@ -345,7 +347,7 @@ struct CarControl {
 
   struct CruiseControl {
     cancel @0: Bool;
-    override @1: Bool;
+    resume @1: Bool;
     speedOverride @2: Float32;
     accelOverride @3: Float32;
   }

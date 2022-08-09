@@ -55,7 +55,7 @@ class CarController:
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, cancel=True))
 
       # ACC resume from standstill
-      elif CS.out.cruiseState.standstill:
+      elif CC.cruiseControl.resume:
         self.last_button_frame = self.frame
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, resume=True))
 
