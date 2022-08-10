@@ -37,7 +37,7 @@ class CarController:
     #     lkas_control_bit = False
     # EPS faults if LKAS re-enables too quickly
 
-    if self.CP.minEnableSpeed == 14.6  and CS.out.gearShifter != GearShifter.drive :
+    if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != GearShifter.drive) :
       steercheck = False
     else:
       steercheck = True
