@@ -60,9 +60,9 @@ class CarInterface(CarInterfaceBase):
       if car_fw is not None:
         for fw in car_fw:
           if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
-            ret.steerMinActivation = 14.6
+            ret.minEnableSpeed = 14.6
           else:
-            ret.steerMinActivation = 14.6
+            ret.minEnableSpeed = 14.6
 
 
 
