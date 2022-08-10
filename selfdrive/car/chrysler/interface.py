@@ -107,7 +107,9 @@ class CarInterface(CarInterfaceBase):
 
     ret.events = events.to_msg()
 
-    return ret
+    self.CS.out = ret.as_reader()
+    
+    return self.CS.out
 
   def apply(self, c):
     return self.CC.update(c, self.CS)
