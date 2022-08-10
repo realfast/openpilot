@@ -21,8 +21,6 @@ class CarController:
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
 
-    self.car_fingerprint = CP.carFingerprint
-
   def update(self, CC, CS):
     can_sends = []
     
@@ -40,7 +38,7 @@ class CarController:
         lkas_control_bit = False    
 
     # EPS faults if LKAS re-enables too quickly
-    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and CS.out.gearShifter == GearShifter.drive and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
+    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent # and CS.out.gearShifter == GearShifter.drive
     lkas_active = CC.enabled and lkas_control_bit and self.lkas_control_bit_prev
 
     # *** control msgs ***
@@ -62,7 +60,7 @@ class CarController:
     # HUD alerts
     if self.frame % 25 == 0:
       if CS.lkas_car_model != -1:
-        can_sends.append(create_lkas_hud(self.packer, self.car_fingerprint, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
+        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
         self.hud_count += 1
 
     # steering
@@ -75,7 +73,7 @@ class CarController:
       self.apply_steer_last = apply_steer
 
       idx = self.frame // 2
-      can_sends.append(create_lkas_command(self.packer, self.car_fingerprint, int(apply_steer), lkas_control_bit, idx))
+      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx))
 
     self.frame += 1
     if not lkas_control_bit and self.lkas_control_bit_prev:
