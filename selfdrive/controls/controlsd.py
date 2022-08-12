@@ -40,8 +40,6 @@ IGNORE_PROCESSES = {"rtshield", "uploader", "deleter", "loggerd", "logmessaged",
                     "statsd", "shutdownd"} | \
                     {k for k, v in managed_processes.items() if not v.enabled}
 
-ACTUATOR_FIELDS = set(car.CarControl.Actuators.schema.fields.keys())
-
 ThermalStatus = log.DeviceState.ThermalStatus
 State = log.ControlsState.OpenpilotState
 PandaType = log.PandaState.PandaType
@@ -52,9 +50,11 @@ EventName = car.CarEvent.EventName
 ButtonEvent = car.CarState.ButtonEvent
 SafetyModel = car.CarParams.SafetyModel
 
-IGNORED_SAFETY_MODES = [SafetyModel.silent, SafetyModel.noOutput]
+IGNORED_SAFETY_MODES = (SafetyModel.silent, SafetyModel.noOutput)
 CSID_MAP = {"0": EventName.roadCameraError, "1": EventName.wideRoadCameraError, "2": EventName.driverCameraError}
-
+ACTUATOR_FIELDS = tuple(car.CarControl.Actuators.schema.fields.keys())
+ACTIVE_STATES = (State.enabled, State.softDisabling, State.overriding)
+ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None):
     config_realtime_process(4 if TICI else 3, Priority.CTRL_HIGH)
@@ -357,7 +357,8 @@ class Controls:
 
     if not self.initialized:
       all_valid = CS.canValid and self.sm.all_alive_and_valid()
-      if all_valid or self.sm.frame * DT_CTRL > 3.5 or SIMULATION:
+      timed_out = self.sm.frame * DT_CTRL > (6. if REPLAY else 3.5)
+      if all_valid or timed_out or SIMULATION:
         if not self.read_only:
           self.CI.init(self.CP, self.can_sock, self.pm.sock['sendcan'])
         self.initialized = True
@@ -397,9 +398,13 @@ class Controls:
 
     # if stock cruise is completely disabled, then we can use our own set speed logic
     if not self.CP.pcmCruise:
-      self.v_cruise_kph = update_v_cruise(self.v_cruise_kph, CS.buttonEvents, self.button_timers, self.enabled, self.is_metric)
-    elif CS.cruiseState.enabled:
-      self.v_cruise_kph = CS.cruiseState.speed * CV.MS_TO_KPH
+      self.v_cruise_kph = update_v_cruise(self.v_cruise_kph, CS.vEgo, CS.gasPressed, CS.buttonEvents,
+                                          self.button_timers, self.enabled, self.is_metric)
+    else:
+      if CS.cruiseState.available:
+        self.v_cruise_kph = CS.cruiseState.speed * CV.MS_TO_KPH
+      else:
+        self.v_cruise_kph = 0
 
     # decrement the soft disable timer at every step, as it's reset on
     # entrance in SOFT_DISABLING state
@@ -407,7 +412,7 @@ class Controls:
 
     self.current_alert_types = [ET.PERMANENT]
 
-    # ENABLED, PRE ENABLING, SOFT DISABLING
+    # ENABLED, SOFT DISABLING, PRE ENABLING, OVERRIDING
     if self.state != State.disabled:
       # user and immediate disable always have priority in a non-disabled state
       if self.events.any(ET.USER_DISABLE):
@@ -426,6 +431,10 @@ class Controls:
             self.soft_disable_timer = int(SOFT_DISABLE_TIME / DT_CTRL)
             self.current_alert_types.append(ET.SOFT_DISABLE)
 
+          elif self.events.any(ET.OVERRIDE):
+            self.state = State.overriding
+            self.current_alert_types.append(ET.OVERRIDE)
+
         # SOFT DISABLING
         elif self.state == State.softDisabling:
           if not self.events.any(ET.SOFT_DISABLE):
@@ -440,10 +449,24 @@ class Controls:
 
         # PRE ENABLING
         elif self.state == State.preEnabled:
-          if not self.events.any(ET.PRE_ENABLE):
+          if self.events.any(ET.NO_ENTRY):
+            self.state = State.disabled
+            self.current_alert_types.append(ET.NO_ENTRY)
+          elif not self.events.any(ET.PRE_ENABLE):
             self.state = State.enabled
           else:
             self.current_alert_types.append(ET.PRE_ENABLE)
+
+        # OVERRIDING
+        elif self.state == State.overriding:
+          if self.events.any(ET.SOFT_DISABLE):
+            self.state = State.softDisabling
+            self.soft_disable_timer = int(SOFT_DISABLE_TIME / DT_CTRL)
+            self.current_alert_types.append(ET.SOFT_DISABLE)
+          elif not self.events.any(ET.OVERRIDE):
+            self.state = State.enabled
+          else:
+            self.current_alert_types.append(ET.OVERRIDE)
 
     # DISABLED
     elif self.state == State.disabled:
@@ -454,18 +477,19 @@ class Controls:
         else:
           if self.events.any(ET.PRE_ENABLE):
             self.state = State.preEnabled
+          elif self.events.any(ET.OVERRIDE):
+            self.state = State.overriding
           else:
             self.state = State.enabled
           self.current_alert_types.append(ET.ENABLE)
-          self.v_cruise_kph = initialize_v_cruise(CS.vEgo, CS.buttonEvents, self.v_cruise_kph_last)
+          if not self.CP.pcmCruise:
+            self.v_cruise_kph = initialize_v_cruise(CS.vEgo, CS.buttonEvents, self.v_cruise_kph_last)
 
-    # Check if actuators are enabled
-    self.active = self.state == State.enabled or self.state == State.softDisabling
+    # Check if openpilot is engaged and actuators are enabled
+    self.enabled = self.state in ENABLED_STATES
+    self.active = self.state in ACTIVE_STATES
     if self.active:
       self.current_alert_types.append(ET.WARNING)
-
-    # Check if openpilot is engaged
-    self.enabled = self.active or self.state == State.preEnabled
 
   def state_control(self, CS):
     """Given the state, this function returns a CarControl packet"""
@@ -625,7 +649,7 @@ class Controls:
     if self.enabled:
       clear_event_types.add(ET.NO_ENTRY)
 
-    alerts = self.events.create_alerts(self.current_alert_types, [self.CP, self.sm, self.is_metric, self.soft_disable_timer])
+    alerts = self.events.create_alerts(self.current_alert_types, [self.CP, CS, self.sm, self.is_metric, self.soft_disable_timer])
     self.AM.add_many(self.sm.frame, alerts)
     current_alert = self.AM.process_alerts(self.sm.frame, clear_event_types)
     if current_alert:
