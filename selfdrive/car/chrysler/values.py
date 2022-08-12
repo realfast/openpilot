@@ -41,7 +41,8 @@ class CarControllerParams:
 
 STEER_THRESHOLD = 120
 
-RAM_CARS = {CAR.RAM_1500, }
+RAM_DT = {CAR.RAM_1500, }
+RAM_CARS = RAM_DT
 
 @dataclass
 class ChryslerCarInfo(CarInfo):

@@ -2,7 +2,7 @@ from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons
-from selfdrive.car.chrysler.values import CAR, RAM_CARS, CarControllerParams
+from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, CarControllerParams
 from cereal import car
 
 GearShifter = car.CarState.GearShifter
@@ -27,7 +27,7 @@ class CarController:
     # TODO: can we make this more sane? why is it different for all the cars?
     lkas_control_bit = self.lkas_control_bit_prev
 
-    if CS.out.vEgo >= self.CP.minEnableSpeed:
+    if CS.out.vEgo > self.CP.minSteerSpeed:
       lkas_control_bit = True
     elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
@@ -35,12 +35,11 @@ class CarController:
     # elif self.CP.carFingerprint in RAM_HD:
     #   if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
     #     lkas_control_bit = False
-    # EPS faults if LKAS re-enables too quickly
-
-    if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != GearShifter.drive) :
-      steercheck = False
-    else:
-      steercheck = True
+    elif self.CP.carFingerprint in RAM_DT:
+      if CS.out.vEgo >= self.CP.minEnableSpeed:
+        lkas_control_bit = True
+      if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != GearShifter.drive) :
+        lkas_control_bit = False
 
     lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent and steercheck# and CS.out.gearShifter == GearShifter.drive
     lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev
