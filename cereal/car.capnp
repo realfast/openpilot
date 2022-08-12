@@ -143,6 +143,10 @@ struct CarEvent @0x9b1657f34caf3ad3 {
 struct CarState {
   events @13 :List(CarEvent);
 
+  # CAN health
+  canValid @26 :Bool;       # invalid counter/checksums
+  canTimeout @40 :Bool;     # CAN bus dropped out
+
   # car speed
   vEgo @1 :Float32;         # best estimate of speed
   aEgo @16 :Float32;        # best estimate of acceleration
@@ -169,12 +173,12 @@ struct CarState {
   steeringTorqueEps @27 :Float32;  # TODO: standardize units
   steeringPressed @9 :Bool;        # if the user is using the steering wheel
   steeringRateLimited @29 :Bool;   # if the torque is limited by the rate limiter
-  steerFaultTemporary @35 :Bool;          # temporary steer unavailble
-  steerFaultPermanent @36 :Bool;            # permanent steer error
+  steerFaultTemporary @35 :Bool;   # temporary EPS fault
+  steerFaultPermanent @36 :Bool;   # permanent EPS fault
   stockAeb @30 :Bool;
   stockFcw @31 :Bool;
   espDisabled @32 :Bool;
-  accFaulted @43 :Bool;
+  accFaulted @42 :Bool;
 
   # cruise state
   cruiseState @10 :CruiseState;
@@ -191,7 +195,6 @@ struct CarState {
   # lock info
   doorOpen @24 :Bool;
   seatbeltUnlatched @25 :Bool;
-  canValid @26 :Bool;
 
   # clutch (manual transmission only)
   clutchPressed @28 :Bool;
@@ -203,11 +206,8 @@ struct CarState {
   leftBlindspot @33 :Bool; # Is there something blocking the left lane change
   rightBlindspot @34 :Bool; # Is there something blocking the right lane change
 
-  # dp
-  lkMode @39 :Bool;
-  engineRPM @40 :Float32;
-  cruiseActualEnabled @41 :Bool;
-  distanceLines @42 :UInt8;
+  fuelGauge @41 :Float32; # battery or fuel tank level from 0.0 to 1.0
+  charging @43 :Bool;
 
   struct WheelSpeeds {
     # optional wheel speeds
@@ -224,8 +224,6 @@ struct CarState {
     speedOffset @3 :Float32;
     standstill @4 :Bool;
     nonAdaptive @5 :Bool;
-    #mapd
-    speedLimit @6 :Float32;
   }
 
   enum GearShifter {
@@ -263,7 +261,7 @@ struct CarState {
   }
 
   errorsDEPRECATED @0 :List(CarEvent.EventName);
-  brakeLights @19 :Bool;
+  brakeLightsDEPRECATED @19 :Bool;
 }
 
 # ******* radar state @ 20hz *******
