@@ -43,7 +43,7 @@ class CarController:
     
     
 
-    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent and steercheck# and CS.out.gearShifter == GearShifter.drive
+    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent # and CS.out.gearShifter == GearShifter.drive
     lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev
 
     # *** control msgs ***
