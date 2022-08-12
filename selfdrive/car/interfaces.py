@@ -109,7 +109,7 @@ class CarInterfaceBase(ABC):
   def apply(self, c: car.CarControl) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     pass
 
-  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True):
+  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True, allow_enable=True):
     events = Events()
 
     if cs_out.doorOpen:
@@ -125,8 +125,6 @@ class CarInterfaceBase(ABC):
       events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
       events.add(EventName.espDisabled)
-    if cs_out.gasPressed:
-      events.add(EventName.gasPressed)
     if cs_out.stockFcw:
       events.add(EventName.stockFcw)
     if cs_out.stockAeb:
@@ -137,7 +135,10 @@ class CarInterfaceBase(ABC):
       events.add(EventName.wrongCruiseMode)
     if cs_out.brakeHoldActive and self.CP.openpilotLongitudinalControl:
       events.add(EventName.brakeHold)
-
+    if cs_out.parkingBrake:
+      events.add(EventName.parkBrake)
+    if cs_out.accFaulted:
+      events.add(EventName.accFaulted)
 
     # Handle permanent and temporary steering faults
     self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
@@ -153,14 +154,10 @@ class CarInterfaceBase(ABC):
     if cs_out.steerFaultPermanent:
       events.add(EventName.steerUnavailable)
 
-    # Disable on rising edge of gas or brake. Also disable on brake when speed > 0.
-    if (cs_out.gasPressed and not self.CS.out.gasPressed) or \
-       (cs_out.brakePressed and (not self.CS.out.brakePressed or not cs_out.standstill)):
-      events.add(EventName.pedalPressed)
-
     # we engage when pcm is active (rising edge)
+    # enabling can optionally be blocked by the car interface
     if pcm_enable:
-      if cs_out.cruiseState.enabled and not self.CS.out.cruiseState.enabled:
+      if cs_out.cruiseState.enabled and not self.CS.out.cruiseState.enabled and allow_enable:
         events.add(EventName.pcmEnable)
       elif not cs_out.cruiseState.enabled:
         events.add(EventName.pcmDisable)
