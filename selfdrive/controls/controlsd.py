@@ -738,15 +738,16 @@ class Controls:
       self.prof.checkpoint("State transition")
 
     # Compute actuators (runs PID loops and lateral MPC)
-    actuators, lac_log = self.state_control(CS)
+    CC, lac_log = self.state_control(CS)
 
     self.prof.checkpoint("State Control")
 
     # Publish data
-    self.publish_logs(CS, start_time, actuators, lac_log)
+    self.publish_logs(CS, start_time, CC, lac_log)
     self.prof.checkpoint("Sent")
 
     self.update_button_timers(CS.buttonEvents)
+    self.CS_prev = CS
 
   def controlsd_thread(self):
     while True:
