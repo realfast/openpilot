@@ -32,7 +32,9 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     reverseGear @10;
     buttonCancel @11;
     buttonEnable @12;
-    pedalPressed @13;
+    pedalPressed @13;  # exits active state
+    pedalPressedPreEnable @73;  # added during pre-enable state for either pedal
+    gasPressedOverride @108;  # added when user is pressing gas with no disengage on gas
     cruiseDisabled @14;
     speedTooLow @17;
     outOfSpace @18;
@@ -64,6 +66,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     accFaulted @51;
     sensorDataInvalid @52;
     commIssue @53;
+    commIssueAvgFreq @109;
     tooDistracted @54;
     posenetInvalid @55;
     soundsUnavailable @56;
@@ -78,7 +81,6 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     speedTooHigh @70;
     laneChangeBlocked @71;
     relayMalfunction @72;
-    gasPressed @73;
     stockFcw @74;
     startup @75;
     startupNoCar @76;
@@ -94,6 +96,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     deviceFalling @90;
     fanMalfunction @91;
     cameraMalfunction @92;
+    cameraFrameRate @110;
     gpsMalfunction @94;
     processNotRunning @95;
     dashcamMode @96;
@@ -106,6 +109,8 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     highCpuUsage @105;
     cruiseMismatch @106;
     lkasDisabled @107;
+    canBusMissing @111;
+    controlsdLagging @112;
 
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
@@ -129,13 +134,6 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     modelLagWarningDEPRECATED @93;
     startupOneplusDEPRECATED @82;
     startupFuzzyFingerprintDEPRECATED @97;
-
-    #dp
-    autoLaneChange @108;
-    manualSteeringRequired @109;
-    manualSteeringRequiredBlinkersOn @110;
-    speedLimitActive @111;
-    speedLimitValueChange @112;
   }
 }
 
@@ -417,7 +415,8 @@ struct CarParams {
   minSteerSpeed @8 :Float32;
   maxSteeringAngleDeg @54 :Float32;
   safetyConfigs @62 :List(SafetyConfig);
-  unsafeMode @65 :Int16;
+  alternativeExperience @65 :Int16;      # panda flag for features like no disengage on gas
+
 
   steerMaxBP @11 :List(Float32);
   steerMaxV @12 :List(Float32);
