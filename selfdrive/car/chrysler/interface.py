@@ -14,11 +14,14 @@ class CarInterface(CarInterfaceBase):
 
     ret.radarOffCan = DBC[candidate]['radar'] is None
 
+    param = Panda.FLAG_CHRYSLER_RAM_DT if candidate in RAM_CARS else None
+    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler, param)]
 
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4
 
     ret.minSteerSpeed = 3.8  # m/s
+    ret.minEnableSpeed = 3.8
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       # TODO: allow 2019 cars to steer down to 13 m/s if already engaged.
       ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
@@ -44,18 +47,13 @@ class CarInterface(CarInterfaceBase):
 
     # Ram
     elif candidate == CAR.RAM_1500:
-      MAX_LAT_ACCEL = 2.5
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.1 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.05
       ret.steerActuatorDelay = 0.2
       ret.steerRateCost = 1.0
       ret.wheelbase = 3.67
       ret.steerRatio = 16.3
       ret.mass = 2493. + STD_CARGO_KG
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
+
       ret.minSteerSpeed = 14.6
       if car_fw is not None:
         for fw in car_fw:
@@ -64,8 +62,6 @@ class CarInterface(CarInterfaceBase):
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
-
-    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
 
     ret.centerToFront = ret.wheelbase * 0.44
 
@@ -80,22 +76,15 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  # returns a car.CarState
-  def update(self, c, can_strings):
-    # ******************* do can recv *******************
-    self.cp.update_strings(can_strings)
-    self.cp_cam.update_strings(can_strings)
-
+  def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)
-
-    ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
 
     # events
     events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
 
     # Low speed steer alert hysteresis logic
     if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 0.5):
-      self.low_speed_alert = True
+      self.low_speed_alert = False
     elif ret.vEgo > (self.CP.minSteerSpeed + 1.):
       self.low_speed_alert = False
     if self.low_speed_alert:
@@ -103,9 +92,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.events = events.to_msg()
 
-    self.CS.out = ret.as_reader()
-    
-    return self.CS.out
+    return ret
 
   def apply(self, c):
     return self.CC.update(c, self.CS)
