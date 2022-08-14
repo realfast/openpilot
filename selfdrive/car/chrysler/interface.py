@@ -14,8 +14,8 @@ class CarInterface(CarInterfaceBase):
 
     ret.radarOffCan = DBC[candidate]['radar'] is None
 
-    param = Panda.FLAG_CHRYSLER_RAM_DT if candidate in RAM_CARS else None
-    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler, param)]
+    # param = Panda.FLAG_CHRYSLER_RAM_DT if candidate in RAM_CARS else None
+    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
 
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4
