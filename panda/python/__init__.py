@@ -8,6 +8,7 @@ import time
 import traceback
 import sys
 from functools import wraps
+from typing import Optional
 from .dfu import PandaDFU, MCU_TYPE_F2, MCU_TYPE_F4, MCU_TYPE_H7  # pylint: disable=import-error
 from .flash_release import flash_release  # noqa pylint: disable=import-error
 from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
@@ -114,7 +115,13 @@ def ensure_can_packet_version(fn):
     return fn(self, *args, **kwargs)
   return wrapper
 
-class Panda(object):
+class ALTERNATIVE_EXPERIENCE:
+  DEFAULT = 0
+  DISABLE_DISENGAGE_ON_GAS = 1
+  DISABLE_STOCK_AEB = 2
+  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
+
+class Panda:
 
   # matches cereal.car.CarParams.SafetyModel
   SAFETY_SILENT = 0
@@ -138,6 +145,11 @@ class Panda(object):
   SAFETY_VOLKSWAGEN_PQ = 21
   SAFETY_SUBARU_LEGACY = 22
   SAFETY_HYUNDAI_LEGACY = 23
+  SAFETY_HYUNDAI_COMMUNITY = 24
+  SAFETY_STELLANTIS = 25
+  SAFETY_FAW = 26
+  SAFETY_BODY = 27
+  SAFETY_HYUNDAI_HDA2 = 28
 
   SERIAL_DEBUG = 0
   SERIAL_ESP = 1
@@ -160,25 +172,33 @@ class Panda(object):
   HW_TYPE_RED_PANDA = b'\x07'
 
   CAN_PACKET_VERSION = 2
-  HEALTH_PACKET_VERSION = 3
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHI")
+  HEALTH_PACKET_VERSION = 7
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBBBHBBBHIf")
 
-  F2_DEVICES = [HW_TYPE_PEDAL]
-  F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
-  H7_DEVICES = [HW_TYPE_RED_PANDA]
+  F2_DEVICES = (HW_TYPE_PEDAL, )
+  F4_DEVICES = (HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS)
+  H7_DEVICES = (HW_TYPE_RED_PANDA, )
 
   CLOCK_SOURCE_MODE_DISABLED = 0
   CLOCK_SOURCE_MODE_FREE_RUNNING = 1
 
+  # first byte is for EPS scaling factor
+  FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
+  FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
+
   FLAG_HONDA_ALT_BRAKE = 1
   FLAG_HONDA_BOSCH_LONG = 2
   FLAG_HONDA_NIDEC_ALT = 4
+  FLAG_HONDA_RADARLESS = 8
 
   FLAG_HYUNDAI_EV_GAS = 1
   FLAG_HYUNDAI_HYBRID_GAS = 2
   FLAG_HYUNDAI_LONG = 4
+
   FLAG_TESLA_POWERTRAIN = 1
   FLAG_TESLA_LONG_CONTROL = 2
+
+  FLAG_CHRYSLER_RAM_DT = 1
 
   def __init__(self, serial=None, claim=True):
     self._serial = serial
@@ -480,8 +500,8 @@ class Panda(object):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xda, int(bootmode), 0, b'')
     time.sleep(0.2)
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, disable_checks=True):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, 0, b'')
+  def set_safety_mode(self, mode=SAFETY_SILENT, param=0, disable_checks=True):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
     if disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
