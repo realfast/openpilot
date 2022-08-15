@@ -53,7 +53,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.3
       ret.mass = 2493. + STD_CARGO_KG
       ret.maxLateralAccel = 2.5
-      ret.lateralTuning.torque.friction = 0.05
+      # ret.lateralTuning.torque.friction = 0.05
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
       ret.minSteerSpeed = 14.6
