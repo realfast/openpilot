@@ -92,6 +92,7 @@ class CarState(CarStateBase):
 
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
+    self.cruise_buttons = cp.vl["CRUISE_BUTTONS"]
 
     return ret
 
@@ -136,6 +137,14 @@ class CarState(CarStateBase):
       ("COLUMN_TORQUE", "EPS_2"),
       ("EPS_TORQUE_MOTOR", "EPS_2"),
       ("LKAS_STATE", "EPS_2"),
+      ("ACC_Cancel", "CRUISE_BUTTONS"),
+      ("ACC_Distance_Dec", "CRUISE_BUTTONS"),
+      ("ACC_Accel", "CRUISE_BUTTONS"),
+      ("ACC_Decel", "CRUISE_BUTTONS"),
+      ("ACC_Resume", "CRUISE_BUTTONS"),
+      ("Cruise_OnOff", "CRUISE_BUTTONS"),
+      ("ACC_OnOff", "CRUISE_BUTTONS"),
+      ("ACC_Distance_Inc", "CRUISE_BUTTONS"),
       ("COUNTER", "CRUISE_BUTTONS"),
     ]
 
