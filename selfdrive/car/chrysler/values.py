@@ -23,12 +23,19 @@ class CAR:
 
   # Ram
   RAM_1500 = "RAM 1500 5TH GEN"
+  RAM_HD = "RAM HD 5TH GEN"
 
 
 class CarControllerParams:
   def __init__(self, CP):  
 
-    if CP.carFingerprint in RAM_CARS:
+    if CP.carFingerprint in RAM_HD:
+      self.STEER_DELTA_UP = 14
+      self.STEER_DELTA_DOWN = 14
+      self.STEER_MAX = 361 # higher than this faults the EPS
+      self.STEER_ERROR_MAX = 200
+      
+    elif CP.carFingerprint in RAM_CARS:
       self.STEER_DELTA_UP = 6
       self.STEER_DELTA_DOWN = 6
       self.STEER_MAX = 350 # higher than this faults the EPS
@@ -42,7 +49,8 @@ class CarControllerParams:
 STEER_THRESHOLD = 120
 
 RAM_DT = {CAR.RAM_1500, }
-RAM_CARS = RAM_DT
+RAM_HD = {CAR.RAM_HD, }
+RAM_CARS = RAM_DT | RAM_HD
 
 @dataclass
 class ChryslerCarInfo(CarInfo):
@@ -54,10 +62,17 @@ CAR_INFO: Dict[str, Optional[Union[ChryslerCarInfo, List[ChryslerCarInfo]]]] = {
   CAR.PACIFICA_2018_HYBRID: None,  # same platforms
   CAR.PACIFICA_2019_HYBRID: ChryslerCarInfo("Chrysler Pacifica Hybrid 2019-22"),
   CAR.PACIFICA_2018: ChryslerCarInfo("Chrysler Pacifica 2017-18"),
-  CAR.PACIFICA_2020: ChryslerCarInfo("Chrysler Pacifica 2019-20"),
+  CAR.PACIFICA_2020: [
+    ChryslerCarInfo("Chrysler Pacifica 2019-20"),
+    ChryslerCarInfo("Chrysler Pacifica 2021", package="All"),
+  ],
   CAR.JEEP_CHEROKEE: ChryslerCarInfo("Jeep Grand Cherokee 2016-18", video_link="https://www.youtube.com/watch?v=eLR9o2JkuRk"),
   CAR.JEEP_CHEROKEE_2019: ChryslerCarInfo("Jeep Grand Cherokee 2019-21", video_link="https://www.youtube.com/watch?v=jBe4lWnRSu4"),
-  CAR.RAM_1500: ChryslerCarInfo("Ram 1500 2019-22"),
+  CAR.RAM_1500: ChryslerCarInfo("Ram 1500 2019-22",),
+  CAR.RAM_HD: [
+    ChryslerCarInfo("Ram 2500 2020-22",),
+    ChryslerCarInfo("Ram 3500 2020-22",),
+  ],
 }
 
 # Unique CAN messages:
@@ -141,7 +156,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68535469AB',
       b'68535470AC',
     ],
-    (Ecu.fwdCamera, 0x753, None): [
+    (Ecu.fwdRadar, 0x753, None): [
       b'68320950AI',
       b'68320950AJ',
       b'68320950AL',
@@ -185,6 +200,40 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
     #   b'68533631AB',
     # ],
   },
+  CAR.RAM_HD: {
+    (Ecu.combinationMeter, 0x742, None): [
+      b'68361606AH',
+      b'68492693AD',
+    ],
+    (Ecu.srs, 0x744, None): [
+      b'68399794AC',
+      b'68428503AA',
+      b'68428505AA',
+    ],
+    (Ecu.esp, 0x747, None): [
+      b'68334977AH',
+      b'68504022AB',
+      b'68530686AB',
+    ],
+    (Ecu.fwdRadar, 0x753, None): [
+      b'04672895AB',
+      b'56029827AG',
+      b'68484694AE',
+    ],
+    (Ecu.eps, 0x761, None): [
+      b'68421036AC',
+      b'68507906AB',
+    ],
+    (Ecu.engine, 0x7e0, None): [
+      b'52421132AF',
+      b'M2370131MB',
+      b'M2421132MB',
+    ],
+    (Ecu.gateway, 0x18DACBF1, None): [
+      b'68488419AB',
+      b'68535476AB',
+    ],
+  },
 }
 
 DBC = {
@@ -196,4 +245,5 @@ DBC = {
   CAR.JEEP_CHEROKEE: dbc_dict('chrysler_pacifica_2017_hybrid_generated', 'chrysler_pacifica_2017_hybrid_private_fusion'),
   CAR.JEEP_CHEROKEE_2019: dbc_dict('chrysler_pacifica_2017_hybrid_generated', 'chrysler_pacifica_2017_hybrid_private_fusion'),
   CAR.RAM_1500: dbc_dict('chrysler_ram_dt_generated', None),
+  CAR.RAM_HD: dbc_dict('chrysler_ram_hd_generated', None),
 }
