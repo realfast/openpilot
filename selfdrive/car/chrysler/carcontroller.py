@@ -52,7 +52,16 @@ class CarController:
     if (CS.button_counter != self.last_button_frame):
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
       self.last_button_frame = CS.button_counter
-      can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
+      if self.CP.carFingerprint in RAM_CARS:
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
+
+       # ACC cancellation
+      elif CC.cruiseControl.cancel:
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, cancel=True))
+
+      # ACC resume from standstill
+      elif CC.cruiseControl.resume:
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
 
     # HUD alerts
     if self.frame % 25 == 0:
