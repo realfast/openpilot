@@ -46,6 +46,9 @@ class CarController:
     lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
     lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev  and not CS.lkasdisabled
 
+    if not lkas_control_bit and self.lkas_control_bit_prev:
+      self.last_lkas_falling_edge = self.frame
+
     # *** control msgs ***
 
     # cruise buttons
@@ -80,11 +83,9 @@ class CarController:
 
       idx = self.frame // 2
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx))
+      self.lkas_control_bit_prev = lkas_control_bit
 
-    self.frame += 1
-    if not lkas_control_bit and self.lkas_control_bit_prev:
-      self.last_lkas_falling_edge = self.frame
-    self.lkas_control_bit_prev = lkas_control_bit
+    self.frame += 1   
 
     new_actuators = CC.actuators.copy()
     new_actuators.steer = self.apply_steer_last / self.params.STEER_MAX
