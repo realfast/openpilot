@@ -43,8 +43,8 @@ class CarController:
     
     
 
-    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent # and CS.out.gearShifter == GearShifter.drive
-    lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev
+    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
+    lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev  and not CS.lkasdisabled
 
     # *** control msgs ***
 
@@ -66,7 +66,7 @@ class CarController:
     # HUD alerts
     if self.frame % 25 == 0:
       if CS.lkas_car_model != -1:
-        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
+        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS))
         self.hud_count += 1
 
     # steering

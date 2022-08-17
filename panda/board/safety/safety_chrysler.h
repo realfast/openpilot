@@ -36,6 +36,7 @@ const int CHRYSLER_RAM_HD_MAX_RT_DELTA = 182;
 #define DAS_6_RAM                  250  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_RAM           166  // LKAS controls from DASM
 #define CRUISE_BUTTONS_RAM         177  // Cruise control buttons
+#define Center_Stack_2_RAM         650  // Center Stack buttons
 
 // CAN messages for the 5th gen RAM HD platform
 #define DAS_6_HD                   629  // LKAS HUD and auto headlight control from DASM
@@ -287,7 +288,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   // forward to camera
-  if ((bus_num == 0) && (addr != CRUISE_BUTTONS_RAM) && (addr != CRUISE_BUTTONS_HD)) {
+  if ((bus_num == 0) && (addr != CRUISE_BUTTONS_RAM) && (addr != CRUISE_BUTTONS_HD) && (addr != Center_Stack_2_RAM)) {
     bus_fwd = 2;
   }
 
