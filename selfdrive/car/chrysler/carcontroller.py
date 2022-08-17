@@ -22,34 +22,8 @@ class CarController:
 
   def update(self, CC, CS):
     can_sends = []
-    
-    
-    # TODO: can we make this more sane? why is it different for all the cars?
-    lkas_control_bit = self.lkas_control_bit_prev
 
-    if self.CP.carFingerprint in RAM_DT:
-      if CS.out.vEgo >= self.CP.minEnableSpeed:
-        lkas_control_bit = True
-      if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != GearShifter.drive) :
-        lkas_control_bit = False
-    elif CS.out.vEgo > self.CP.minSteerSpeed:
-      lkas_control_bit = True
-    elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
-      if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
-        lkas_control_bit = False
-    elif self.CP.carFingerprint in RAM_HD:
-      if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
-        lkas_control_bit = False
-    
-    
-
-    lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
-    lkas_active = CC.latActive and lkas_control_bit and self.lkas_control_bit_prev  and not CS.lkasdisabled
-
-    if not lkas_control_bit and self.lkas_control_bit_prev:
-      self.last_lkas_falling_edge = self.frame
-
-    # *** control msgs ***
+    lkas_active = CC.latActive and self.lkas_control_bit_prev and not CS.lkasdisabled
 
     # cruise buttons
     if (CS.button_counter != self.last_button_frame):
@@ -74,18 +48,40 @@ class CarController:
 
     # steering
     if self.frame % 2 == 0:
+
+      # TODO: can we make this more sane? why is it different for all the cars?
+      lkas_control_bit = self.lkas_control_bit_prev
+      if self.CP.carFingerprint in RAM_DT:
+        if CS.out.vEgo >= self.CP.minEnableSpeed:
+          lkas_control_bit = True
+        if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != GearShifter.drive) :
+          lkas_control_bit = False
+      elif CS.out.vEgo > self.CP.minSteerSpeed:
+        lkas_control_bit = True
+      elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
+        if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
+          lkas_control_bit = False
+      elif self.CP.carFingerprint in RAM_HD:
+        if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
+          lkas_control_bit = False
+
+      # EPS faults if LKAS re-enables too quickly
+      lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
+
+      if not lkas_control_bit and self.lkas_control_bit_prev:
+        self.last_lkas_falling_edge = self.frame
+      self.lkas_control_bit_prev = lkas_control_bit
+
       # steer torque
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
-      if not lkas_active:
+      if not lkas_active or not lkas_control_bit:
         apply_steer = 0
       self.apply_steer_last = apply_steer
 
-      idx = self.frame // 2
-      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx))
-      self.lkas_control_bit_prev = lkas_control_bit
+      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
 
-    self.frame += 1   
+    self.frame += 1
 
     new_actuators = CC.actuators.copy()
     new_actuators.steer = self.apply_steer_last / self.params.STEER_MAX
