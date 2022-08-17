@@ -57,11 +57,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.3
       ret.mass = 2493. + STD_CARGO_KG
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
-      ret.minSteerSpeed = 0.5
       if car_fw is not None:
         for fw in car_fw:
           if fw.ecu == 'eps':
-            ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else 14.6
+            ret.minEnableSpeed, ret.minSteerSpeed = [0.,0.5]  if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else [14.6, 14.6]
 
     elif candidate == CAR.RAM_HD:
       ret.steerActuatorDelay = 0.2
@@ -95,15 +94,15 @@ class CarInterface(CarInterfaceBase):
 
     if self.CP.carFingerprint in RAM_DT:
       if self.CS.out.vEgo >= self.CP.minEnableSpeed:
-        self.low_speed_alert = False
-      if (self.CP.minEnableSpeed >= 14.5)  and (self.CS.out.gearShifter != GearShifter.drive) :
-        self.low_speed_alert = True
+        car.CarParams.minSteerSpeed = 0.5
+      elif (self.CP.minEnableSpeed >= 14.5)  and (self.CS.out.gearShifter != GearShifter.drive) :
+        car.CarParams.minSteerSpeed = 14.6
 
-    else:# Low speed steer alert hysteresis logic
-      if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 0.5):
-        self.low_speed_alert = True
-      elif ret.vEgo > (self.CP.minSteerSpeed + 1.):
-        self.low_speed_alert = False
+
+    if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 0.5):
+      self.low_speed_alert = True
+    elif ret.vEgo > (self.CP.minSteerSpeed + 1.):
+      self.low_speed_alert = False
     if self.low_speed_alert:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 
