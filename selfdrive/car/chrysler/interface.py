@@ -2,7 +2,7 @@
 from cereal import car
 from panda import Panda
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
-from selfdrive.car.chrysler.values import CAR, DBC, RAM_CARS
+from selfdrive.car.chrysler.values import CAR, DBC, RAM_DT, RAM_HD
 from selfdrive.car.interfaces import CarInterfaceBase
 
 
@@ -14,8 +14,11 @@ class CarInterface(CarInterfaceBase):
 
     ret.radarOffCan = DBC[candidate]['radar'] is None
 
-    param = Panda.FLAG_CHRYSLER_RAM_DT if candidate in RAM_CARS else None
-    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler, param)]
+    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
+    if candidate in RAM_HD:
+      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD
+    elif candidate in RAM_DT:
+      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_DT
 
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4

@@ -199,6 +199,7 @@ class Panda:
   FLAG_TESLA_LONG_CONTROL = 2
 
   FLAG_CHRYSLER_RAM_DT = 1
+  FLAG_CHRYSLER_RAM_DT = 2
 
   def __init__(self, serial=None, claim=True):
     self._serial = serial
