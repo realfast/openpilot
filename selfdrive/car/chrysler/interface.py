@@ -2,9 +2,10 @@
 from cereal import car
 from panda import Panda
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
-from selfdrive.car.chrysler.values import CAR, DBC, RAM_DT, RAM_HD
+from selfdrive.car.chrysler.values import CAR, DBC, RAM_HD, RAM_DT
 from selfdrive.car.interfaces import CarInterfaceBase
 
+GearShifter = car.CarState.GearShifter
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
@@ -14,14 +15,15 @@ class CarInterface(CarInterfaceBase):
 
     ret.radarOffCan = DBC[candidate]['radar'] is None
 
+    ret.steerActuatorDelay = 0.1
+    ret.steerLimitTimer = 0.4
+
+    # safety config
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
     if candidate in RAM_HD:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD
     elif candidate in RAM_DT:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_DT
-
-    ret.steerActuatorDelay = 0.1
-    ret.steerLimitTimer = 0.4
 
     ret.minSteerSpeed = 3.8  # m/s
     ret.minEnableSpeed = 3.8
@@ -62,6 +64,14 @@ class CarInterface(CarInterfaceBase):
         for fw in car_fw:
           if fw.ecu == 'eps':
             ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else 14.6
+
+    elif candidate == CAR.RAM_HD:
+      ret.steerActuatorDelay = 0.2
+      ret.wheelbase = 3.785
+      ret.steerRatio = 15.61
+      ret.mass = 3405. + STD_CARGO_KG
+      ret.minSteerSpeed = 16
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
