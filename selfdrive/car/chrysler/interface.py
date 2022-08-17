@@ -53,7 +53,6 @@ class CarInterface(CarInterfaceBase):
     # Ram
     elif candidate == CAR.RAM_1500:
       ret.steerActuatorDelay = 0.2
-      ret.steerRateCost = 1.0
       ret.wheelbase = 3.67
       ret.steerRatio = 16.3
       ret.mass = 2493. + STD_CARGO_KG
