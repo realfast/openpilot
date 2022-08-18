@@ -32,6 +32,7 @@ if __name__ == "__main__":
 
   panda = Panda()
   panda.set_safety_mode(Panda.SAFETY_ELM327)
+  panda.set_heartbeat_disabled()
   print("querying addresses ...")
   with tqdm(addrs) as t:
     for addr in t:
@@ -39,10 +40,13 @@ if __name__ == "__main__":
       if addr == 0x7df or addr == 0x18db33f1:
         continue
       t.set_description(hex(addr))
-      panda.send_heartbeat()
 
       bus = 1 if panda.has_obd() else 0
-      rx_addr = addr + int(args.rxoffset, base=16) if args.rxoffset else None
+      if addr<0x800:
+        rx_addr = addr - 0x280
+      else:
+        rx_addr = (addr & 0x7FFF0000) + ((addr & 0xFF)<<8) + ((addr & 0xFF00)>>8)
+        
       uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.2, debug=args.debug)
       # Check for anything alive at this address, and switch to the highest
       # available diagnostic session without security access

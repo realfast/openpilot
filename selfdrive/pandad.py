@@ -4,13 +4,12 @@ import os
 import usb1
 import time
 import subprocess
-from typing import List, NoReturn
+from typing import NoReturn
 from functools import cmp_to_key
 
 from panda import DEFAULT_FW_FN, DEFAULT_H7_FW_FN, MCU_TYPE_H7, Panda, PandaDFU
 from common.basedir import BASEDIR
 from common.params import Params
-from selfdrive.hardware import HARDWARE
 from selfdrive.swaglog import cloudlog
 
 
@@ -95,7 +94,7 @@ def main() -> NoReturn:
       cloudlog.info(f"{len(panda_serials)} panda(s) found, connecting - {panda_serials}")
 
       # Flash pandas
-      pandas: List[Panda] = []
+      pandas = []
       for serial in panda_serials:
         pandas.append(flash_panda(serial))
 
@@ -112,7 +111,7 @@ def main() -> NoReturn:
 
       # sort pandas to have deterministic order
       pandas.sort(key=cmp_to_key(panda_sort_cmp))
-      panda_serials = list(map(lambda p: p.get_usb_serial(), pandas))  # type: ignore
+      panda_serials = list(map(lambda p: p.get_usb_serial(), pandas))
 
       # log panda fw versions
       params.put("PandaSignatures", b','.join(p.get_signature() for p in pandas))
@@ -128,7 +127,6 @@ def main() -> NoReturn:
     first_run = False
 
     # run boardd with all connected serials as arguments
-    os.environ['MANAGER_DAEMON'] = 'boardd'
     os.chdir(os.path.join(BASEDIR, "selfdrive/boardd"))
     subprocess.run(["./boardd", *panda_serials], check=True)
 

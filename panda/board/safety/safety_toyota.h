@@ -2,14 +2,14 @@
 const int TOYOTA_MAX_TORQUE = 1500;       // max torque cmd allowed ever
 
 // rate based torque limit + stay within actually applied
-// packet is sent at 100hz, so this limit is 1500/sec
-const int TOYOTA_MAX_RATE_UP = 15;        // ramp up slow
+// packet is sent at 100hz, so this limit is 1000/sec
+const int TOYOTA_MAX_RATE_UP = 10;        // ramp up slow
 const int TOYOTA_MAX_RATE_DOWN = 25;      // ramp down fast
 const int TOYOTA_MAX_TORQUE_ERROR = 350;  // max torque cmd in excess of torque motor
 
 // real time torque limit to prevent controls spamming
-// the real time limit is 1800/sec, a 20% buffer
-const int TOYOTA_MAX_RT_DELTA = 450;      // max delta torque allowed for real time checks
+// the real time limit is 1500/sec
+const int TOYOTA_MAX_RT_DELTA = 375;      // max delta torque allowed for real time checks
 const uint32_t TOYOTA_RT_INTERVAL = 250000;    // 250ms between real time checks
 
 // longitudinal limits
@@ -18,10 +18,12 @@ const int TOYOTA_MIN_ACCEL = -3500;       // -3.5 m/s2
 
 const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
 
-// panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
-// If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
-// Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
-const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
+// Roughly calculated using the offsets in openpilot +5%:
+// In openpilot: ((gas1_norm + gas2_norm)/2) > 15
+// gas_norm1 = ((gain_dbc*gas1) + offset1_dbc)
+// gas_norm2 = ((gain_dbc*gas2) + offset2_dbc)
+// In this safety: ((gas1 + gas2)/2) > THRESHOLD
+const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 845;
 #define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U) // avg between 2 tracks
 
 const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  // DSU bus 0
@@ -39,17 +41,10 @@ AddrCheckStruct toyota_addr_checks[] = {
 #define TOYOTA_ADDR_CHECKS_LEN (sizeof(toyota_addr_checks) / sizeof(toyota_addr_checks[0]))
 addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 
-// safety param flags
-// first byte is for eps factor, second is for flags
-const uint32_t TOYOTA_EPS_FACTOR = (1U << 8U) - 1U;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << 8U;
-const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << 8U;
-
-bool toyota_alt_brake = false;
-bool toyota_stock_longitudinal = false;
+// global actuation limit states
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
+static uint8_t toyota_compute_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(len);
@@ -59,7 +54,7 @@ static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
+static uint8_t toyota_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
@@ -119,7 +114,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
-    if (((addr == 0x224) && toyota_alt_brake) || ((addr == 0x226) && !toyota_alt_brake)) {
+    if ((addr == 0x224) || (addr == 0x226)) {
       int byte = (addr == 0x224) ? 0 : 4;
       brake_pressed = ((GET_BYTE(to_push, byte) >> 5) & 1U) != 0U;
     }
@@ -139,7 +134,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
+static int toyota_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -154,7 +149,7 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 
     // GAS PEDAL: safety check
     if (addr == 0x200) {
-      if (!longitudinal_allowed) {
+      if (!controls_allowed) {
         if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
           tx = 0;
         }
@@ -165,20 +160,11 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (addr == 0x343) {
       int desired_accel = (GET_BYTE(to_send, 0) << 8) | GET_BYTE(to_send, 1);
       desired_accel = to_signed(desired_accel, 16);
-      if (!longitudinal_allowed || toyota_stock_longitudinal) {
+      if (!controls_allowed) {
         if (desired_accel != 0) {
           tx = 0;
         }
       }
-
-      // only ACC messages that cancel are allowed when openpilot is not controlling longitudinal
-      if (toyota_stock_longitudinal) {
-        bool cancel_req = GET_BIT(to_send, 24U) != 0U;
-        if (!cancel_req) {
-          tx = 0;
-        }
-      }
-
       bool violation = max_limit_check(desired_accel, TOYOTA_MAX_ACCEL, TOYOTA_MIN_ACCEL);
 
       if (violation) {
@@ -214,7 +200,6 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     if (addr == 0x2E4) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       desired_torque = to_signed(desired_torque, 16);
-      bool steer_req = GET_BIT(to_send, 0U) != 0U;
       bool violation = 0;
 
       uint32_t ts = microsecond_timer_get();
@@ -242,8 +227,8 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
         }
       }
 
-      // no torque if controls is not allowed or mismatch with STEER_REQUEST bit
-      if ((!controls_allowed || !steer_req) && (desired_torque != 0)) {
+      // no torque if controls is not allowed
+      if (!controls_allowed && (desired_torque != 0)) {
         violation = 1;
       }
 
@@ -263,11 +248,11 @@ static int toyota_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   return tx;
 }
 
-static const addr_checks* toyota_init(uint16_t param) {
+static const addr_checks* toyota_init(int16_t param) {
+  controls_allowed = 0;
+  relay_malfunction_reset();
   gas_interceptor_detected = 0;
-  toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
-  toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
-  toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
+  toyota_dbc_eps_torque_factor = param;
   return &toyota_rx_checks;
 }
 
@@ -286,7 +271,7 @@ static int toyota_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
     int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
     // in TSS2 the camera does ACC as well, so filter 0x343
     int is_acc_msg = (addr == 0x343);
-    int block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
+    int block_msg = is_lkas_msg || is_acc_msg;
     if (!block_msg) {
       bus_fwd = 0;
     }

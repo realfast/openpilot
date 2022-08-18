@@ -45,7 +45,6 @@
 #include "libc.h"
 #include "critical.h"
 #include "faults.h"
-#include "utils.h"
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
@@ -60,7 +59,6 @@
 #if !defined(BOOTSTUB) && defined(PANDA)
   #include "drivers/uart.h"
   #include "stm32h7/lluart.h"
-  #include "stm32h7/llexti.h"
 #endif
 
 #ifdef BOOTSTUB

@@ -106,9 +106,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int nissan_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
-  UNUSED(longitudinal_allowed);
-
+static int nissan_tx_hook(CANPacket_t *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = 0;
@@ -160,6 +158,7 @@ static int nissan_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   if (violation) {
+    controls_allowed = 0;
     tx = 0;
   }
 
@@ -189,8 +188,10 @@ static int nissan_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
-static const addr_checks* nissan_init(uint16_t param) {
+static const addr_checks* nissan_init(int16_t param) {
+  controls_allowed = 0;
   nissan_alt_eps = param ? 1 : 0;
+  relay_malfunction_reset();
   return &nissan_rx_checks;
 }
 
