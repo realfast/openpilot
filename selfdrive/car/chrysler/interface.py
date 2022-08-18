@@ -17,6 +17,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4
+    stiffnessFactor = 1.0
 
     # safety config
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
@@ -64,6 +65,7 @@ class CarInterface(CarInterfaceBase):
             ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else 14.6
 
     elif candidate == CAR.RAM_HD:
+      stiffnessFactor = 0.35
       ret.steerActuatorDelay = 0.2
       ret.wheelbase = 3.785
       ret.steerRatio = 15.61
@@ -81,7 +83,7 @@ class CarInterface(CarInterfaceBase):
 
     # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
     # mass and CG position, so all cars will have approximately similar dyn behaviors
-    ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
+    ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront, stiffnessFactor)
 
     ret.enableBsm = 720 in fingerprint[0]
 
