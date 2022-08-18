@@ -110,9 +110,9 @@ class CarInterfaceBase(ABC):
 
     tune.init('torque')
     tune.torque.useSteeringAngle = use_steering_angle
-    tune.torque.kp = 1.0 / car.CarParams.maxLateralAccel
-    tune.torque.kf = 1.0 / car.CarParams.maxLateralAccel
-    tune.torque.ki = 0.1 / car.CarParams.maxLateralAccel
+    tune.torque.kp = 1.0 / 2.5
+    tune.torque.kf = 1.0 / 2.5
+    tune.torque.ki = 0.1 / 2.5
     tune.torque.friction = 0.05
     tune.torque.steeringAngleDeadzoneDeg = steering_angle_deadzone_deg
 
