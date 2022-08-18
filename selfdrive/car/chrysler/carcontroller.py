@@ -67,7 +67,7 @@ class CarController:
           lkas_control_bit = False
 
       # EPS faults if LKAS re-enables too quickly
-      lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
+      lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.steerFaultTemporary and not CS.steerFaultPermanent
 
       if not lkas_control_bit and self.lkas_control_bit_prev:
         self.last_lkas_falling_edge = self.frame
