@@ -31,13 +31,13 @@ const int RAM_MAX_TORQUE_ERROR = 400;    // since 3 x the rate up from chrsyler,
 #define DAS_3_RAM                  153  // ACC engagement states from DASM
 #define DAS_6_RAM                  250  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_RAM           166  // LKAS controls from DASM 
-#define CRUISE_BUTTONS_RAM 177  // Cruise control buttons
+#define CRUISE_BUTTONS_RAM         177  // Cruise control buttons
 #define Center_Stack_2_RAM         650  // Center Stack buttons
 
 // Safety-relevant CAN messages for the 5th gen RAM HD platform
 #define DAS_6_HD                   629  // LKAS HUD and auto headlight control from DASM
 #define LKAS_COMMAND_HD            630  // LKAS controls from DASM 
-#define CRUISE_BUTTONS_HD  570  // Cruise control buttons
+#define CRUISE_BUTTONS_HD          570  // Cruise control buttons
 #define Center_Stack_2_HD          650  // Center Stack buttons
 
 const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3},{LKAS_COMMAND, 0, 6}, {DAS_6, 0, 8},
