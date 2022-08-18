@@ -73,4 +73,4 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     }
   else:
     values = cruise_buttons.copy()
-  return packer.make_can_msg("CRUISE_BUTTONS", bus, values, frame % 0x10)
+  return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
