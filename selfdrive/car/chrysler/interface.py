@@ -56,8 +56,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 3.67
       ret.steerRatio = 16.3
       ret.mass = 2493. + STD_CARGO_KG
-      ret.maxLateralAccel = 2.5
-      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 2.5, 0.05) #maxlataccel 2.5 Friction 0.05
       ret.minSteerSpeed = 0.5
       if car_fw is not None:
         for fw in car_fw:
@@ -70,8 +69,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 15.61
       ret.mass = 3405. + STD_CARGO_KG
       ret.minSteerSpeed = 16
-      ret.maxLateralAccel = 1.4
-      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.4, 0.05, 1.0, False) #maxlataccel 1.4 Friction 0.05
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
