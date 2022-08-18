@@ -41,8 +41,8 @@ const int RAM_MAX_TORQUE_ERROR = 400;    // since 3 x the rate up from chrsyler,
 #define Center_Stack_2_HD          650  // Center Stack buttons
 
 const CanMsg CHRYSLER_TX_MSGS[] = {{Cruise_Control_Buttons, 0, 3},{LKAS_COMMAND, 0, 6}, {DAS_6, 0, 8},
-  {Cruise_Control_Buttons_RAM, 2, 3}, {LKAS_COMMAND_RAM, 0, 8}, {DAS_6_RAM, 0, 8},
-  {Cruise_Control_Buttons_HD, 2, 3}, {LKAS_COMMAND_HD, 0, 8}, {DAS_6_HD, 0, 8}};
+  {CRUISE_BUTTONS_RAM, 2, 3}, {LKAS_COMMAND_RAM, 0, 8}, {DAS_6_RAM, 0, 8},
+  {CRUISE_BUTTONS_HD, 2, 3}, {LKAS_COMMAND_HD, 0, 8}, {DAS_6_HD, 0, 8}};
 
 AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, {EPS_2_RAM, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}}},  // EPS module
