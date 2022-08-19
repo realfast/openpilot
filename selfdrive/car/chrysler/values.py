@@ -137,6 +137,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68320950AM',
       b'68454268AB',
       b'68475160AE',
+      b'68475160AF',
       b'68475160AG',
       b'04672892AB',
     ],
