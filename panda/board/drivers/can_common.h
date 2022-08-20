@@ -225,13 +225,26 @@ bool can_tx_check_min_slots_free(uint32_t min) {
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
-    if (bus_number < BUS_CNT) {
+    uint8_t busnum1 = (bus_number & 0xF);
+    if (busnum1 < BUS_CNT) {
       // add CAN packet to send queue
-      if ((bus_number == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
+      if ((busnum1 == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
         gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
       } else {
-        can_fwd_errs += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
-        process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+        can_fwd_errs += can_push(can_queues[busnum1], to_push) ? 0U : 1U;
+        process_can(CAN_NUM_FROM_BUS_NUM(busnum1));
+      }
+    }
+    if (bus_number > 0xF){
+      uint8_t busnum2 = ((bus_number >> 4) & 0x0F);
+      if (busnum2 < BUS_CNT) {
+        // add CAN packet to send queue
+        if ((busnum2 == 3U) && (bus_config[3].can_num_lookup == 0xFFU)) {
+          gmlan_send_errs += bitbang_gmlan(to_push) ? 0U : 1U;
+        } else {
+          can_fwd_errs += can_push(can_queues[busnum2], to_push) ? 0U : 1U;
+          process_can(CAN_NUM_FROM_BUS_NUM(busnum2));
+        }
       }
     }
   } else {

@@ -58,7 +58,10 @@ const CanMsg CHRYSLER_RAM_TX_MSGS[] = {
 const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
   {CRUISE_BUTTONS_HD, 2, 3},
   {LKAS_COMMAND_HD, 0, 8},
+  {LKAS_COMMAND_HD, 1, 8}, 
   {DAS_6_HD, 0, 8},
+  {DAS_6_HD, 1, 8},
+  {ESP_8, 1, 8},
 };
 
 AddrCheckStruct chrysler_addr_checks[] = {
@@ -81,7 +84,7 @@ AddrCheckStruct chrysler_ram_addr_checks[] = {
 #define CHRYSLER_RAM_ADDR_CHECK_LEN (sizeof(chrysler_ram_addr_checks) / sizeof(chrysler_ram_addr_checks[0]))
 
 AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
-  {.msg = {{EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  // EPS module
+  {.msg = {{EPS_2, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  // EPS module
   {.msg = {{ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // brake pressed
   {.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // vehicle Speed
   {.msg = {{ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  // gas pedal
@@ -152,7 +155,7 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
     // Measured EPS torque
     const int eps_2 = chrysler_ram ? EPS_2_RAM : EPS_2;
-    if ((bus == 0) && (addr == eps_2)) {
+    if ((bus == 1) && (addr == eps_2)) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
       update_sample(&torque_meas, torque_meas_new);
     }
@@ -287,9 +290,19 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
-  // forward to camera
-  if ((bus_num == 0) && (addr != CRUISE_BUTTONS_RAM) && (addr != CRUISE_BUTTONS_HD) && (addr != Center_Stack_2_RAM)) {
-    bus_fwd = 2;
+  // forward CAN 0 & 1 -> 2 so stock LKAS camera sees messages
+  if (bus_num == 0){
+    if (chrysler_ram_hd && (addr == ESP_8)) {
+      bus_fwd = 2;
+    }
+    else if ((addr == CRUISE_BUTTONS_RAM) || (addr == CRUISE_BUTTONS_HD) || (addr == Center_Stack_2_RAM)){
+      bus_fwd = 1;
+    }
+    else {//Ram and HD share the same
+      //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
+      //Bus 0 will be ignored if put in the high 4 bits
+      bus_fwd = 0x21; //Sends to bus 2 and bus 1
+    }
   }
 
   // forward all messages from camera except LKAS messages
@@ -297,7 +310,16 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
                        (chrysler_ram && ((addr == LKAS_COMMAND_RAM) || (addr == DAS_6_RAM))) ||
                        (chrysler_ram_hd && ((addr == LKAS_COMMAND_HD) || (addr == DAS_6_HD)));
   if ((bus_num == 2) && !is_lkas){
-    bus_fwd = 0;
+      //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
+      //Bus 0 will be ignored if put in the high 4 bits
+      bus_fwd = 0x10;//Sends to bus 1 and bus 0
+  }
+
+  //forward CAN1->CAN2
+  if (bus_num == 1){
+    //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
+    //Bus 0 will be ignored if put in the high 4 bits
+    bus_fwd = 0x20;//Sends to bus 2 and bus 0
   }
 
   return bus_fwd;

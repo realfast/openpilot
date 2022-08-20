@@ -70,7 +70,7 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 3.785
       ret.steerRatio = 15.61
       ret.mass = 3405. + STD_CARGO_KG
-      ret.minSteerSpeed = 16
+      ret.minSteerSpeed = 0.5
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
 
     else:
@@ -90,7 +90,7 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def _update(self, c):
-    ret = self.CS.update(self.cp, self.cp_cam)
+    ret = self.CS.update(self.cp, self.cp_cam, self.cp_eps)
 
     # events
     events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
