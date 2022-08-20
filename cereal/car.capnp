@@ -393,9 +393,9 @@ struct CarControl {
   gasDEPRECATED @1 :Float32;
   brakeDEPRECATED @2 :Float32;
   steeringTorqueDEPRECATED @3 :Float32;
-  active @7 :Bool;
-  roll @8 :Float32;
-  pitch @9 :Float32;
+  activeDEPRECATED @7 :Bool;
+  rollDEPRECATED @8 :Float32;
+  pitchDEPRECATED @9 :Float32;
 }
 
 # ****** car param ******
@@ -418,7 +418,7 @@ struct CarParams {
   minSteerSpeed @8 :Float32;
   maxSteeringAngleDeg @54 :Float32;
   safetyConfigs @62 :List(SafetyConfig);
-  unsafeMode @65 :Int16;      # panda flag for features like no disengage on gas
+  alternativeExperience @65 :Int16;      # panda flag for features like no disengage on gas
   maxLateralAccel @68 :Float32;
 
   steerMaxBPDEPRECATED @11 :List(Float32);
