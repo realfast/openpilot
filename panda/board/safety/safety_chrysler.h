@@ -27,6 +27,8 @@ const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
   {DAS_6_HD, 0, 8},
   {DAS_6_HD, 1, 8},
   {ESP_8, 1, 8},
+  {DAS_3, 0, 8},
+  {DAS_3, 1, 8},
 };
 
 AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
@@ -234,7 +236,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
 
   // forward all messages from camera except LKAS messages
-  const bool is_lkas = ((addr == LKAS_COMMAND_HD) || (addr == DAS_6_HD));
+  const bool is_lkas = ((addr == LKAS_COMMAND_HD) || (addr == DAS_6_HD) || (addr == DAS_3));
   if ((bus_num == 2) && !is_lkas){
       //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
       //Bus 0 will be ignored if put in the high 4 bits

@@ -133,13 +133,17 @@ BO_ 820 BCM_1: 8 XXX
 VAL_ 368 Gear_State 4 "D" 2 "N" 1 "R" 0 "P" ;
 
 CM_ SG_ 258 STEERING_ANGLE_HP "Steering angle high precision";
-CM_ SG_ 264 ENGINE_TORQUE "Effective engine torque";
-CM_ SG_ 264 EXPECTED_ENGINE_TORQUE "Expected Engine Torque based on target engine speed";
-CM_ SG_ 678 LKAS_ICON_COLOR "3 is yellow, 2 is green, 1 is white, 0 is null";
-CM_ SG_ 678 LKAS_LANE_LINES "0x01 transparent lines, 0x02 left white, 0x03 right white, 0x04 left yellow with car on top, 0x05 left yellow with car on top, 0x06 both white, 0x07 left yellow, 0x08 left yellow right white, 0x09 right yellow, 0x0a right yellow left white, 0x0b left yellow with car on top right white, 0x0c right yellow with car on top left white, (0x00, 0x0d, 0x0e, 0x0f) null";
-CM_ SG_ 678 LKAS_ALERTS "(0x01, 0x02) lane sense off, (0x03, 0x04, 0x06) place hands on steering wheel, 0x07 lane departure detected + place hands on steering wheel, (0x08, 0x09) lane sense unavailable + clean front windshield, 0x0b lane sense and auto high beam unavailable + clean front windshield, 0x0c lane sense unavailable + service required, (0x00, 0x05, 0x0a, 0x0d, 0x0e, 0x0f) null";
+CM_ SG_ 629 LKAS_ICON_COLOR "3 is yellow, 2 is green, 1 is white, 0 is null";
+CM_ SG_ 629 LKAS_LANE_LINES "0x01 transparent lines, 0x02 left white, 0x03 right white, 0x04 left yellow with car on top, 0x05 left yellow with car on top, 0x06 both white, 0x07 left yellow, 0x08 left yellow right white, 0x09 right yellow, 0x0a right yellow left white, 0x0b left yellow with car on top right white, 0x0c right yellow with car on top left white, (0x00, 0x0d, 0x0e, 0x0f) null";
+CM_ SG_ 629 LKAS_ALERTS "(0x01, 0x02) lane sense off, (0x03, 0x04, 0x06) place hands on steering wheel, 0x07 lane departure detected + place hands on steering wheel, (0x08, 0x09) lane sense unavailable + clean front windshield, 0x0b lane sense and auto high beam unavailable + clean front windshield, 0x0c lane sense unavailable + service required, (0x00, 0x05, 0x0a, 0x0d, 0x0e, 0x0f) null";
+CM_ SG_ 464 Driver_Seatbelt_Status "1 unbuckled 0 buckled";
+CM_ SG_ 792 High_Beam_Lever_Status "1 is high beam, 0 reg";
 
 CM_ "chrysler_ram_hd.dbc starts here";
+
+BO_ 332 ESP_4: 8 XXX
+ SG_ Yaw_Rate : 7|16@0+ (0.01,-327.68) [-327.68|327.66] "deg/s" XXX
+ SG_ Acceleration : 32|8@1+ (0.08,-10.24) [-10.24|10.08] "m/s2" XXX
 
 BO_ 545 EPS_3: 8 XXX
  SG_ DASM_FAULT : 34|1@0+ (1,0) [0|1] "" XXX
