@@ -129,10 +129,11 @@ class CarController:
       if CC.actuators.accel <= 0:
         accel_req = False
         decel_req = False
-        torque = 0
+        torque = None
         decel = self.acc_brake(CC.actuators.accel)
         max_gear = 6
         delta_accel = 0
+        self.last_torque = CS.engineTorque
       else:
         self.last_brake = None
         accel_req = True
@@ -144,13 +145,16 @@ class CarController:
         # torque1 = (self.vehicleMass * accel * CS.out.vEgo) / (.105 *  CS.engineRpm)
         torque2 = (self.vehicleMass * ((delta_accel) *0.02)** 2)  / (.105 *  CS.engineRpm)
         torque2 += CS.engineTorque
-        torque = max(CS.torqMin + 1, min(CS.torqMax, torque2)) # limits
+        # if delta_accel > 0:
+        #   torque = max(CS.torqMin + 1, min(CS.torqMax, torque2)) # limits
+        # else:
+        #   torque = min(CS.engineTorque, max(CS.torqMin, torque2)) # limits
         decel = None
-        if (CC.actuators.accel < 0.1):
-          if torque > self.last_torque:
-            torque = clip(torque,
-                          max(self.last_torque - LOW_TRQ_DELTA, -LOW_TRQ_DELTA),
-                          self.last_torque  + LOW_TRQ_DELTA)
+        # if (CC.actuators.accel < 0.1):
+        #   if torque > self.last_torque:
+        #     torque = clip(torque,
+        #                   max(self.last_torque - LOW_TRQ_DELTA, -LOW_TRQ_DELTA),
+        #                   self.last_torque  + LOW_TRQ_DELTA)
       # else:
       #   self.last_torque = None
       #   self.last_brake = None
