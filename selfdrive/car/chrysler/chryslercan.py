@@ -85,18 +85,30 @@ def acc_command(packer, counter, enabled, accel_req, torque, max_gear, decel_req
   values = das_3.copy()  # forward what we parsed
   values['ACC_AVAILABLE'] = 1
   values['ACC_ACTIVE'] = enabled
-  values['COUNTER'] = counter % 0x10
+  # values['COUNTER'] = counter % 0x10
 
-  values['ACC_GO'] = accel_req
+  # values['ACC_GO'] = 0 #accel_req
   values['ACC_STANDSTILL'] = decel_req
   values['GR_MAX_REQ'] = max_gear
+  
 
   values['ACC_DECEL_REQ'] = enabled and decel is not None
+  values['BRAKE_BOOL_1'] = enabled and decel is not None
   if decel is not None:
     values['ACC_DECEL'] = decel
 
   values['ENGINE_TORQUE_REQUEST_MAX'] = enabled and torque is not None
   if torque is not None:
     values['ENGINE_TORQUE_REQUEST'] = torque
+    values['ACC_DECEL'] = 3.99
 
   return packer.make_can_msg("DAS_3", 0, values)
+
+def acc_log(packer, accel, delta_accel, torque, standstill):
+  values = {
+    'ACCEL': accel,
+    'DELTA_ACCEL': delta_accel,
+    'TORQUE': torque,
+    'STANDSTILL': standstill,
+  }
+  return packer.make_can_msg("ACC_LOG", 0, values)

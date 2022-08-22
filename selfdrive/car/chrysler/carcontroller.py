@@ -1,7 +1,7 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, create_speed_spoof, acc_command
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, create_speed_spoof, acc_command, acc_log
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 from common.conversions import Conversions as CV
@@ -118,7 +118,7 @@ class CarController:
 
       #LONG
       das_3_counter = CS.das_3['COUNTER']
-      max_gear = 6
+      max_gear = 0
 
       if not CC.enabled:
         self.last_brake = None
@@ -131,15 +131,18 @@ class CarController:
         decel_req = False
         torque = 0
         decel = self.acc_brake(CC.actuators.accel)
+        max_gear = 6
+        delta_accel = 0
       else:
         self.last_brake = None
         accel_req = True
         decel_req = False
         accel = CC.actuators.accel
+        delta_accel = accel - CS.out.aEgo
         # if abs(CS.out.vEgo - CC.actuators.speed)<=0.11:
         #   accel = 0.1
         # torque1 = (self.vehicleMass * accel * CS.out.vEgo) / (.105 *  CS.engineRpm)
-        torque2 = (self.vehicleMass * ((accel - CS.out.aEgo) *0.02)** 2)  / (.105 *  CS.engineRpm)
+        torque2 = (self.vehicleMass * ((delta_accel) *0.02)** 2)  / (.105 *  CS.engineRpm)
         torque2 += CS.engineTorque
         torque = max(CS.torqMin + 1, min(CS.torqMax, torque2)) # limits
         decel = None
@@ -166,6 +169,8 @@ class CarController:
                                    decel_req,
                                    decel,
                                    CS.das_3))
+
+      can_sends.append(acc_log(self.packer, CC.actuators.accel, delta_accel, torque, CS.out.standstill))
 
     self.frame += 1
 
