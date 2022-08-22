@@ -5,6 +5,7 @@ from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_comm
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 from common.conversions import Conversions as CV
+from common.numpy_fast import clip
 
 GearShifter = car.CarState.GearShifter
 
@@ -12,6 +13,8 @@ GearShifter = car.CarState.GearShifter
 BRAKE_CHANGE = 0.06
 
 ACCEL_MIN = -3.5
+
+LOW_TRQ_DELTA = 1
 
 class CarController:
   def __init__(self, dbc_name, CP, VM):
@@ -33,6 +36,8 @@ class CarController:
     self.last_brake = None
     self.vehicleMass = CP.mass
     self.max_gear = None
+    self.last_torque = 0
+
 
   def update(self, CC, CS):
     can_sends = []
@@ -113,15 +118,18 @@ class CarController:
 
       #LONG
       das_3_counter = CS.das_3['COUNTER']
+      max_gear = 6
 
       if not CC.enabled:
         self.last_brake = None
-
+      
+      # override_request = CS.out.gasPressed or CS.out.brakePressed
+      # if not override_request:
       max_gear = 8
       if CC.actuators.accel <= 0:
         accel_req = False
         decel_req = False
-        torque = None
+        torque = 0
         decel = self.acc_brake(CC.actuators.accel)
       else:
         self.last_brake = None
@@ -130,11 +138,26 @@ class CarController:
         accel = CC.actuators.accel
         # if abs(CS.out.vEgo - CC.actuators.speed)<=0.11:
         #   accel = 0.1
-        torque1 = (self.vehicleMass * accel * CS.out.vEgo) / (.105 *  CS.engineRpm)
+        # torque1 = (self.vehicleMass * accel * CS.out.vEgo) / (.105 *  CS.engineRpm)
         torque2 = (self.vehicleMass * ((accel - CS.out.aEgo) *0.02)** 2)  / (.105 *  CS.engineRpm)
         torque2 += CS.engineTorque
         torque = max(CS.torqMin + 1, min(CS.torqMax, torque2)) # limits
         decel = None
+        if (CC.actuators.accel < 0.1):
+          if torque > self.last_torque:
+            torque = clip(torque,
+                          max(self.last_torque - LOW_TRQ_DELTA, -LOW_TRQ_DELTA),
+                          self.last_torque  + LOW_TRQ_DELTA)
+      # else:
+      #   self.last_torque = None
+      #   self.last_brake = None
+      #   self.max_gear = max_gear
+      #   decel_req = None
+      #   decel = None
+      #   accel_req = None
+      #   torque = None
+
+      self.last_torque = torque
 
       can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
                                    accel_req,
