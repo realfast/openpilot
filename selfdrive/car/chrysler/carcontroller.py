@@ -133,7 +133,7 @@ class CarController:
         torque1 = (self.vehicleMass * accel * CS.out.vEgo) / (.105 *  CS.engineRpm)
         torque2 = (self.vehicleMass * ((accel - CS.out.aEgo) *0.02)** 2)  / (.105 *  CS.engineRpm)
         torque2 += CS.engineTorque
-        torque = max(CS.torqMin + 1, min(CS.torqMax, min(torque1, torque2))) # limits
+        torque = max(CS.torqMin + 1, min(CS.torqMax, torque2)) # limits
         decel = None
 
       can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
