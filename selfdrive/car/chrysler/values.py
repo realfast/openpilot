@@ -203,21 +203,25 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
   CAR.RAM_HD: {
     (Ecu.combinationMeter, 0x742, None): [
       b'68361606AH',
+      b'68437735AC',
       b'68492693AD',
     ],
     (Ecu.srs, 0x744, None): [
       b'68399794AC',
       b'68428503AA',
       b'68428505AA',
+      b'68428507AA',
     ],
     (Ecu.esp, 0x747, None): [
       b'68334977AH',
+      b'68455481AC',
       b'68504022AB',
       b'68530686AB',
     ],
     (Ecu.fwdRadar, 0x753, None): [
       b'04672895AB',
       b'56029827AG',
+      b'68462657AE',
       b'68484694AE',
     ],
     (Ecu.eps, 0x761, None): [
@@ -225,11 +229,13 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68507906AB',
     ],
     (Ecu.engine, 0x7e0, None): [
+      b'52401032AE',
       b'52421132AF',
       b'M2370131MB',
       b'M2421132MB',
     ],
     (Ecu.gateway, 0x18DACBF1, None): [
+      b'68450806AB',
       b'68488419AB',
       b'68535476AB',
     ],
