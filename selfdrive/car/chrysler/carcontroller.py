@@ -138,7 +138,7 @@ class CarController:
         self.last_brake = None
         accel_req = True
         decel_req = False
-        accel = CC.actuators.accel
+        accel = clip(CC.actuators.accel, -3.5, 1.5)
         delta_accel = accel - CS.out.aEgo
         # if abs(CS.out.vEgo - CC.actuators.speed)<=0.11:
         #   accel = 0.1
