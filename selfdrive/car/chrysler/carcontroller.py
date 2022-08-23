@@ -6,6 +6,7 @@ from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarCont
 from cereal import car
 from common.conversions import Conversions as CV
 from common.numpy_fast import clip
+from common.op_params import opParams, ACCEL_FACTOR, DECEL_FACTOR
 
 GearShifter = car.CarState.GearShifter
 
@@ -17,7 +18,7 @@ ACCEL_MIN = -3.5
 LOW_TRQ_DELTA = 1
 
 class CarController:
-  def __init__(self, dbc_name, CP, VM):
+  def __init__(self, dbc_name, CP, VM, OP=None):
     self.CP = CP
     self.apply_steer_last = 0
     self.frame = 0
@@ -37,6 +38,11 @@ class CarController:
     self.vehicleMass = CP.mass
     self.max_gear = None
     self.last_torque = 0
+
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
+    self.factor = self.op_params.get(ACCEL_FACTOR)
 
 
   def update(self, CC, CS):
@@ -138,13 +144,21 @@ class CarController:
         self.last_brake = None
         accel_req = True
         decel_req = False
-        accel = clip(CC.actuators.accel, -3.5, 1.5)
-        delta_accel = accel - CS.out.aEgo
+        # accel = clip(CC.actuators.accel, -3.5, 1.5)
+        delta_accel = CC.actuators.accel - CS.out.aEgo
+
+        if delta_accel < 0:
+          velocity = clip((self.op_params.get(DECEL_FACTOR) * abs(delta_accel)),  -3.5, 2.0)
+        else:
+          velocity = clip((self.op_params.get(ACCEL_FACTOR) * abs(delta_accel)),  -3.5, 2.0)
         # if abs(CS.out.vEgo - CC.actuators.speed)<=0.11:
         #   accel = 0.1
         # torque1 = (self.vehicleMass * accel * CS.out.vEgo) / (.105 *  CS.engineRpm)
-        torque = (self.vehicleMass * delta_accel * abs(delta_accel))  / (.105 *  CS.engineRpm)
-        torque += CS.engineTorque
+        torque = (self.vehicleMass * delta_accel * velocity)  / (.105 *  CS.engineRpm)
+        if CS.engineTorque < 0 and torque > 0:
+          torque +=200
+        else:
+          torque += CS.engineTorque
         # if delta_accel > 0:
         #   torque = max(CS.torqMin + 1, min(CS.torqMax, torque2)) # limits
         # else:
