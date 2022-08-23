@@ -143,7 +143,7 @@ class CarController:
         # if abs(CS.out.vEgo - CC.actuators.speed)<=0.11:
         #   accel = 0.1
         # torque1 = (self.vehicleMass * accel * CS.out.vEgo) / (.105 *  CS.engineRpm)
-        torque = (self.vehicleMass * ((delta_accel))** 2)  / (.105 *  CS.engineRpm)
+        torque = (self.vehicleMass * delta_accel * abs(delta_accel))  / (.105 *  CS.engineRpm)
         torque += CS.engineTorque
         # if delta_accel > 0:
         #   torque = max(CS.torqMin + 1, min(CS.torqMax, torque2)) # limits

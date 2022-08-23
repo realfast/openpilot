@@ -169,7 +169,7 @@ BO_ 816 Center_Stack_1: 8 XXX
  SG_ Traction_Button : 54|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 509 ACC_LOG: 8 XXX
- SG_ ACCEL : 7|16@0+ (0.00025,-4) [0|65534] "m/s2" XXX
- SG_ DELTA_ACCEL : 23|16@0+ (0.00025,-4) [0|65534] "m/s2" XXX
- SG_ TORQUE : 39|16@0+ (1,0) [0|65535] "Nm" XXX
- SG_ STANDSTILL : 57|1@0+ (1,0) [0|1] "" XXX
+ SG_ ACCEL : 7|8@1+ (0.08,-10.24) [-10.24|10.08] "m/s2" XXX
+ SG_ DELTA_ACCEL : 23|8@1+ (0.08,-10.24) [-10.24|10.08] "m/s2" XXX
+ SG_ TORQUE : 39|13@0+ (0.25,-500) [-500|1547.5] "Nm" XXX
+ SG_ STANDSTILL : 57|13@0+ (0.25,-500) [-500|1547.5] "Nm" XXX
