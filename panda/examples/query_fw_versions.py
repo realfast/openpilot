@@ -29,7 +29,7 @@ if __name__ == "__main__":
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_VEHICLE_MANUFACTURER_SPECIFIC_DATA_IDENTIFIER"
     for uds_id in range(0xf1a0,0xf1f0):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_VEHICLE_MANUFACTURER_SPECIFIC"
-    for uds_id in range(0xf1f0,0xf200):
+    for uds_id in range(0xf1f0,0xffff):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
   panda = Panda()
@@ -47,7 +47,7 @@ if __name__ == "__main__":
       else:
         bus = 1 if panda.has_obd() else 0
       rx_addr = addr - 0x280
-      uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.2, debug=args.debug)
+      uds_client = UdsClient(panda, addr, rx_addr, bus, timeout=0.04, debug=args.debug)
       # Check for anything alive at this address, and switch to the highest
       # available diagnostic session without security access
       try:
