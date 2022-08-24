@@ -65,7 +65,7 @@ class CarInterface(CarInterfaceBase):
             ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else 14.6
 
     elif candidate == CAR.RAM_HD:
-      stiffnessFactor = 0.45
+      stiffnessFactor = 0.35
       ret.steerActuatorDelay = 0.2
       ret.wheelbase = 3.785
       ret.steerRatio = 15.61
