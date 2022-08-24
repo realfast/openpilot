@@ -205,6 +205,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68361606AH',
       b'68437735AC',
       b'68492693AD',
+      b'68525487AB',
     ],
     (Ecu.srs, 0x744, None): [
       b'68399794AC',
@@ -217,6 +218,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68455481AC',
       b'68504022AB',
       b'68530686AB',
+      b'68530686AC',
     ],
     (Ecu.fwdRadar, 0x753, None): [
       b'04672895AB',
@@ -229,6 +231,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68507906AB',
     ],
     (Ecu.engine, 0x7e0, None): [
+      b'52370231AF',
       b'52401032AE',
       b'52421132AF',
       b'M2370131MB',
@@ -238,6 +241,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68450806AB',
       b'68488419AB',
       b'68535476AB',
+      b'68535476AC',
     ],
   },
 }
