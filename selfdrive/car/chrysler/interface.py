@@ -66,7 +66,7 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.RAM_HD:
       stiffnessFactor = 0.35
-      ret.steerActuatorDelay = 0.2
+      ret.steerActuatorDelay = 0.25
       ret.wheelbase = 3.785
       ret.steerRatio = 15.61
       ret.mass = 3405. + STD_CARGO_KG
