@@ -205,6 +205,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'52421132AF',
       b'M2370131MB',
       b'M2421132MB',
+      b'           ',
     ],
     (Ecu.gateway, 0x18DACBF1, None): [
       b'68488419AB',
