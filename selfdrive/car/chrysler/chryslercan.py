@@ -59,8 +59,9 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame, bus):
   values = {
     "STEERING_TORQUE": apply_steer,
     "LKAS_CONTROL_BIT": enabled_val if lkas_control_bit else 0,
+    "COUNTER": frame % 0x10,
   }
-  return packer.make_can_msg("LKAS_COMMAND", bus, values, frame % 0x10)
+  return packer.make_can_msg("LKAS_COMMAND", bus, values)
 
 
 def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resume=False):
@@ -69,14 +70,16 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = {
       "ACC_Cancel": cancel,
       "ACC_Resume": resume,
+      "COUNTER": frame % 0x10,
     }
   else:
     values = cruise_buttons.copy()
-  return packer.make_can_msg("CRUISE_BUTTONS", bus, values, frame % 0x10)
+  return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
 def create_speed_spoof(packer, frame, spoofspeed):
   # Cruise_Control_Buttons Message sent to cancel ACC.
   values = {
     "Vehicle_Speed": spoofspeed,
+    "COUNTER": frame % 0x10,
   }
-  return packer.make_can_msg("ESP_8", 1, values, frame % 0x10)
+  return packer.make_can_msg("ESP_8", 1, values)
