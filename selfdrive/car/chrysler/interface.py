@@ -61,7 +61,7 @@ class CarInterface(CarInterfaceBase):
       if car_fw is not None:
         for fw in car_fw:
           if fw.ecu == 'eps':
-            ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG") else 14.6
+            ret.minEnableSpeed = 0. if fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG", b'68273275AF') else 14.6
 
     elif candidate == CAR.RAM_HD:
       ret.steerActuatorDelay = 0.2
