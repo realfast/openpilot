@@ -133,10 +133,16 @@ FINGERPRINTS = {
 FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int]], List[str]]] = {
   CAR.RAM_1500: {
     (Ecu.combinationMeter, 0x742, None): [
+      b'68294051AI',
+      b'68294052AG',
       b'68294063AG',
       b'68294063AH',
+      b'68294063AI',
+      b'68434846AC',
+      b'68434858AC',
       b'68434860AC',
       b'68453503AC',
+      b'68453505AC',
       b'68453511AC',
       b'68453513AD',
       b'68453514AD',
@@ -150,6 +156,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68500728AA',
     ],
     (Ecu.esp, 0x747, None): [
+      b'68292406AH',
       b'68432418AB',
       b'68432418AD',
       b'68436004AD',
@@ -179,23 +186,28 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68440789AC',
       b'68466110AB',
       b'68469901AA',
+      b'68522583AB',
       b'68522585AB',
       b'68552788AA',
       b'68552790AA',
     ],
     (Ecu.engine, 0x7e0, None): [
       b'68448163AJ',
+      b'68448165AK',
       b'68500630AD',
+      b'68500630AE',
       b'68539650AD',
       b'           ', # TODO:some trucks are responding with nothing here
       b'68378758AM ',
     ],
     # (Ecu.transmission, 0x7e1, None): [
     #   b'68360078AL',
+    #   b'68360080AM',
     #   b'68360081AM',
     #   b'68360085AL',
     #   b'68360085AM',
     #   b'68384328AD',
+    #   b'68384332AD',
     #   b'68445533AB',
     #   b'68484467AC',
     #   b'68502994AD',
@@ -215,6 +227,9 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68437735AC',
       b'68492693AD',
       b'68525485AB', #TODO: CHECK in newest updat on dongle 5c05760b592aee2c
+      b'68525487AB',
+      b'68525498AB',
+
     ],
     (Ecu.srs, 0x744, None): [
       b'68399794AC',
@@ -225,13 +240,17 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
     (Ecu.esp, 0x747, None): [
       b'68334977AH',
       b'68455481AC',
+      b'68504022AA',
       b'68504022AB',
+      b'68504022AC',
       b'68530686AB',
+      b'68530686AC',
     ],
     (Ecu.fwdRadar, 0x753, None): [
       b'04672895AB',
       b'56029827AG',
       b'68462657AE',
+      b'68484694AD',
       b'68484694AE',
     ],
     (Ecu.eps, 0x761, None): [
@@ -239,6 +258,10 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68507906AB',
     ],
     (Ecu.engine, 0x7e0, None): [
+      b'52370131AF',
+      b'52370231AF',
+      b'52370231AG',
+      b'52370931CT',
       b'52401032AE',
       b'52421132AF',
       b'M2370131MB',
@@ -249,6 +272,7 @@ FW_VERSIONS: Dict[str, Dict[Tuple[capnp.lib.capnp._EnumModule, int, Optional[int
       b'68450806AB',
       b'68488419AB',
       b'68535476AB',
+      b'68535476AC',
     ],
   },
 }
