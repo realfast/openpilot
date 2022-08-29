@@ -12,11 +12,12 @@ class CarController:
     self.CP = CP
     self.apply_steer_last = 0
     self.frame = 0
+
     self.hud_count = 0
     self.last_lkas_falling_edge = 0
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
-    
+
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
 
@@ -79,8 +80,7 @@ class CarController:
         apply_steer = 0
       self.apply_steer_last = apply_steer
 
-      idx = self.frame // 2
-      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx))
+      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
 
     self.frame += 1
 
