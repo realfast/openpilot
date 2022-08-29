@@ -6,6 +6,7 @@ from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.controls.lib.drive_helpers import apply_deadzone
 from selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
+from common.op_params import opParams, FRICTION
 
 # At higher speeds (25+mph) we can assume:
 # Lateral acceleration achieved by a specific car correlates to
@@ -23,15 +24,19 @@ FRICTION_THRESHOLD = 0.2
 
 
 class LatControlTorque(LatControl):
-  def __init__(self, CP, CI):
+  def __init__(self, CP, CI, OP=None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
     super().__init__(CP, CI)
     self.pid = PIDController(CP.lateralTuning.torque.kp, CP.lateralTuning.torque.ki,
-                             k_f=CP.lateralTuning.torque.kf, pos_limit=self.steer_max, neg_limit=-self.steer_max)
+                             k_f=CP.lateralTuning.torque.kf, pos_limit=self.steer_max, neg_limit=-self.steer_max, is_lateral=True)
     self.get_steer_feedforward = CI.get_steer_feedforward_function()
     self.use_steering_angle = CP.lateralTuning.torque.useSteeringAngle
     self.friction = CP.lateralTuning.torque.friction
     self.kf = CP.lateralTuning.torque.kf
     self.steering_angle_deadzone_deg = CP.lateralTuning.torque.steeringAngleDeadzoneDeg
+    self.friction = self.op_params.get(FRICTION)
 
   def update(self, active, CS, VM, params, last_actuators, steer_limited, desired_curvature, desired_curvature_rate, llk):
     pid_log = log.ControlsState.LateralTorqueState.new_message()
@@ -61,6 +66,8 @@ class LatControlTorque(LatControl):
       measurement = actual_lateral_accel + low_speed_factor * actual_curvature
       error = setpoint - measurement
       pid_log.error = error
+
+      self.friction = self.op_params.get(FRICTION)
 
       ff = desired_lateral_accel - params.roll * ACCELERATION_DUE_TO_GRAVITY
       # convert friction into lateral accel units for feedforward

@@ -30,6 +30,7 @@ from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.locationd.calibrationd import Calibration
 from system.hardware import HARDWARE
 from selfdrive.manager.process_config import managed_processes
+from common.op_params import opParams
 
 SOFT_DISABLE_TIME = 3  # seconds
 LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
@@ -63,6 +64,7 @@ ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
     config_realtime_process(4, Priority.CTRL_HIGH)
+    self.opParams = opParams()
 
     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
     self.branch = get_short_branch("")
@@ -607,7 +609,8 @@ class Controls:
       self.desired_curvature, self.desired_curvature_rate = get_lag_adjusted_curvature(self.CP, CS.vEgo,
                                                                                        lat_plan.psis,
                                                                                        lat_plan.curvatures,
-                                                                                       lat_plan.curvatureRates)
+                                                                                       lat_plan.curvatureRates,
+                                                                                       self.opParams)
       actuators.steer, actuators.steeringAngleDeg, lac_log = self.LaC.update(CC.latActive, CS, self.VM, params,
                                                                              self.last_actuators, self.steer_limited, self.desired_curvature,
                                                                              self.desired_curvature_rate, self.sm['liveLocationKalman'])

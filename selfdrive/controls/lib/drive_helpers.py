@@ -5,6 +5,7 @@ from common.conversions import Conversions as CV
 from common.numpy_fast import clip, interp
 from common.realtime import DT_MDL
 from selfdrive.modeld.constants import T_IDXS
+from common.op_params import STEER_ACT_DELAY
 
 # WARNING: this value was determined based on the model's training distribution,
 #          model predictions above this speed can be unpredictable
@@ -103,7 +104,7 @@ def initialize_v_cruise(v_ego, buttonEvents, v_cruise_last):
   return int(round(clip(v_ego * CV.MS_TO_KPH, V_CRUISE_ENABLE_MIN, V_CRUISE_MAX)))
 
 
-def get_lag_adjusted_curvature(CP, v_ego, psis, curvatures, curvature_rates):
+def get_lag_adjusted_curvature(CP, v_ego, psis, curvatures, curvature_rates, op_params):
   if len(psis) != CONTROL_N:
     psis = [0.0]*CONTROL_N
     curvatures = [0.0]*CONTROL_N
@@ -111,7 +112,7 @@ def get_lag_adjusted_curvature(CP, v_ego, psis, curvatures, curvature_rates):
   v_ego = max(v_ego, 0.1)
 
   # TODO this needs more thought, use .2s extra for now to estimate other delays
-  delay = CP.steerActuatorDelay + .2
+  delay = op_params.get(STEER_ACT_DELAY) + .2
 
   # MPC can plan to turn the wheel and turn back before t_delay. This means
   # in high delay cases some corrections never even get commanded. So just use
