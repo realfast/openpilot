@@ -2,8 +2,10 @@ from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons
-from selfdrive.car.chrysler.values import CAR, RAM_CARS, CarControllerParams
+from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
+from cereal import car
 
+GearShifter = car.CarState.GearShifter
 
 class CarController:
   def __init__(self, dbc_name, CP, VM):
@@ -25,18 +27,22 @@ class CarController:
     lkas_active = CC.latActive and self.lkas_control_bit_prev
 
     # cruise buttons
-    if (self.frame - self.last_button_frame)*DT_CTRL > 0.05:
+    if (CS.button_counter != self.last_button_frame):
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
+      self.last_button_frame = CS.button_counter
+      if self.CP.carFingerprint in RAM_CARS:
+        if CS.cruise_cancel:
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
+        else:
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
-      # ACC cancellation
-      if CC.cruiseControl.cancel:
-        self.last_button_frame = self.frame
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, cancel=True))
+       # ACC cancellation
+      elif CC.cruiseControl.cancel:
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, cancel=True))
 
       # ACC resume from standstill
       elif CC.cruiseControl.resume:
-        self.last_button_frame = self.frame
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, resume=True))
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
 
     # HUD alerts
     if self.frame % 25 == 0:
@@ -49,17 +55,22 @@ class CarController:
 
       # TODO: can we make this more sane? why is it different for all the cars?
       lkas_control_bit = self.lkas_control_bit_prev
-      if CS.out.vEgo > self.CP.minSteerSpeed:
+      if self.CP.carFingerprint in RAM_DT:
+        if CS.out.vEgo >= self.CP.minEnableSpeed and CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
+          lkas_control_bit = True
+        if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != GearShifter.drive) :
+          lkas_control_bit = False
+      elif CS.out.vEgo > self.CP.minSteerSpeed:
         lkas_control_bit = True
       elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
         if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
           lkas_control_bit = False
-      elif self.CP.carFingerprint in RAM_CARS:
+      elif self.CP.carFingerprint in RAM_HD:
         if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
           lkas_control_bit = False
 
       # EPS faults if LKAS re-enables too quickly
-      lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
+      lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
 
       if not lkas_control_bit and self.lkas_control_bit_prev:
         self.last_lkas_falling_edge = self.frame
