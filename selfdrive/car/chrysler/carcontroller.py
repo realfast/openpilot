@@ -94,9 +94,11 @@ class CarController:
       self.apply_steer_last = apply_steer
       self.lkas_control_bit_prev = lkas_control_bit
 
+      idx = self.frame // 2
+
       can_sends.append(create_speed_spoof(self.packer, CS.esp8_counter, self.spoofspeed))
-      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 0))
-      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 1))
+      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx, 0))
+      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx, 1))
 
     self.frame += 1
 
