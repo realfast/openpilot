@@ -30,7 +30,7 @@ const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
 
 const int CHRYSLER_STANDSTILL_THRSLD = 10;     // about 1m/s
 const int CHRYSLER_RAM_STANDSTILL_THRSLD = 3;  // about 1m/s changed from wheel rpm to km/h
-#define Center_Stack_2_RAM         650  // Center Stack buttons
+
 typedef struct {
   const int EPS_2;
   const int ESP_1;
@@ -40,6 +40,8 @@ typedef struct {
   const int DAS_6;
   const int LKAS_COMMAND;
   const int CRUISE_BUTTONS;
+  const int CENTER_STACK_1;
+  const int CENTER_STACK_2;
 } ChryslerAddrs;
 
 // CAN messages for Chrysler/Jeep platforms
@@ -52,6 +54,8 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .DAS_6            = 678,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 658,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 571,  // Cruise control buttons
+  .CENTER_STACK_1   = 816,  // LKAS Button
+  .CENTER_STACK_2   = 650,  // LKAS Button
 };
 
 // CAN messages for the 5th gen RAM DT platform
@@ -64,6 +68,8 @@ const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
   .DAS_6            = 250,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 166,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 177,  // Cruise control buttons
+  .CENTER_STACK_1   = 221,  // LKAS Button
+  .CENTER_STACK_2   = 650,  // LKAS Button
 };
 
 // CAN messages for the 5th gen RAM HD platform
@@ -76,6 +82,8 @@ const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
   .DAS_6            = 629,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 630,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 570,  // Cruise control buttons
+  .CENTER_STACK_1   = 816,  // LKAS Button
+  .CENTER_STACK_2   = 650,  // LKAS Button
 };
 
 const CanMsg CHRYSLER_TX_MSGS[] = {
@@ -91,6 +99,12 @@ const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
 };
 
 const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
+  {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
+  {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
+};
+
+const CanMsg CHRYSLER_RAM_HD_S0_TX_MSGS[] = {
   {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
   {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
@@ -119,7 +133,7 @@ AddrCheckStruct chrysler_ram_dt_addr_checks[] = {
 #define CHRYSLER_RAM_DT_ADDR_CHECK_LEN (sizeof(chrysler_ram_dt_addr_checks) / sizeof(chrysler_ram_dt_addr_checks[0]))
 
 AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
-  {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -127,15 +141,26 @@ AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
 };
 #define CHRYSLER_RAM_HD_ADDR_CHECK_LEN (sizeof(chrysler_ram_hd_addr_checks) / sizeof(chrysler_ram_hd_addr_checks[0]))
 
+AddrCheckStruct chrysler_ram_hd_s0_addr_checks[] = {
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+};
+#define CHRYSLER_RAM_HD_S0_ADDR_CHECK_LEN (sizeof(chrysler_ram_hd_s0_addr_checks) / sizeof(chrysler_ram_hd_s0_addr_checks[0]))
+
 
 addr_checks chrysler_rx_checks = {chrysler_addr_checks, CHRYSLER_ADDR_CHECK_LEN};
 
-const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
-const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram DT platform
+const uint32_t CHRYSLER_PARAM_RAM_DT    = 1U;  // set for Ram DT platform
+const uint32_t CHRYSLER_PARAM_RAM_HD    = 2U;  // set for Ram HD platform
+const uint32_t CHRYSLER_PARAM_RAM_HD_S0 = 3U;  // set for Ram HD platform S0 Hardware
 
 enum {
   CHRYSLER_RAM_DT,
   CHRYSLER_RAM_HD,
+  CHRYSLER_RAM_HD_S0,
   CHRYSLER_PACIFICA,  // plus Jeep
 } chrysler_platform = CHRYSLER_PACIFICA;
 const ChryslerAddrs *chrysler_addrs = &CHRYSLER_ADDRS;
@@ -244,6 +269,8 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = msg_allowed(to_send, CHRYSLER_RAM_DT_TX_MSGS, sizeof(CHRYSLER_RAM_DT_TX_MSGS) / sizeof(CHRYSLER_RAM_DT_TX_MSGS[0]));
   } else if (chrysler_platform == CHRYSLER_RAM_HD) {
     tx = msg_allowed(to_send, CHRYSLER_RAM_HD_TX_MSGS, sizeof(CHRYSLER_RAM_HD_TX_MSGS) / sizeof(CHRYSLER_RAM_HD_TX_MSGS[0]));
+  } else if (chrysler_platform == CHRYSLER_RAM_HD_S0) {
+    tx = msg_allowed(to_send, CHRYSLER_RAM_HD_S0_TX_MSGS, sizeof(CHRYSLER_RAM_HD_S0_TX_MSGS) / sizeof(CHRYSLER_RAM_HD_S0_TX_MSGS[0]));
   } else {
     tx = msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]));
   }
@@ -262,12 +289,12 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   }
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if (addr == chrysler_addrs->CRUISE_BUTTONS) {
+  if ((addr == chrysler_addrs->CRUISE_BUTTONS) && (chrysler_platform == CHRYSLER_PACIFICA)) {
     const bool is_cancel = GET_BYTE(to_send, 0) == 1U;
     const bool is_resume = GET_BYTE(to_send, 0) == 0x10U;
     const bool allowed = is_cancel || (is_resume && controls_allowed);
     if (!allowed) {
-      // tx = 0;
+      tx = 0;
     }
   }
 
@@ -278,18 +305,26 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
+  
   // forward CAN 0 & 1 -> 2 so stock LKAS camera sees messages
+  const bool is_lkas_button = (addr == chrysler_addrs->CENTER_STACK_1) || (addr == chrysler_addrs->CENTER_STACK_2);
   if (bus_num == 0){
-    if ((addr == chrysler_addrs->ESP_8)) {
+    if (addr == chrysler_addrs->ESP_8) {
       bus_fwd = 2;
     }
-    else if (addr == chrysler_addrs->CRUISE_BUTTONS || (addr == Center_Stack_2_RAM)){
+    else if (((chrysler_platform != CHRYSLER_PACIFICA) && (addr == chrysler_addrs->CRUISE_BUTTONS)) || is_lkas_button){
+      if (chrysler_platform == CHRYSLER_RAM_HD_S0){
       bus_fwd = 1;
+      }
     }
-    else {//Ram and HD share the same
+    else {
       //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
       //Bus 0 will be ignored if put in the high 4 bits
+      if (chrysler_platform == CHRYSLER_RAM_HD_S0){
       bus_fwd = 0x21; //Sends to bus 2 and bus 1
+      } else{
+        bus_fwd = 2;
+      }
     }
   }
 
@@ -298,11 +333,15 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   if ((bus_num == 2) && !is_lkas){
       //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
       //Bus 0 will be ignored if put in the high 4 bits
+      if (chrysler_platform == CHRYSLER_RAM_HD_S0){
       bus_fwd = 0x10;//Sends to bus 1 and bus 0
+      } else{
+        bus_fwd =0;
+      }
   }
 
   //forward CAN1->CAN2
-  if (bus_num == 1){
+  if (bus_num == 1 && chrysler_platform == CHRYSLER_RAM_HD_S0){
     //When forwarding to multiple addresses, make sure to use a hex value of the highest bus first (0xF0 spot/bits 4-7) and lowest bus second (0x0F spot/bits 0-3)
     //Bus 0 will be ignored if put in the high 4 bits
     bus_fwd = 0x20;//Sends to bus 2 and bus 0
@@ -320,6 +359,10 @@ static const addr_checks* chrysler_init(uint16_t param) {
     chrysler_platform = CHRYSLER_RAM_HD;
     chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
     chrysler_rx_checks = (addr_checks){chrysler_ram_hd_addr_checks, CHRYSLER_RAM_HD_ADDR_CHECK_LEN};
+  } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD_S0)) {
+    chrysler_platform = CHRYSLER_RAM_HD_S0;
+    chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
+    chrysler_rx_checks = (addr_checks){chrysler_ram_hd_s0_addr_checks, CHRYSLER_RAM_HD_S0_ADDR_CHECK_LEN};
   } else {
     chrysler_platform = CHRYSLER_PACIFICA;
     chrysler_addrs = &CHRYSLER_ADDRS;

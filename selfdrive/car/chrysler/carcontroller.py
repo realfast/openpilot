@@ -33,7 +33,10 @@ class CarController:
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
       self.last_button_frame = CS.button_counter
       if self.CP.carFingerprint in RAM_CARS:
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
+        if CS.cruise_cancel:
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
+        else:
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
        # ACC cancellation
       elif CC.cruiseControl.cancel:
@@ -42,13 +45,6 @@ class CarController:
       # ACC resume from standstill
       elif CC.cruiseControl.resume:
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
-
-    # HUD alerts
-    if self.frame % 25 == 0:
-      if CS.lkas_car_model != -1:
-        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS, 0))
-        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS, 1))
-        self.hud_count += 1
 
     # steering
     if self.frame % 2 == 0:
@@ -99,6 +95,13 @@ class CarController:
       can_sends.append(create_speed_spoof(self.packer, CS.esp8_counter, self.spoofspeed))
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx, 0))
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, idx, 1))
+
+    # HUD alerts
+    if self.frame % 25 == 0:
+      if CS.lkas_car_model != -1:
+        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS, 0))
+        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS, 1))
+        self.hud_count += 1
 
     self.frame += 1
 

@@ -133,6 +133,7 @@ FINGERPRINTS = {
 FW_VERSIONS = {
   CAR.RAM_1500: {
     (Ecu.combinationMeter, 0x742, None): [
+      b'68294051AG',
       b'68294051AI',
       b'68294052AG',
       b'68294063AG',
@@ -169,6 +170,7 @@ FW_VERSIONS = {
       b'68535470AC',
     ],
     (Ecu.fwdRadar, 0x753, None): [
+      b'68320950AH',
       b'68320950AI',
       b'68320950AJ',
       b'68320950AL',
@@ -180,6 +182,7 @@ FW_VERSIONS = {
       b'04672892AB',
     ],
     (Ecu.eps, 0x75A, None): [
+      b'68273275AF', #S0
       b'68273275AG', #S0
       b'68312176AE', #S0
       b'68312176AG', #S0
