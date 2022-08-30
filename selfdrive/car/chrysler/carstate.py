@@ -136,6 +136,12 @@ class CarState(CarStateBase):
 
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
+      self.lkasbutton = (cp.vl["Center_Stack_2"]["LKAS_Button"] == 1) or (cp.vl["Center_Stack_1"]["LKAS_Button"] == 1)
+      if self.lkasbutton ==1 and self.lkasdisabled== 0 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 1
+      elif self.lkasbutton ==1 and self.lkasdisabled == 1 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 0
+      self.lkasbuttonprev = self.lkasbutton
 
     ret.steerFaultTemporary = False
     ret.steerFaultPermanent = False

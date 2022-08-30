@@ -24,27 +24,19 @@ class CarController:
   def update(self, CC, CS):
     can_sends = []
 
-    lkas_active = CC.latActive and self.lkas_control_bit_prev
+    lkas_active = CC.latActive and not CS.lkasdisabled
 
     # cruise buttons
-    if (self.frame - self.last_button_frame)*DT_CTRL > 0.05:
+    if (CS.button_counter != self.last_button_frame):
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
-
+      self.last_button_frame = CS.button_counter
       # ACC cancellation
       if CC.cruiseControl.cancel:
-        self.last_button_frame = self.frame
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, cancel=True))
 
       # ACC resume from standstill
       elif CC.cruiseControl.resume:
-        self.last_button_frame = self.frame
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, resume=True))
-
-    # HUD alerts
-    if self.frame % 25 == 0:
-      if CS.lkas_car_model != -1:
-        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CS.madsEnabled, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
-        self.hud_count += 1
 
     # steering
     if self.frame % 2 == 0:
@@ -70,16 +62,22 @@ class CarController:
 
       if not lkas_control_bit and self.lkas_control_bit_prev:
         self.last_lkas_falling_edge = self.frame
-      self.lkas_control_bit_prev = lkas_control_bit
 
       # steer torque
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
-      if not lkas_active or not lkas_control_bit:
+      if not lkas_active or not lkas_control_bit or not self.lkas_control_bit_prev:
         apply_steer = 0
       self.apply_steer_last = apply_steer
+      self.lkas_control_bit_prev = lkas_control_bit
 
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
+
+    # HUD alerts
+    if self.frame % 25 == 0:
+      if CS.lkas_car_model != -1:
+        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CS.madsEnabled, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS))
+        self.hud_count += 1
 
     self.frame += 1
 
