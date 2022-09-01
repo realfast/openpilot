@@ -27,8 +27,9 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, CS
   # == Alerts ==
   # 7 Normal
   # 6 lane departure place hands on wheel
+  lkas_active = lkas_active and not CS.lkasdisabled
 
-  color = 2 if lkas_active and not CS.lkasdisabled else 1
+  color = 2 if lkas_active else 0 if CS.lkasdisabled else 1
   lines = 3 if lkas_active else 0
   alerts = 7 if lkas_active else 0
 
