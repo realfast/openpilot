@@ -27,7 +27,7 @@ def create_lkas_hud(packer, CP, lkas_active, mads_enabled, hud_alert, hud_count,
   # 7 Normal
   # 6 lane departure place hands on wheel
 
-  color = 2 if lkas_active else 1 if not lkas_active and mads_enabled else 0
+  color = 2 if lkas_active and not CS.lkasdisabled else 1 if not lkas_active and mads_enabled else 0
   lines = 3 if lkas_active else 0
   alerts = 7 if lkas_active else 0
 
@@ -47,8 +47,10 @@ def create_lkas_hud(packer, CP, lkas_active, mads_enabled, hud_alert, hud_count,
   }
 
   if CP.carFingerprint in RAM_CARS:
-    values['AUTO_HIGH_BEAM_ON'] = CS.auto_high_beam
-    values['LKAS_Disabled'] = CS.lkasdisabled
+    values = {
+      "Auto_High_Beam": CS.auto_high_beam,
+      "LKAS_Disabled":CS.lkasdisabled,
+    }
 
   return packer.make_can_msg("DAS_6", 0, values)
 
