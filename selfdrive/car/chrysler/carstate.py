@@ -99,6 +99,7 @@ class CarState(CarStateBase):
       ret.rightBlindspot = cp.vl["BSM_1"]["RIGHT_STATUS"] == 1
 
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"]
+    self.cruise_cancel = cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
     self.cruise_buttons = cp.vl["CRUISE_BUTTONS"]
     return ret
