@@ -135,7 +135,7 @@ def main(sm=None, pm=None):
     try:
       angle_offset_sane = abs(params.get('angleOffsetAverageDeg')) < 10.0
       steer_ratio_sane = min_sr <= params['steerRatio'] <= max_sr
-      params_sane = angle_offset_sane and steer_ratio_sane
+      params_sane = angle_offset_sane #and steer_ratio_sane
       if not params_sane:
         cloudlog.info(f"Invalid starting values found {params}")
         params = None
@@ -186,18 +186,18 @@ def main(sm=None, pm=None):
       liveParameters = msg.liveParameters
       liveParameters.posenetValid = True
       liveParameters.sensorValid = sensors_valid
-      liveParameters.steerRatio = float(x[States.STEER_RATIO])
+      liveParameters.steerRatio = CP.steerRatio
       liveParameters.stiffnessFactor = float(x[States.STIFFNESS])
       liveParameters.roll = float(x[States.ROAD_ROLL])
       liveParameters.angleOffsetAverageDeg = angle_offset_average
       liveParameters.angleOffsetDeg = angle_offset
       liveParameters.valid = all((
         abs(liveParameters.angleOffsetAverageDeg) < 10.0,
-        abs(liveParameters.angleOffsetDeg) < 10.0,
-        0.2 <= liveParameters.stiffnessFactor <= 5.0,
-        min_sr <= liveParameters.steerRatio <= max_sr,
+        # abs(liveParameters.angleOffsetDeg) < 10.0,
+        # 0.2 <= liveParameters.stiffnessFactor <= 5.0,
+        # min_sr <= liveParameters.steerRatio <= max_sr,
       ))
-      liveParameters.steerRatioStd = float(P[States.STEER_RATIO])
+      # liveParameters.steerRatioStd = float(P[States.STEER_RATIO])
       liveParameters.stiffnessFactorStd = float(P[States.STIFFNESS])
       liveParameters.angleOffsetAverageStd = float(P[States.ANGLE_OFFSET])
       liveParameters.angleOffsetFastStd = float(P[States.ANGLE_OFFSET_FAST])
