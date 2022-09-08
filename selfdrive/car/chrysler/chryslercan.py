@@ -48,7 +48,7 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, CS
 
   if CP.carFingerprint in RAM_CARS:
     values = {
-      "Auto_High_Beam": CS.auto_high_beam,
+      "AUTO_HIGH_BEAM_ON": CS.auto_high_beam,
       "LKAS_Disabled":CS.lkasdisabled,
     }
 
