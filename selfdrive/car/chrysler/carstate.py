@@ -94,7 +94,7 @@ class CarState(CarStateBase):
     self.leftBlinkerOn = bool(cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1)
     self.rightBlinkerOn = bool(cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 2)
 
-    cp_steering = cp_eps if self.CP.flags & ChryslerFlags.RAM_HD_S0 else cp
+    cp_steering = cp_eps if self.CP.flags == ChryslerFlags.RAM_HD_S0 else cp
 
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
@@ -255,7 +255,7 @@ class CarState(CarStateBase):
       ]
       checks.append(("BSM_1", 2))
 
-    if not (CP.flags & ChryslerFlags.RAM_HD_S0):
+    if not (CP.flags == ChryslerFlags.RAM_HD_S0):
       signals += [
         ("COUNTER", "EPS_2",),
         ("COLUMN_TORQUE", "EPS_2"),
@@ -281,7 +281,7 @@ class CarState(CarStateBase):
         ("Center_Stack_2", 1),
       ]
 
-      if not (CP.flags & ChryslerFlags.RAM_HD_S0):
+      if not (CP.flags == ChryslerFlags.RAM_HD_S0):
         signals.append(("DASM_FAULT", "EPS_3"))
         checks.append(("EPS_3", 50))
     else:
@@ -321,10 +321,20 @@ class CarState(CarStateBase):
   @staticmethod
   def get_eps_can_parser(CP):
     signals = [
-      ("DASM_FAULT", "EPS_3"),
     ]
     checks = [
-      ("EPS_3", 50),
     ]
+    if (CP.flags == ChryslerFlags.RAM_HD_S0):
+      signals += [
+      ("COUNTER", "EPS_2",),
+      ("COLUMN_TORQUE", "EPS_2"),
+      ("EPS_TORQUE_MOTOR", "EPS_2"),
+      ("LKAS_STATE", "EPS_2"),
+      ("DASM_FAULT", "EPS_3"),
+      ]
+      checks += [
+        ("EPS_2", 100),
+        ("EPS_3", 50),
+      ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 1)
