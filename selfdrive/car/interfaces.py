@@ -440,6 +440,9 @@ class CarStateBase(ABC):
   def get_loopback_can_parser(CP):
     return None
 
+  @staticmethod
+  def get_eps_can_parser(CP):
+    return None
 
 # interface-specific helpers
 
