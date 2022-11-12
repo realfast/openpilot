@@ -61,7 +61,7 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame, bus):
     "LKAS_CONTROL_BIT": enabled_val if lkas_control_bit else 0,
   }
 
-  if CP.flags:
+  if CP.flags == ChryslerFlags.RAM_HD_S0:
     values["COUNTER"] = frame % 0x10
 
   return packer.make_can_msg("LKAS_COMMAND", bus, values)

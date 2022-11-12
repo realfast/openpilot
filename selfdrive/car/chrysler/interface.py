@@ -22,18 +22,16 @@ class CarInterface(CarInterfaceBase):
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4
     stiffnessFactor = 1.0
-
-    if Params().get_bool("ChryslerRamHDS0") == True:
-      ret.flags = 1
+    ret.flags = 0
       
-    
-
     # safety config
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
-    if ret.flags:
-      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD_S0
-    elif candidate in RAM_HD:
-      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD
+    if candidate in RAM_HD:
+      if Params().get_bool("ChryslerRamHDS0") == True:
+        ret.flags = ChryslerFlags.RAM_HD_S0.value
+        ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD_S0
+      else:
+        ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD
     elif candidate in RAM_DT:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_DT
 
@@ -82,7 +80,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 15.61
       ret.mass = 3405. + STD_CARGO_KG
       ret.minSteerSpeed = 16
-      if ret.flags:
+      if ret.flags == ChryslerFlags.RAM_HD_S0:
         ret.minSteerSpeed = 0.5
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
 
