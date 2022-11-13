@@ -319,7 +319,7 @@ class SpeedLimitController():
 
     # In any case, if op is disabled, or speed limit control is disabled
     # or the reported speed limit is 0 or gas is pressed, deactivate.
-    if not self._op_enabled or not self._is_enabled or (self._speed_limit == 0 and self.state >= SpeedLimitControlState.tempInactive) or (self._gas_pressed and self._disengage_on_accelerator):
+    if not self._op_enabled or not self._is_enabled or self._speed_limit == 0 or (self._gas_pressed and self._disengage_on_accelerator):
       self.state = SpeedLimitControlState.inactive
       return
 
