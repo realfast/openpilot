@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntFlag
 from typing import Dict, List, Optional, Union
 
 from cereal import car
@@ -50,6 +50,11 @@ STEER_THRESHOLD = 120
 RAM_DT = {CAR.RAM_1500, }
 RAM_HD = {CAR.RAM_HD, }
 RAM_CARS = RAM_DT | RAM_HD
+
+
+class ChryslerFlags(IntFlag):
+  RAM_HD_S0 = 1
+
 
 @dataclass
 class ChryslerCarInfo(CarInfo):

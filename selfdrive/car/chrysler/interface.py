@@ -3,7 +3,7 @@ from cereal import car
 from common.params import Params
 from panda import Panda
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
-from selfdrive.car.chrysler.values import CAR, DBC, RAM_HD, RAM_DT
+from selfdrive.car.chrysler.values import CAR, DBC, RAM_HD, RAM_DT, ChryslerFlags
 from selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
@@ -22,10 +22,15 @@ class CarInterface(CarInterfaceBase):
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4
     stiffnessFactor = 1.0
-
+    ret.flags = 0
+      
     # safety config
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
     if candidate in RAM_HD:
+      # if Params().get_bool("ChryslerRamHDS0") == True:
+      #   ret.flags = ChryslerFlags.RAM_HD_S0.value
+      #   ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD_S0
+      # else:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_HD
     elif candidate in RAM_DT:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_DT
@@ -75,6 +80,8 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 15.61
       ret.mass = 3405. + STD_CARGO_KG
       ret.minSteerSpeed = 16
+      if ret.flags == ChryslerFlags.RAM_HD_S0:
+        ret.minSteerSpeed = 0.5
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
 
     else:
@@ -97,7 +104,7 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def _update(self, c):
-    ret = self.CS.update(self.cp, self.cp_cam)
+    ret = self.CS.update(self.cp, self.cp_cam, self.cp_eps)
 
     ret.madsEnabled = self.CS.madsEnabled
     ret.accEnabled = self.CS.accEnabled
