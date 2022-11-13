@@ -204,6 +204,22 @@ class CarState(CarStateBase):
       ("DAS_4", 50),
     ]
     return signals, checks
+    
+  @staticmethod
+  def get_steering_signals(CP):
+    signals = [
+      ("COUNTER", "EPS_2",),
+      ("COLUMN_TORQUE", "EPS_2"),
+      ("EPS_TORQUE_MOTOR", "EPS_2"),
+      ("LKAS_STATE", "EPS_2"),
+      ]
+    checks = [
+      ("EPS_2", 100),
+      ]
+    if CP.carFingerprint in RAM_CARS:
+      signals.append(("DASM_FAULT", "EPS_3"))
+      checks.append(("EPS_3", 50))
+    return signals, checks
 
   @staticmethod
   def get_can_parser(CP):
@@ -256,17 +272,6 @@ class CarState(CarStateBase):
       ]
       checks.append(("BSM_1", 2))
 
-    if not (CP.flags == ChryslerFlags.RAM_HD_S0):
-      signals += [
-        ("COUNTER", "EPS_2",),
-        ("COLUMN_TORQUE", "EPS_2"),
-        ("EPS_TORQUE_MOTOR", "EPS_2"),
-        ("LKAS_STATE", "EPS_2"),
-      ]
-      checks += [
-        ("EPS_2", 100),
-      ]
-
     if CP.carFingerprint in RAM_CARS:
       signals += [
         ("Vehicle_Speed", "ESP_8"),
@@ -282,9 +287,6 @@ class CarState(CarStateBase):
         ("Center_Stack_2", 1),
       ]
 
-      if not (CP.flags == ChryslerFlags.RAM_HD_S0):
-        signals.append(("DASM_FAULT", "EPS_3"))
-        checks.append(("EPS_3", 50))
     else:
       signals += [
         ("PRNDL", "GEAR"),
@@ -297,6 +299,11 @@ class CarState(CarStateBase):
       ]
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
+    
+    if not (CP.flags == ChryslerFlags.RAM_HD_S0):
+      signals += CarState.get_steering_signals(CP)[0]
+      checks += CarState.get_steering_signals(CP)[1]
+      
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
 
@@ -326,16 +333,7 @@ class CarState(CarStateBase):
     checks = [
     ]
     if (CP.flags == ChryslerFlags.RAM_HD_S0):
-      signals += [
-      ("COUNTER", "EPS_2",),
-      ("COLUMN_TORQUE", "EPS_2"),
-      ("EPS_TORQUE_MOTOR", "EPS_2"),
-      ("LKAS_STATE", "EPS_2"),
-      ("DASM_FAULT", "EPS_3"),
-      ]
-      checks += [
-        ("EPS_2", 100),
-        ("EPS_3", 50),
-      ]
+      signals += CarState.get_steering_signals(CP)[0]
+      checks += CarState.get_steering_signals(CP)[1]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 1)
