@@ -92,11 +92,11 @@ class CarController:
         apply_steer = 0
       self.apply_steer_last = apply_steer
       self.lkas_control_bit_prev = lkas_control_bit
-
-      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame // 2, 0))
+      
       if self.CP.flags == ChryslerFlags.RAM_HD_S0:
         can_sends.append(create_speed_spoof(self.packer, CS.esp8_counter, self.spoofspeed))
         can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame // 2, 1))
+      can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame // 2, 0))
 
     # HUD alerts
     if self.frame % 25 == 0:
