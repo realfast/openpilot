@@ -135,7 +135,7 @@ def main(sm=None, pm=None):
     try:
       angle_offset_sane = abs(params.get('angleOffsetAverageDeg')) < 10.0
       steer_ratio_sane = min_sr <= params['steerRatio'] <= max_sr
-      params_sane = angle_offset_sane and steer_ratio_sane
+      params_sane = angle_offset_sane
       if not params_sane:
         cloudlog.info(f"Invalid starting values found {params}")
         params = None
@@ -156,7 +156,7 @@ def main(sm=None, pm=None):
   # When driving in wet conditions the stiffness can go down, and then be too low on the next drive
   # Without a way to detect this we have to reset the stiffness every drive
   params['stiffnessFactor'] = 1.0
-  learner = ParamsLearner(CP, params['steerRatio'], params['stiffnessFactor'], math.radians(params['angleOffsetAverageDeg']))
+  learner = ParamsLearner(CP, CP.steerRatio, params['stiffnessFactor'], math.radians(params['angleOffsetAverageDeg']))
   angle_offset_average = params['angleOffsetAverageDeg']
   angle_offset = angle_offset_average
 
@@ -186,7 +186,7 @@ def main(sm=None, pm=None):
       liveParameters = msg.liveParameters
       liveParameters.posenetValid = True
       liveParameters.sensorValid = sensors_valid
-      liveParameters.steerRatio = float(x[States.STEER_RATIO])
+      liveParameters.steerRatio = CP.steerRatio
       liveParameters.stiffnessFactor = float(x[States.STIFFNESS])
       liveParameters.roll = float(x[States.ROAD_ROLL])
       liveParameters.angleOffsetAverageDeg = angle_offset_average
