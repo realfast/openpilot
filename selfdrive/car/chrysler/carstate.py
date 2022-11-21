@@ -4,8 +4,7 @@ from common.params import Params
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
-from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
-from selfdrive.controls.lib.desire_helper import LANE_CHANGE_SPEED_MIN
+from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, ChryslerFlags
 
 
 class CarState(CarStateBase):
@@ -42,7 +41,7 @@ class CarState(CarStateBase):
     self.prev_cruiseState_enabled = False
     self.prev_acc_mads_combo = None
 
-  def update(self, cp, cp_cam):
+  def update(self, cp, cp_cam, cp_eps):
 
     ret = car.CarState.new_message()
 
@@ -82,7 +81,10 @@ class CarState(CarStateBase):
       unit=1,
     )
 
-    self.belowLaneChangeSpeed = ret.vEgo < LANE_CHANGE_SPEED_MIN and self.below_speed_pause
+    if self.CP.carFingerprint in RAM_CARS:
+      self.esp8_counter = cp.vl["ESP_8"]["COUNTER"]
+
+    self.belowLaneChangeSpeed = ret.vEgo < (15 * CV.MPH_TO_MS) and self.below_speed_pause
 
     # button presses
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_stalk(200, cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1,
@@ -92,11 +94,13 @@ class CarState(CarStateBase):
     self.leftBlinkerOn = bool(cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1)
     self.rightBlinkerOn = bool(cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 2)
 
+    cp_steering = cp_eps if self.CP.flags == ChryslerFlags.RAM_HD_S0 else cp
+
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
     ret.steeringRateDeg = cp.vl["STEERING"]["STEERING_RATE"]
-    ret.steeringTorque = cp.vl["EPS_2"]["COLUMN_TORQUE"]
-    ret.steeringTorqueEps = cp.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
+    ret.steeringTorque = cp_steering.vl["EPS_2"]["COLUMN_TORQUE"]
+    ret.steeringTorqueEps = cp_steering.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
     ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
 
     # cruise state
@@ -167,7 +171,7 @@ class CarState(CarStateBase):
       if (not self.belowLaneChangeSpeed and (self.leftBlinkerOn or self.rightBlinkerOn)) or\
         not (self.leftBlinkerOn or self.rightBlinkerOn):
         if self.CP.carFingerprint in RAM_CARS:
-          ret.steerFaultTemporary  = cp.vl["EPS_3"]["DASM_FAULT"] == 1
+          ret.steerFaultTemporary = cp_steering.vl["EPS_3"]["DASM_FAULT"] == 1
         else:
           ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
 
@@ -199,6 +203,22 @@ class CarState(CarStateBase):
       ("DAS_4", 50),
     ]
     return signals, checks
+    
+  @staticmethod
+  def get_steering_signals(CP):
+    signals = [
+      ("COUNTER", "EPS_2",),
+      ("COLUMN_TORQUE", "EPS_2"),
+      ("EPS_TORQUE_MOTOR", "EPS_2"),
+      ("LKAS_STATE", "EPS_2"),
+      ]
+    checks = [
+      ("EPS_2", 100),
+      ]
+    if CP.carFingerprint in RAM_CARS:
+      signals.append(("DASM_FAULT", "EPS_3"))
+      checks.append(("EPS_3", 50))
+    return signals, checks
 
   @staticmethod
   def get_can_parser(CP):
@@ -221,10 +241,6 @@ class CarState(CarStateBase):
       ("TURN_SIGNALS", "STEERING_LEVERS"),
       ("HIGH_BEAM_PRESSED", "STEERING_LEVERS"),
       ("SEATBELT_DRIVER_UNLATCHED", "ORC_1"),
-      ("COUNTER", "EPS_2",),
-      ("COLUMN_TORQUE", "EPS_2"),
-      ("EPS_TORQUE_MOTOR", "EPS_2"),
-      ("LKAS_STATE", "EPS_2"),
       ("ACC_Cancel", "CRUISE_BUTTONS"),
       ("ACC_Distance_Dec", "CRUISE_BUTTONS"),
       ("ACC_Accel", "CRUISE_BUTTONS"),
@@ -239,7 +255,6 @@ class CarState(CarStateBase):
     checks = [
       # sig_address, frequency
       ("ESP_1", 50),
-      ("EPS_2", 100),
       ("ESP_6", 50),
       ("STEERING", 100),
       ("ECM_5", 50),
@@ -258,19 +273,19 @@ class CarState(CarStateBase):
 
     if CP.carFingerprint in RAM_CARS:
       signals += [
-        ("DASM_FAULT", "EPS_3"),
         ("Vehicle_Speed", "ESP_8"),
+        ("COUNTER", "ESP_8"),
         ("Gear_State", "Transmission_Status"),
         ("LKAS_Button", "Center_Stack_1"),
         ("LKAS_Button", "Center_Stack_2"),
       ]
       checks += [
         ("ESP_8", 50),
-        ("EPS_3", 50),
         ("Transmission_Status", 50),
         ("Center_Stack_1", 1),
         ("Center_Stack_2", 1),
       ]
+
     else:
       signals += [
         ("PRNDL", "GEAR"),
@@ -283,6 +298,11 @@ class CarState(CarStateBase):
       ]
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
+    
+    if not (CP.flags == ChryslerFlags.RAM_HD_S0):
+      signals += CarState.get_steering_signals(CP)[0]
+      checks += CarState.get_steering_signals(CP)[1]
+      
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
 
@@ -304,3 +324,15 @@ class CarState(CarStateBase):
       checks += CarState.get_cruise_signals()[1]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)
+
+  @staticmethod
+  def get_eps_can_parser(CP):
+    signals = [
+    ]
+    checks = [
+    ]
+    if (CP.flags == ChryslerFlags.RAM_HD_S0):
+      signals += CarState.get_steering_signals(CP)[0]
+      checks += CarState.get_steering_signals(CP)[1]
+
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 1)

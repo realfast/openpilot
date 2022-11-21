@@ -34,7 +34,7 @@ MAX_INVALID_THRESHOLD = 10
 MIN_ENGAGE_BUFFER = 2  # secs
 
 VERSION = 1  # bump this to invalidate old parameter caches
-ALLOWED_CARS = ['toyota', 'hyundai']
+ALLOWED_CARS = ['toyota', 'hyundai', 'chrysler']
 
 
 def slope2rot(slope):
