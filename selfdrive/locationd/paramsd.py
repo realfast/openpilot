@@ -192,10 +192,10 @@ def main(sm=None, pm=None):
       liveParameters.angleOffsetAverageDeg = angle_offset_average
       liveParameters.angleOffsetDeg = angle_offset
       liveParameters.valid = all((
-        abs(liveParameters.angleOffsetAverageDeg) < 10.0,
-        abs(liveParameters.angleOffsetDeg) < 10.0,
-        0.2 <= liveParameters.stiffnessFactor <= 5.0,
-        min_sr <= liveParameters.steerRatio <= max_sr,
+        # abs(liveParameters.angleOffsetAverageDeg) < 10.0,
+        # abs(liveParameters.angleOffsetDeg) < 10.0,
+        # 0.2 <= liveParameters.stiffnessFactor <= 5.0,
+        # min_sr <= liveParameters.steerRatio <= max_sr,
       ))
       liveParameters.steerRatioStd = float(P[States.STEER_RATIO])
       liveParameters.stiffnessFactorStd = float(P[States.STIFFNESS])
@@ -206,10 +206,10 @@ def main(sm=None, pm=None):
 
       if sm.frame % 1200 == 0:  # once a minute
         params = {
-          # 'carFingerprint': CP.carFingerprint,
-          # 'steerRatio': liveParameters.steerRatio,
-          # 'stiffnessFactor': liveParameters.stiffnessFactor,
-          # 'angleOffsetAverageDeg': liveParameters.angleOffsetAverageDeg,
+          'carFingerprint': CP.carFingerprint,
+          'steerRatio': liveParameters.steerRatio,
+          'stiffnessFactor': liveParameters.stiffnessFactor,
+          'angleOffsetAverageDeg': liveParameters.angleOffsetAverageDeg,
         }
         put_nonblocking("LiveParameters", json.dumps(params))
 
