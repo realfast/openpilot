@@ -199,7 +199,7 @@ FW_VERSIONS = {
       b'68490898AA',
       b'68500728AA',
     ],
-    (Ecu.esp, 0x747, None): [
+    (Ecu.abs, 0x747, None): [
       b'68292406AH',
       b'68432418AB',
       b'68432418AD',
@@ -283,7 +283,7 @@ FW_VERSIONS = {
       b'68428505AA',
       b'68428507AA',
     ],
-    (Ecu.esp, 0x747, None): [
+    (Ecu.abs, 0x747, None): [
       b'68334977AH',
       b'68455481AC',
       b'68504022AA',
