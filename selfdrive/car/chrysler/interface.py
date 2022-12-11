@@ -19,7 +19,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.radarOffCan = DBC[candidate]['radar'] is None
 
-    ret.steerActuatorDelay = 0.07
+    ret.steerActuatorDelay = 0.5
     ret.steerLimitTimer = 0.4
 
     # safety config
@@ -29,7 +29,7 @@ class CarInterface(CarInterfaceBase):
     elif candidate in RAM_DT:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_DT
 
-    ret.minSteerSpeed = 3.8  # m/s
+    ret.minSteerSpeed = 0  # m/s
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       # TODO: allow 2019 cars to steer down to 13 m/s if already engaged.
       ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
