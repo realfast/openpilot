@@ -15,6 +15,8 @@ class CarState(CarStateBase):
     self.auto_high_beam = 0
     self.button_counter = 0
     self.lkas_car_model = -1
+    self.lkasdisabled = 0
+    self.lkasbuttonprev = 0
 
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
@@ -82,6 +84,12 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       ret.steerFaultTemporary  = cp.vl["EPS_3"]["DASM_FAULT"] == 1
+      self.lkasbutton = (cp.vl["Center_Stack_2"]["LKAS_Button"] == 1) or (cp.vl["Center_Stack_1"]["LKAS_Button"] == 1)
+      if self.lkasbutton ==1 and self.lkasdisabled== 0 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 1
+      elif self.lkasbutton ==1 and self.lkasdisabled == 1 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 0
+      self.lkasbuttonprev = self.lkasbutton
     else:
       ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
 
@@ -91,8 +99,9 @@ class CarState(CarStateBase):
       ret.rightBlindspot = cp.vl["BSM_1"]["RIGHT_STATUS"] == 1
 
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"]
+    self.cruise_cancel = cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
-
+    self.cruise_buttons = cp.vl["CRUISE_BUTTONS"]
     return ret
 
   @staticmethod
@@ -136,6 +145,14 @@ class CarState(CarStateBase):
       ("COLUMN_TORQUE", "EPS_2"),
       ("EPS_TORQUE_MOTOR", "EPS_2"),
       ("LKAS_STATE", "EPS_2"),
+      ("ACC_Cancel", "CRUISE_BUTTONS"),
+      ("ACC_Distance_Dec", "CRUISE_BUTTONS"),
+      ("ACC_Accel", "CRUISE_BUTTONS"),
+      ("ACC_Decel", "CRUISE_BUTTONS"),
+      ("ACC_Resume", "CRUISE_BUTTONS"),
+      ("Cruise_OnOff", "CRUISE_BUTTONS"),
+      ("ACC_OnOff", "CRUISE_BUTTONS"),
+      ("ACC_Distance_Inc", "CRUISE_BUTTONS"),
       ("COUNTER", "CRUISE_BUTTONS"),
     ]
 
@@ -164,11 +181,15 @@ class CarState(CarStateBase):
         ("DASM_FAULT", "EPS_3"),
         ("Vehicle_Speed", "ESP_8"),
         ("Gear_State", "Transmission_Status"),
+        ("LKAS_Button", "Center_Stack_1"),
+        ("LKAS_Button", "Center_Stack_2"),
       ]
       checks += [
         ("ESP_8", 50),
         ("EPS_3", 50),
         ("Transmission_Status", 50),
+        ("Center_Stack_1", 1),
+        ("Center_Stack_2", 1),
       ]
     else:
       signals += [
