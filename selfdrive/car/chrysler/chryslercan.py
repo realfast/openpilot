@@ -78,3 +78,38 @@ def create_wheel_buttons_command(packer, bus, frame, buttons):
       values[b] = 1
 
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
+
+def create_acc_1_message(packer, bus, frame):
+  values = {
+    "ACCEL_PERHAPS": 32767,
+    "COUNTER": frame % 0x10,
+  }
+
+  return packer.make_can_msg("ACC_1", bus, values)
+
+def create_das_3_message(packer, bus, frame):
+  values = {
+    "ENGINE_TORQUE_REQUEST": 0,
+    "ACC_DECEL": 32767,
+    # "GR_MAX_REQ": 9;
+    "COUNTER": frame % 0x10,
+  }
+
+  return packer.make_can_msg("DAS_3", bus, values)
+
+def create_das_4_message(packer, bus):
+  values = {
+    "ACC_DISTANCE_CONFIG_1": 0x1,
+    "ACC_DISTANCE_CONFIG_2": 0x1,
+    "SPEED_DIGITAL": 0xFE,
+  }
+
+  return packer.make_can_msg("DAS_4", bus, values)
+
+def create_chime_message(packer, bus):
+  values = { # 1000ms
+    # "CHIME": chime if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 14,
+    # "CHIME_REQ_L": 1 if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 0,
+    # "CHIME_REQ_R": 1 if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 0
+  }
+  return packer.make_can_msg("CHIME", bus, values)

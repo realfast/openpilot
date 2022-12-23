@@ -29,11 +29,14 @@ const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
 };
 
 typedef struct {
+  const int ACC_1;
+  const int CHIME;
   const int EPS_2;
   const int ESP_1;
   const int ESP_8;
   const int ECM_5;
   const int DAS_3;
+  const int DAS_4;
   const int DAS_6;
   const int LKAS_COMMAND;
   const int LKAS_HEARTBIT;
@@ -51,6 +54,9 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .LKAS_COMMAND     = 658,  // LKAS controls from DASM
   .LKAS_HEARTBIT    = 729,  // LKAS HEARTBIT from DASM
   .CRUISE_BUTTONS   = 571,  // Cruise control buttons
+  .DAS_4            = 501,  // ACC engagement states from DASM
+  .ACC_1            = 625,  // ACC set speed
+  .CHIME            = 838, // Chime control
 };
 
 // CAN messages for the 5th gen RAM DT platform
@@ -82,6 +88,15 @@ const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
   {CHRYSLER_ADDRS.DAS_6, 0, 8},
   {CHRYSLER_ADDRS.LKAS_HEARTBIT, 0, 5},
+  {0x753, 0, 8},
+  {CHRYSLER_ADDRS.DAS_3, 0, 8},
+  {CHRYSLER_ADDRS.DAS_4, 0, 8},
+  {CHRYSLER_ADDRS.ACC_1, 0, 8},
+  {CHRYSLER_ADDRS.DAS_3, 2, 8},
+  {CHRYSLER_ADDRS.DAS_4, 2, 8},
+  {CHRYSLER_ADDRS.ACC_1, 2, 8},
+  {CHRYSLER_ADDRS.CHIME, 0, 2},
+  {CHRYSLER_ADDRS.CHIME, 2, 2},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
@@ -265,6 +280,13 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
 //      tx = 0;
 //    }
 //  }
+
+ // UDS: Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
+  if (addr == 0x753) {
+    if ((GET_BYTES_04(to_send) != 0x00803E02U) || (GET_BYTES_48(to_send) != 0x0U)) {
+      tx = 0;
+    }
+  }
 
   return tx;
 }
