@@ -93,12 +93,14 @@ const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
   {CHRYSLER_RAM_DT_ADDRS.CRUISE_BUTTONS, 2, 3},
   {CHRYSLER_RAM_DT_ADDRS.LKAS_COMMAND, 0, 8},
   {CHRYSLER_RAM_DT_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_RAM_DT_ADDRS.DAS_3, 0, 8},
 };
 
 const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
   {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
   {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS.DAS_3, 0, 8},
 };
 
 AddrCheckStruct chrysler_addr_checks[] = {
@@ -285,7 +287,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
 
   // forward all messages from camera except LKAS messages
-  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6));
+  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6) || (addr == chrysler_addrs->DAS_3));
   if ((bus_num == 2) && !is_lkas){
     bus_fwd = 0;
   }

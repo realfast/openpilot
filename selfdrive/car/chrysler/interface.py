@@ -63,6 +63,12 @@ class CarInterface(CarInterfaceBase):
         for fw in car_fw:
           if fw.ecu == 'eps' and fw.fwVersion in (b"68273275AF", b"68273275AG", b"68312176AE", b"68312176AG", ):
             ret.minEnableSpeed = 0.
+      ret.openpilotLongitudinalControl = True
+      tune = ret.longitudinalTuning
+      tune.deadzoneBP = [0., 9.]
+      tune.deadzoneV = [.0, .15]
+      tune.kpV = [0.25]
+      tune.kiV = [0.05]
 
     elif candidate == CAR.RAM_HD:
       stiffnessFactor = 0.35
@@ -72,6 +78,14 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3405. + STD_CARGO_KG
       ret.minSteerSpeed = 16
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
+      ret.openpilotLongitudinalControl = True
+      tune = ret.longitudinalTuning
+      tune.deadzoneBP = [0., 9.]
+      tune.deadzoneV = [.0, .15]
+      tune.kpV = [0.25]
+      tune.kiV = [0.05]
+      ret.longitudinalActuatorDelayUpperBound = 0.5 # s
+      ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
