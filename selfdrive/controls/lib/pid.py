@@ -3,12 +3,16 @@ from numbers import Number
 
 from common.numpy_fast import clip, interp
 
+from common.op_params import opParams
+
 
 class PIDController():
-  def __init__(self, k_p, k_i, k_f=0., k_d=0., pos_limit=1e308, neg_limit=-1e308, rate=100):
+  def __init__(self, k_p, k_i, k_f=0., k_d=0., pos_limit=1e308, neg_limit=-1e308, rate=100, islong=False):
     self._k_p = k_p
     self._k_i = k_i
     self._k_d = k_d
+    self.op_params = opParams()
+    self.islong = islong
     self.k_f = k_f   # feedforward gain
     if isinstance(self._k_p, Number):
       self._k_p = [[0], [self._k_p]]
@@ -25,6 +29,11 @@ class PIDController():
     self.speed = 0.0
 
     self.reset()
+
+
+  def _update_params(self):
+    self.k_p = self.op_params.get('long_p')
+    self.k_i = self.op_params.get('long_i')
 
   @property
   def k_p(self):
@@ -51,6 +60,9 @@ class PIDController():
 
   def update(self, error, error_rate=0.0, speed=0.0, override=False, feedforward=0., freeze_integrator=False):
     self.speed = speed
+
+    if self.islong:
+      update_params()
 
     self.p = float(error) * self.k_p
     self.f = feedforward * self.k_f

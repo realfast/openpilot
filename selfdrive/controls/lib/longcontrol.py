@@ -5,6 +5,8 @@ from selfdrive.controls.lib.drive_helpers import CONTROL_N, apply_deadzone
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.modeld.constants import T_IDXS
 
+from common.op_params import opParams
+
 LongCtrlState = car.CarControl.Actuators.LongControlState
 
 
@@ -53,10 +55,15 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target,
 class LongControl:
   def __init__(self, CP):
     self.CP = CP
+    self.op_params = opParams()
+
+    self.kp = self.op_params.get('long_p')
+    self.ki = self.op_params.get('long_i')
+
     self.long_control_state = LongCtrlState.off  # initialized to off
-    self.pid = PIDController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
-                             (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
-                             k_f=CP.longitudinalTuning.kf, rate=1 / DT_CTRL)
+    self.pid = PIDController((CP.longitudinalTuning.kpBP, self.kp),
+                             (CP.longitudinalTuning.kiBP, self.ki),
+                             k_f=CP.longitudinalTuning.kf, rate=1 / DT_CTRL, islong=True)
     self.v_pid = 0.0
     self.last_output_accel = 0.0
 
