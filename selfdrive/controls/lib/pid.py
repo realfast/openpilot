@@ -64,13 +64,12 @@ class PIDController():
     if self.islong:
       self._update_params()
       self.p = float(error) * self._k_p
-      self.f = feedforward * self.k_f
-      self.d = error_rate * self._k_d
     
     else:
       self.p = float(error) * self.k_p
-      self.f = feedforward * self.k_f
-      self.d = error_rate * self.k_d
+
+    self.f = feedforward * self.k_f
+    self.d = error_rate * self.k_d
 
     if override:
       self.i -= self.i_unwind_rate * float(np.sign(self.i))
