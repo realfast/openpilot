@@ -32,8 +32,8 @@ class PIDController():
 
 
   def _update_params(self):
-    self.k_p = self.op_params.get('long_p')
-    self.k_i = self.op_params.get('long_i')
+    self._k_p = self.op_params.get('long_p')
+    self._k_i = self.op_params.get('long_i')
 
   @property
   def k_p(self):
@@ -63,15 +63,22 @@ class PIDController():
 
     if self.islong:
       self._update_params()
-
-    self.p = float(error) * self.k_p
-    self.f = feedforward * self.k_f
-    self.d = error_rate * self.k_d
+      self.p = float(error) * self._k_p
+      self.f = feedforward * self.k_f
+      self.d = error_rate * self._k_d
+    
+    else:
+      self.p = float(error) * self.k_p
+      self.f = feedforward * self.k_f
+      self.d = error_rate * self.k_d
 
     if override:
       self.i -= self.i_unwind_rate * float(np.sign(self.i))
     else:
-      i = self.i + error * self.k_i * self.i_rate
+      if self.islong:
+        i = self.i + error * self._k_i * self.i_rate
+      else:
+        i = self.i + error * self.k_i * self.i_rate
       control = self.p + i + self.d + self.f
 
       # Update when changing i will move the control away from the limits
