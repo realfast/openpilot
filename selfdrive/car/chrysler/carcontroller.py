@@ -31,6 +31,11 @@ class CarController:
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
 
+    # long
+    self.last_brake = None
+    self.max_gear = None
+    self.last_torque = 0
+
   def update(self, CC, CS):
     can_sends = []
 
@@ -107,26 +112,41 @@ class CarController:
       decel_req = False
       torque = None
       decel = self.acc_brake(CC.actuators.accel)
+      max_gear = 8
+      delta_accel = 0
+      self.last_torque = CS.engineTorque
     else:
       self.last_brake = None
       accel_req = True
       decel_req = False
-      pcm_accel_cmd = clip(CC.actuators.accel, -3.5, 2.0)
-      # if abs(CS.out.vEgo - CC.actuators.speed)<=0.11:
-      #   accel = 0.1
-      torque1 = (self.CP.mass * pcm_accel_cmd * CS.out.vEgo) / (.105 *  CS.engineRpm)
-      torque2 = (self.CP.mass * ((pcm_accel_cmd - CS.out.aEgo) *0.02)** 2)  / (.105 *  CS.engineRpm)
-      torque2 += CS.engineTorque
-      torque = max(CS.torqMin + 1, min(CS.torqMax, min(torque1, torque2))) # limits
+      delta_accel = CC.actuators.accel - CS.out.aEgo
+        
+        # adding a factor to the velocity. 1.0 multiplied by the delta_accel assumes that we are telling the formula we want to be x m/s faster than we currently
+        # are 1 second from now. I add the ability to modify this in real time to dial it in better. 
+        # For example if comma is requesting 2.0m/s2 acceleration and we use a 1.0 multiplier, then we are saying in 1 second we want to be traveling 2.0m/s faster. 
+        # if we put a 1.5 multiplier then it becomes 3.0 m/s faster 1 second from now. 
+      if delta_accel < 0: 
+        velocity = clip(abs(delta_accel),  -3.5, 2.0)
+      else:
+        velocity = clip(abs(delta_accel),  -3.5, 2.0)
+
+      torque = (self.CP.mass * delta_accel * velocity)  / (.105 *  CS.engineRpm)
+      if CS.engineTorque < 0 and torque > 0:
+        torque +=200 #A truck will idle between 100-200nm So, If torque is very negative we need to get back to positive quickly. 
+      else:
+        torque += CS.engineTorque
+
       decel = None
 
+      self.last_torque = torque
+
     can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
-                                  accel_req,
-                                  torque,
-                                  max_gear,
-                                  decel_req,
-                                  decel,
-                                  CS.das_3))
+                                   accel_req,
+                                   torque,
+                                   max_gear,
+                                   decel_req,
+                                   decel,
+                                   CS.das_3))
 
     self.frame += 1
 
