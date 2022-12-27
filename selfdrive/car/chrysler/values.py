@@ -29,6 +29,9 @@ class CAR:
 
 
 class CarControllerParams:
+  ACCEL_MAX = 2.0  # m/s2, lower than allowed 2.0 m/s2 for tuning reasons
+  ACCEL_MIN = -3.5  # m/s2
+
   def __init__(self, CP):
     self.STEER_ERROR_MAX = 80
     if CP.carFingerprint in RAM_HD:

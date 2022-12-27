@@ -34,7 +34,6 @@ class CarController:
     # long
     self.last_brake = None
     self.max_gear = None
-    self.last_torque = 0
 
   def update(self, CC, CS):
     can_sends = []
@@ -107,38 +106,48 @@ class CarController:
       self.last_brake = None
 
     max_gear = 8
+
+    self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
+
     if CC.actuators.accel <= 0:
       accel_req = False
       decel_req = False
       torque = None
-      decel = self.acc_brake(CC.actuators.accel)
+      decel = self.acc_brake(self.accel)
       max_gear = 8
       delta_accel = 0
-      self.last_torque = CS.engineTorque
     else:
       self.last_brake = None
       accel_req = True
       decel_req = False
-      delta_accel = CC.actuators.accel - CS.out.aEgo
+      # delta_accel = CC.actuators.accel - CS.out.aEgo
         
         # adding a factor to the velocity. 1.0 multiplied by the delta_accel assumes that we are telling the formula we want to be x m/s faster than we currently
         # are 1 second from now. I add the ability to modify this in real time to dial it in better. 
         # For example if comma is requesting 2.0m/s2 acceleration and we use a 1.0 multiplier, then we are saying in 1 second we want to be traveling 2.0m/s faster. 
         # if we put a 1.5 multiplier then it becomes 3.0 m/s faster 1 second from now. 
-      if delta_accel < 0: 
-        velocity = clip(abs(delta_accel),  -3.5, 2.0)
-      else:
-        velocity = clip(abs(delta_accel),  -3.5, 2.0)
+      # if delta_accel < 0: 
+      #   velocity = clip(abs(delta_accel),  -3.5, 2.0)
+      # else:
+      #   velocity = clip(abs(delta_accel),  -3.5, 2.0)
 
-      torque = (self.CP.mass * delta_accel * velocity)  / (.105 *  CS.engineRpm)
+      #calculate torque using self.CP.mass, self.accel, CS.vEgoRaw, CS.engineTorque, and CS.engineRPM
+      torque = (self.CP.mass * self.accel)  / (CS.out.vEgoRaw + .00001) #+ .00001 to prevent divide by zero
+
+      # torque = (self.CP.mass*self.accel*CS.out.vEgoRaw) / (CS.EngineRPM + .00001) #+ .00001 to prevent divide by zero
+
       if CS.engineTorque < 0 and torque > 0:
-        torque +=200 #A truck will idle between 100-200nm So, If torque is very negative we need to get back to positive quickly. 
+        #If torque is less than -200nm, we need to get back to 0 quickly.
+        if CS.engineTorque <= -200:
+          torque = 0
+        #A truck will idle between 100-200nm So, If torque is very negative we need to get back to positive quickly. 
+        else:
+          torque +=200 
+      #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
       else:
         torque += CS.engineTorque
 
       decel = None
-
-      self.last_torque = torque
 
     can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
                                    accel_req,
@@ -156,7 +165,7 @@ class CarController:
     return new_actuators, can_sends
 
   def acc_brake(self, aTarget):
-    brake_target = max(ACCEL_MIN, round(aTarget, 2))
+    brake_target = aTarget
     if self.last_brake is None:
       self.last_brake = min(0., brake_target / 2)
     else:
