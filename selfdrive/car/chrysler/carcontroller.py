@@ -10,10 +10,12 @@ from common.conversions import Conversions as CV
 from common.params import Params, put_nonblocking
 from cereal import car
 import math
+
+from common.op_params import opParams
+
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
 BRAKE_CHANGE = 0.06
-ACCEL_MIN = -3.5
 
 GearShifter = car.CarState.GearShifter
 
@@ -34,6 +36,7 @@ class CarController:
     # long
     self.last_brake = None
     self.max_gear = None
+    self.op_params = opParams()
 
   def update(self, CC, CS):
     can_sends = []
@@ -126,15 +129,22 @@ class CarController:
 
         #calculate torque using self.CP.mass, self.accel, CS.vEgoRaw, CS.engineTorque, and CS.engineRpm
         # torque = ((self.CP.mass * self.accel)  / (CS.out.vEgoRaw + .00001))*.020 #+ .00001 to prevent divide by zero
-        # torque = Power (W) / (RPM * 2 * pi / 60)
-        # Power (W)= work(J) * time (s)
-        # work (J) = force (N) * distance (m)
-        # force (N) = mass (kg) * acceleration (m/s^2)
-        # distance (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s)
         
-        timeforsample = 1.0
-        distancemoved = (.5 * self.accel * timeforsample**2) + (CS.out.vEgoRaw)#the 1st 1.0 should be squared
-        torque = (self.CP.mass * self.accel * distancemoved * 9.55414 * .020)/CS.engineRpm
+        time_for_sample = self.op_params.get('long_time_constant')
+
+        # distance_moved = (.5 * self.accel * time_for_sample**2) + (CS.out.vEgoRaw)#the 1st 1.0 should be squared
+        # torque = (self.CP.mass * self.accel * distance_moved * 9.55414 * .020)/CS.engineRpm
+
+        # force (N) = mass (kg) * acceleration (m/s^2)
+        force = self.CP.mass * self.accel
+        # distance_moved (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s)
+        distance_moved = ((self.accel * (time_for_sample**2))/2) + (CS.out.vEgoRaw)
+        # work (J) = force (N) * distance (m)
+        work = force * distance_moved
+        # Power (W)= work(J) * time (s)
+        power = work * time_for_sample
+        # torque = Power (W) / (RPM * 2 * pi / 60)
+        torque = power/(CS.engineRpm * 2 * math.pi / 60)
 
         # torque = (self.CP.mass*self.accel*CS.out.vEgoRaw) / (CS.engineRpm + .00001) #+ .00001 to prevent divide by zero
 

@@ -62,7 +62,8 @@ class PIDController():
     self.speed = speed
 
     if self.islong:
-      self._update_params()
+      if self.op_params.get('long_p') != self._k_p or self.op_params.get('long_i') != self._k_i:
+        self._update_params()
       self.p = float(error) * self._k_p
     
     else:
