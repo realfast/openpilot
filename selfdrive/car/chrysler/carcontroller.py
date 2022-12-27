@@ -124,7 +124,7 @@ class CarController:
         # else:
         #   velocity = clip(abs(delta_accel),  -3.5, 2.0)
 
-        #calculate torque using self.CP.mass, self.accel, CS.vEgoRaw, CS.engineTorque, and CS.engineRPM
+        #calculate torque using self.CP.mass, self.accel, CS.vEgoRaw, CS.engineTorque, and CS.engineRpm
         # torque = ((self.CP.mass * self.accel)  / (CS.out.vEgoRaw + .00001))*.020 #+ .00001 to prevent divide by zero
         # torque = Power (W) / (RPM * 2 * pi / 60)
         # Power (W)= work(J) * time (s)
@@ -132,10 +132,11 @@ class CarController:
         # force (N) = mass (kg) * acceleration (m/s^2)
         # distance (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s)
         
-        distancemoved = (.5 self.accel * 1.0^2) + (CS.out.vEgoRaw * 1.0)
-        torque = (self.CP.mass * self.accel * distancemoved * 9.55414)/CS.EngineRPM
+        timeforsample = 1.0
+        distancemoved = (.5 * self.accel * timeforsample**2) + (CS.out.vEgoRaw)#the 1st 1.0 should be squared
+        torque = (self.CP.mass * self.accel * distancemoved * 9.55414 * .020)/CS.engineRpm
 
-        # torque = (self.CP.mass*self.accel*CS.out.vEgoRaw) / (CS.EngineRPM + .00001) #+ .00001 to prevent divide by zero
+        # torque = (self.CP.mass*self.accel*CS.out.vEgoRaw) / (CS.engineRpm + .00001) #+ .00001 to prevent divide by zero
 
         if CS.engineTorque < 0 and torque > 0:
           torque += 0
