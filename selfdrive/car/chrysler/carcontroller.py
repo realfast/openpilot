@@ -142,9 +142,9 @@ class CarController:
         # work (J) = force (N) * distance (m)
         work = force * distance_moved
         # Power (W)= work(J) * time (s)
-        power = work * time_for_sample
+        power = work / time_for_sample
         # torque = Power (W) / (RPM * 2 * pi / 60)
-        torque = power/(CS.engineRpm * 2 * math.pi / 60)
+        torque = power/((CS.engineRpm * 2 * math.pi) / 60)
 
         # torque = (self.CP.mass*self.accel*CS.out.vEgoRaw) / (CS.engineRpm + .00001) #+ .00001 to prevent divide by zero
 
