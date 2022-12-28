@@ -111,20 +111,11 @@ class CarController:
         torque = None
         decel = self.acc_brake(self.accel)
         max_gear = 8
-        delta_accel = 0
+
       else:
         self.last_brake = None
         accel_req = True
         decel_req = False
-          
-          # adding a factor to the velocity. 1.0 multiplied by the delta_accel assumes that we are telling the formula we want to be x m/s faster than we currently
-          # are 1 second from now. I add the ability to modify this in real time to dial it in better. 
-          # For example if comma is requesting 2.0m/s2 acceleration and we use a 1.0 multiplier, then we are saying in 1 second we want to be traveling 2.0m/s faster. 
-          # if we put a 1.5 multiplier then it becomes 3.0 m/s faster 1 second from now. 
-        # if delta_accel < 0: 
-        #   velocity = clip(abs(delta_accel),  -3.5, 2.0)
-        # else:
-        #   velocity = clip(abs(delta_accel),  -3.5, 2.0)
         
         time_for_sample = self.op_params.get('long_time_constant')
 

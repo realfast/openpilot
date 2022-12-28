@@ -175,6 +175,9 @@ class opParams:
                         'long_p': Param(0.5, VT.number, live=True),
                         'long_i': Param(0.0, VT.number, live=True),
                         'long_time_constant': Param(1.0, VT.number, live=True),
+                        'stopping_decel_rate': Param(0.5, VT.number, live=True),
+                        'deadzone_v': Param([0.0, 0.8], [list, float, int], live=True),
+                        'long_act_delay': Param(0.5, VT.number, live=True),
                         # 'lane_speed_alerts': Param('silent', str, static=True, hidden=True),
                         # 'min_TR': Param(0.9, NUMBER, 'The minimum allowed following distance in seconds. Default is 0.9 seconds\n'
                         #            'The range is limited from 0.85 to 2.7', live=True),
