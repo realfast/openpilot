@@ -116,7 +116,6 @@ class CarController:
         self.last_brake = None
         accel_req = True
         decel_req = False
-        # delta_accel = CC.actuators.accel - CS.out.aEgo
           
           # adding a factor to the velocity. 1.0 multiplied by the delta_accel assumes that we are telling the formula we want to be x m/s faster than we currently
           # are 1 second from now. I add the ability to modify this in real time to dial it in better. 
@@ -126,27 +125,32 @@ class CarController:
         #   velocity = clip(abs(delta_accel),  -3.5, 2.0)
         # else:
         #   velocity = clip(abs(delta_accel),  -3.5, 2.0)
-
-        #calculate torque using self.CP.mass, self.accel, CS.vEgoRaw, CS.engineTorque, and CS.engineRpm
-        # torque = ((self.CP.mass * self.accel)  / (CS.out.vEgoRaw + .00001))*.020 #+ .00001 to prevent divide by zero
         
         time_for_sample = self.op_params.get('long_time_constant')
 
-        # distance_moved = (.5 * self.accel * time_for_sample**2) + (CS.out.vEgoRaw)#the 1st 1.0 should be squared
+        # distance_moved = (.5 * self.accel * time_for_sample**2) + (CS.out.vEgoRaw)
         # torque = (self.CP.mass * self.accel * distance_moved * 9.55414 * .020)/CS.engineRpm
 
-        # force (N) = mass (kg) * acceleration (m/s^2)
-        force = self.CP.mass * self.accel
-        # distance_moved (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s)
-        distance_moved = ((self.accel * (time_for_sample**2))/2) + (CS.out.vEgoRaw)
-        # work (J) = force (N) * distance (m)
-        work = force * distance_moved
-        # Power (W)= work(J) * time (s)
-        power = work / time_for_sample
-        # torque = Power (W) / (RPM * 2 * pi / 60)
-        torque = power/((CS.engineRpm * 2 * math.pi) / 60)
+        # # force (N) = mass (kg) * acceleration (m/s^2)
+        # force = self.CP.mass * self.accel
+        # # distance_moved (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s) * time(s)
+        # distance_moved = ((self.accel * (time_for_sample**2))/2) + (CS.out.vEgoRaw)
+        # # work (J) = force (N) * distance (m)
+        # work = force * distance_moved
+        # # Power (W)= work(J) * time (s)
+        # power = work * time_for_sample
+        # # torque = Power (W) / (RPM * 2 * pi / 60)
+        # torque = power/((CS.engineRpm * 2 * math.pi) / 60)
 
-        # torque = (self.CP.mass*self.accel*CS.out.vEgoRaw) / (CS.engineRpm + .00001) #+ .00001 to prevent divide by zero
+
+        #desired Velocity(m/s) = (acceleration(m/s^2) * time(s)) + velocity(m/s)
+        desired_velocity = (self.accel * time_for_sample) + CS.out.vEgoRaw
+        # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
+        # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
+        kinetic_energy = (.5 * self.CP.mass * (desired_velocity**2)) - (.5 * self.CP.mass * (CS.out.vEgoRaw**2))
+        # convert kinetic energy to torque
+        # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
+        torque = (kinetic_energy * 9.55414 * time_for_sample)/CS.engineRpm
 
         if CS.engineTorque < 0 and torque > 0:
           torque += 0
