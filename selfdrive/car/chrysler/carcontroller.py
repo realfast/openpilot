@@ -41,6 +41,7 @@ class CarController:
         elif CS.cruise_cancel:
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
         else:
+          self.accel_sent = False
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
        # ACC cancellation
