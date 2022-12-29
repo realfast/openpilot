@@ -105,7 +105,7 @@ class CarController:
 
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
-      if CC.actuators.accel <= 0:
+      if CC.actuators.accel < 0:
         accel_req = False
         decel_req = False
         torque = None
