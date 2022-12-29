@@ -113,19 +113,21 @@ class CarController:
         max_gear = 8
 
       else:
+        time_for_sample = self.op_params.get('long_time_constant')
         self.last_brake = None
         accel_req = True
         decel_req = False
-        
-        time_for_sample = self.op_params.get('long_time_constant')
+        # delta_accel = CC.actuators.accel - CS.out.aEgo
+        # velocity = abs(clip(delta_accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)) * self.op_params.get('long_time_constant')
+        # torque = (self.vehicleMass * delta_accel * velocity)  / (.105 *  CS.engineRpm)
 
-        # distance_moved = (.5 * self.accel * time_for_sample**2) + (CS.out.vEgoRaw)
+        # distance_moved = (.5 * self.accel * time_for_sample**2) + (CS.out.vEgo)
         # torque = (self.CP.mass * self.accel * distance_moved * 9.55414 * .020)/CS.engineRpm
 
         # # force (N) = mass (kg) * acceleration (m/s^2)
         # force = self.CP.mass * self.accel
         # # distance_moved (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s) * time(s)
-        # distance_moved = ((self.accel * (time_for_sample**2))/2) + (CS.out.vEgoRaw)
+        # distance_moved = ((abs(self.accel) * (time_for_sample**2))/2) + (CS.out.vEgo)
         # # work (J) = force (N) * distance (m)
         # work = force * distance_moved
         # # Power (W)= work(J) * time (s)
@@ -135,10 +137,10 @@ class CarController:
 
 
         #desired Velocity(m/s) = (acceleration(m/s^2) * time(s)) + velocity(m/s)
-        desired_velocity = (self.accel * time_for_sample) + CS.out.vEgoRaw
+        desired_velocity = (self.accel * time_for_sample) + CS.out.vEgo
         # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
         # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
-        kinetic_energy = (.5 * self.CP.mass * (desired_velocity**2)) - (.5 * self.CP.mass * (CS.out.vEgoRaw**2))
+        kinetic_energy = (.5 * self.CP.mass * desired_velocity * abs(desired_velocity)) - (.5 * self.CP.mass * (CS.out.vEgo**2))
         # convert kinetic energy to torque
         # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
         torque = (kinetic_energy * 9.55414 * time_for_sample)/CS.engineRpm
