@@ -179,6 +179,7 @@ class opParams:
                         'deadzone_v': Param([0.0, 0.8], [list, float, int], live=True),
                         'long_act_delay': Param(0.5, VT.number, live=True),
                         'brakethreshold': Param(0.1, VT.number, live=True),
+                        'use_delta_accel': Param(False, [bool], live=True),
                         # 'lane_speed_alerts': Param('silent', str, static=True, hidden=True),
                         # 'min_TR': Param(0.9, NUMBER, 'The minimum allowed following distance in seconds. Default is 0.9 seconds\n'
                         #            'The range is limited from 0.85 to 2.7', live=True),
