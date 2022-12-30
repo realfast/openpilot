@@ -32,7 +32,7 @@ class CarController:
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
       self.last_button_frame = CS.button_counter
       if self.CP.carFingerprint in RAM_CARS:
-        if self.CP.carFingerprint in RAM_HD and CS.out.cruiseState.standstill and self.frame % 50 == 0 and self.accel_sent == False:
+        if self.CP.carFingerprint in RAM_HD and CS.out.cruiseState.standstill and CS.button_counter % 14 == 0 and self.accel_sent == False:
           self.accel_sent = True
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, accel = True))
         elif self.CP.carFingerprint in RAM_HD and CS.out.cruiseState.standstill and self.accel_sent == True:
