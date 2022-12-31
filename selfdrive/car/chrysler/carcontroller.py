@@ -117,7 +117,6 @@ class CarController:
         self.last_brake = None
         accel_req = True
         decel_req = False
-        desired_velocity = 0
         # delta_accel = CC.actuators.accel - CS.out.aEgo
         # velocity = abs(clip(delta_accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)) * self.op_params.get('long_time_constant')
         # torque = (self.vehicleMass * delta_accel * velocity)  / (.105 *  CS.engineRpm)
@@ -135,18 +134,15 @@ class CarController:
         # power = work * time_for_sample
         # # torque = Power (W) / (RPM * 2 * pi / 60)
         # torque = power/((CS.engineRpm * 2 * math.pi) / 60)
-        if self.op_params.get('use_delta_accel') == True:
-          desired_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
-        else:
-        #desired Velocity(m/s) = (acceleration(m/s^2) * time(s)) + velocity(m/s)
-          desired_velocity = (self.accel * time_for_sample) + CS.out.vEgo
+        desired_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
         # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
         # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
         kinetic_energy = (.5 * self.CP.mass * desired_velocity * abs(desired_velocity)) - (.5 * self.CP.mass * (CS.out.vEgo**2))
         # convert kinetic energy to torque
         # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
         torque = (kinetic_energy * 9.55414 * time_for_sample)/(CS.engineRpm + 0.001)
-        torque = clip(torque, -6, 6) # clip torque to -6 to 6 Nm for sanity
+        accel_limits = self.op_params.get('accel_limits')
+        torque = clip(torque, -accel_limits, accel_limits) # clip torque to -6 to 6 Nm for sanity
 
         if CS.engineTorque < 0 and torque > 0:
           torque += 0
