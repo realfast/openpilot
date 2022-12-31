@@ -177,8 +177,9 @@ class opParams:
                         'long_time_constant': Param(1.0, VT.number, live=True),
                         'stopping_decel_rate': Param(2.0, VT.number, live=True),
                         'long_act_delay': Param(0.5, VT.number, live=True),
-                        'brakethreshold': Param(0.1, VT.number, live=True),
+                        'brake_threshold': Param(0.1, VT.number, live=True),
                         'accel_limits': Param(6, VT.number, live=True),
+                        'drivetrain_efficiency': Param(0.85, VT.number, live=True),
                         # 'lane_speed_alerts': Param('silent', str, static=True, hidden=True),
                         # 'min_TR': Param(0.9, NUMBER, 'The minimum allowed following distance in seconds. Default is 0.9 seconds\n'
                         #            'The range is limited from 0.85 to 2.7', live=True),

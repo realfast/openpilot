@@ -105,7 +105,7 @@ class CarController:
 
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
-      if CC.actuators.accel < - self.op_params.get('brakethreshold'):
+      if CC.actuators.accel < - self.op_params.get('brake_threshold'):
         accel_req = False
         decel_req = False
         torque = None
@@ -114,6 +114,8 @@ class CarController:
 
       else:
         time_for_sample = self.op_params.get('long_time_constant')
+        accel_limits = self.op_params.get('accel_limits')
+        drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
         self.last_brake = None
         accel_req = True
         decel_req = False
@@ -140,12 +142,15 @@ class CarController:
         kinetic_energy = (.5 * self.CP.mass * desired_velocity * abs(desired_velocity)) - (.5 * self.CP.mass * (CS.out.vEgo**2))
         # convert kinetic energy to torque
         # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
-        torque = (kinetic_energy * 9.55414 * time_for_sample)/(CS.engineRpm + 0.001)
-        accel_limits = self.op_params.get('accel_limits')
+        torque = (kinetic_energy * 9.55414 * time_for_sample)/(CS.engineRpm * drivetrain_efficiency + 0.001)
         torque = clip(torque, -accel_limits, accel_limits) # clip torque to -6 to 6 Nm for sanity
 
         if CS.engineTorque < 0 and torque > 0:
-          torque += 0
+          #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
+          # rough estimate of external forces in N
+          total_forces = 650
+          #torque required to maintain speed
+          torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
 
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
