@@ -5,6 +5,7 @@ from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
 
+from common.op_params import opParams
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -21,6 +22,7 @@ class CarState(CarStateBase):
     self.engineRpm = None
     self.torqMin = None
     self.torqMax = None
+    self.op_params = opParams()
 
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
@@ -53,6 +55,8 @@ class CarState(CarStateBase):
     else:
       ret.vEgoRaw = (cp.vl["SPEED_1"]["SPEED_LEFT"] + cp.vl["SPEED_1"]["SPEED_RIGHT"]) / 2.
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["GEAR"]["PRNDL"], None))
+    if self.op_params.get('use_smoothed_accel'):
+        ret.vEgoRaw = cp.vl["ESP_1"]["Vehicle_Speed"] * CV.KPH_TO_MS
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = not ret.vEgoRaw > 0.001
     ret.wheelSpeeds = self.get_wheel_speeds(
@@ -158,6 +162,7 @@ class CarState(CarStateBase):
       ("DOOR_OPEN_RL", "BCM_1"),
       ("DOOR_OPEN_RR", "BCM_1"),
       ("Brake_Pedal_State", "ESP_1"),
+      ("Vehicle_Speed", "ESP_1"),
       ("Accelerator_Position", "ECM_5"),
       ("WHEEL_SPEED_FL", "ESP_6"),
       ("WHEEL_SPEED_RR", "ESP_6"),
