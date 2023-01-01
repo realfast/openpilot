@@ -114,36 +114,34 @@ class CarController:
 
       else:
         time_for_sample = self.op_params.get('long_time_constant')
-        accel_limits = self.op_params.get('accel_limits')
+        torque_limits = self.op_params.get('torque_limits')
         drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
         self.last_brake = None
         accel_req = True
         decel_req = False
         # delta_accel = CC.actuators.accel - CS.out.aEgo
-        # velocity = abs(clip(delta_accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)) * self.op_params.get('long_time_constant')
-        # torque = (self.vehicleMass * delta_accel * velocity)  / (.105 *  CS.engineRpm)
 
-        # distance_moved = (.5 * self.accel * time_for_sample**2) + (CS.out.vEgo)
-        # torque = (self.CP.mass * self.accel * distance_moved * 9.55414 * .020)/CS.engineRpm
+        # distance_moved = ((delta_accel * time_for_sample**2)/2) + (CS.out.vEgo * time_for_sample)
+        # torque = (self.CP.mass * delta_accel * distance_moved * time_for_sample)/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
 
         # # force (N) = mass (kg) * acceleration (m/s^2)
-        # force = self.CP.mass * self.accel
+        # force = self.CP.mass * delta_accel
         # # distance_moved (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s) * time(s)
-        # distance_moved = ((abs(self.accel) * (time_for_sample**2))/2) + (CS.out.vEgo)
+        # distance_moved = ((delta_accel) * (time_for_sample**2))/2) + (CS.out.vEgo * time_for_sample)
         # # work (J) = force (N) * distance (m)
         # work = force * distance_moved
         # # Power (W)= work(J) * time (s)
         # power = work * time_for_sample
         # # torque = Power (W) / (RPM * 2 * pi / 60)
-        # torque = power/((CS.engineRpm * 2 * math.pi) / 60)
+        # torque = power/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
         desired_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
         # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
         # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
-        kinetic_energy = (.5 * self.CP.mass * desired_velocity * abs(desired_velocity)) - (.5 * self.CP.mass * (CS.out.vEgo**2))
+        kinetic_energy = ((self.CP.mass * desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
         # convert kinetic energy to torque
         # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
-        torque = (kinetic_energy * 9.55414 * time_for_sample)/(CS.engineRpm * drivetrain_efficiency + 0.001)
-        torque = clip(torque, -accel_limits, accel_limits) # clip torque to -6 to 6 Nm for sanity
+        torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
+        torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
         if CS.engineTorque < 0 and torque > 0:
           #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.

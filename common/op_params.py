@@ -178,7 +178,7 @@ class opParams:
                         'stopping_decel_rate': Param(2.0, VT.number, live=True),
                         'long_act_delay': Param(0.5, VT.number, live=True),
                         'brake_threshold': Param(0.1, VT.number, live=True),
-                        'accel_limits': Param(6, VT.number, live=True),
+                        'torque_limits': Param(6, VT.number, live=True),
                         'drivetrain_efficiency': Param(0.85, VT.number, live=True),
                         'use_smoothed_accel': Param(False, [bool], live=True),
                         # 'lane_speed_alerts': Param('silent', str, static=True, hidden=True),
