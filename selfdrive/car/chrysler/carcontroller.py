@@ -165,6 +165,15 @@ class CarController:
           accel_req = 0
           torque = None
           max_gear = 8
+          
+        elif not CS.out.cruiseState.enabled:
+          self.last_brake = None
+          self.last_torque = None
+          self.max_gear = None
+
+          can_sends.append(create_das_3_message(self.packer, self.frame / 2, 0, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0))
+          can_sends.append(create_das_3_message(self.packer, self.frame / 2, 2, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0))
+
         else:
           max_gear = 8
           can_sends.append(acc_command(self.packer, self.frame / 2, 0,
