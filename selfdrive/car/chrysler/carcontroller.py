@@ -155,8 +155,43 @@ class CarController:
           torque += CS.engineTorque
 
         decel = None
+        
+      #ECU Disabled
+      if self.ecu_disabled: #need to init it somewhere
+        max_gear = 8
+        can_sends.append(create_das_3_message(self.packer, self.frame / 2, 0,
+                           CS.out.cruiseState.available,
+                           CS.out.cruiseState.enabled,
+                           accel_req,
+                           torque,
+                           max_gear,
+                           decel_req,
+                           decel))
+        can_sends.append(create_das_3_message(self.packer, self.frame / 2, 2,
+                           CS.out.cruiseState.available,
+                           CS.out.cruiseState.enabled,
+                           accel_req,
+                           torque,
+                           max_gear,
+                           decel_req,
+                           decel))
+        if self.frame % 2 == 0:
+          can_sends.append(create_acc_1_message(self.packer, 0, self.frame / 2))
+          can_sends.append(create_acc_1_message(self.packer, 2, self.frame / 2))
+          
+        if self.frame % 6 == 0:
+          state = 0
+          if CS.out.cruiseState.available:
+            state = 2 if CS.out.cruiseState.enabled else 1
+            can_sends.append(create_das_4_message(self.packer, 0, state, CC.hud_control.setSpeed)) #need to double check setSpeed
+            can_sends.append(create_das_4_message(self.packer, 2, state, CC.hud_control.setSpeed))
 
-      can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
+        if self.frame % 50 == 0:
+          # tester present - w/ no response (keeps radar disabled)
+          can_sends.append((0x753, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))
+          
+      else: 
+        can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
                                     accel_req,
                                     torque,
                                     max_gear,
