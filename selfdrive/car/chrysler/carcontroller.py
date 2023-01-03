@@ -1,7 +1,7 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command, create_acc_1_message, create_das_4_message
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 
@@ -157,26 +157,34 @@ class CarController:
         decel = None
         
       #ECU Disabled
-      if self.ecu_disabled: #need to init it somewhere
-        max_gear = 8
-        can_sends.append(create_das_3_message(self.packer, self.frame / 2, 0,
-                           CS.out.cruiseState.available,
-                           CS.out.cruiseState.enabled,
-                           accel_req,
-                           torque,
-                           max_gear,
-                           decel_req,
-                           decel,
-                           0))
-        can_sends.append(create_das_3_message(self.packer, self.frame / 2, 2,
-                           CS.out.cruiseState.available,
-                           CS.out.cruiseState.enabled,
-                           accel_req,
-                           torque,
-                           max_gear,
-                           decel_req,
-                           decel,
-                           0))
+      if self.ecu_disabled == 1: #need to init it somewhere
+        override_request = CS.out.gasPressed or CS.out.brakePressed
+        if override_request:
+          self.last_brake = None
+          decel_req = None
+          accel_req = 0
+          torque = None
+          max_gear = 8
+        else:
+          max_gear = 8
+          can_sends.append(acc_command(self.packer, self.frame / 2, 0,
+                             CS.out.cruiseState.available,
+                             CS.out.cruiseState.enabled,
+                             accel_req,
+                             torque,
+                             max_gear,
+                             decel_req,
+                             decel,
+                             0))
+         can_sends.append(acc_command(self.packer, self.frame / 2, 2,
+                             CS.out.cruiseState.available,
+                             CS.out.cruiseState.enabled,
+                             accel_req,
+                             torque,
+                             max_gear,
+                             decel_req,
+                             decel,
+                             0))
         if self.frame % 2 == 0:
           can_sends.append(create_acc_1_message(self.packer, 0, self.frame / 2))
           can_sends.append(create_acc_1_message(self.packer, 2, self.frame / 2))
@@ -191,9 +199,11 @@ class CarController:
         if self.frame % 50 == 0:
           # tester present - w/ no response (keeps radar disabled)
           can_sends.append((0x753, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))
-          
+
       else: 
-        can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
+        can_sends.append(acc_command(self.packer, das_3_counter, 0, 
+                                    1, 
+                                    CC.enabled,
                                     accel_req,
                                     torque,
                                     max_gear,
