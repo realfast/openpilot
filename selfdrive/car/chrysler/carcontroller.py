@@ -104,8 +104,9 @@ class CarController:
       max_gear = 8
 
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
-
-      if CC.actuators.accel < - self.op_params.get('brake_threshold'):
+      brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
+        
+      if CC.actuators.accel < brake_threshold:
         accel_req = False
         decel_req = False
         torque = None
