@@ -101,7 +101,7 @@ class CarController:
       if not CC.enabled:
         self.last_brake = None
 
-      max_gear = 8
+      max_gear = 9
 
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
@@ -175,7 +175,7 @@ class CarController:
           can_sends.append(create_das_3_message(self.packer, self.frame / 2, 2, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0))
 
         else:
-          max_gear = 8
+          max_gear = 9
           can_sends.append(acc_command(self.packer, self.frame / 2, 0,
                              CS.out.cruiseState.available,
                              CS.out.cruiseState.enabled,
@@ -208,7 +208,11 @@ class CarController:
         if self.frame % 50 == 0:
           # tester present - w/ no response (keeps radar disabled)
           can_sends.append((0x753, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))
-
+          
+        if self.frame % 100 == 0:
+          can_sends.append(create_chime_message(self.packer, 0))
+          can_sends.append(create_chime_message(self.packer, 2))
+          
       else: 
         can_sends.append(acc_command(self.packer, das_3_counter, 0, 
                                     1, 
