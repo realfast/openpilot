@@ -135,7 +135,7 @@ class CarController:
         # # torque = Power (W) / (RPM * 2 * pi / 60)
         # torque = power/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
         calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
-        desired_velocity = max(calc_velocity, CS.out.cruiseState.speed)
+        desired_velocity = min(calc_velocity, CS.out.cruiseState.speed)
         # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
         # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
         kinetic_energy = ((self.CP.mass * desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
