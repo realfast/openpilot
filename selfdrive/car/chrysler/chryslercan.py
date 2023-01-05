@@ -125,3 +125,11 @@ def create_das_4_message(packer, bus, state, speed):
   }
 
   return packer.make_can_msg("DAS_4", bus, values) 
+
+def create_chime_message(packer, bus):
+  values = { # 1000ms
+    # "CHIME": chime if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 14,
+    # "CHIME_REQ_L": 1 if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 0,
+    # "CHIME_REQ_R": 1 if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 0
+  }
+  return packer.make_can_msg("CHIME", bus, values)
