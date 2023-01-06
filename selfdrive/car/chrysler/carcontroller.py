@@ -1,7 +1,7 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command, acc_log
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 
@@ -37,6 +37,7 @@ class CarController:
     self.last_brake = None
     self.max_gear = None
     self.op_params = opParams()
+    self.desired_velocity = 0
 
   def update(self, CC, CS):
     can_sends = []
@@ -136,10 +137,14 @@ class CarController:
         # # torque = Power (W) / (RPM * 2 * pi / 60)
         # torque = power/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
         calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
-        desired_velocity = min(calc_velocity, CS.out.cruiseState.speed)
+        if self.op_params.get('comma_speed'):
+          self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
+        else:
+          self.desired_velocity = min(calc_velocity, CS.out.cruiseState.speed)
+
         # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
         # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
-        kinetic_energy = ((self.CP.mass * desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
+        kinetic_energy = ((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
         # convert kinetic energy to torque
         # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
         torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
@@ -165,6 +170,8 @@ class CarController:
                                     decel_req,
                                     decel,
                                     CS.das_3))
+
+      can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
     # HUD alerts
     if self.frame % 25 == 0:

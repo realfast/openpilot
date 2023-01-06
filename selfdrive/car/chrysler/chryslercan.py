@@ -96,3 +96,13 @@ def acc_command(packer, counter, enabled, accel_req, torque, max_gear, decel_req
     values['ENGINE_TORQUE_REQUEST'] = torque
 
   return packer.make_can_msg("DAS_3", 0, values)
+
+def acc_log(packer, aTarget, vTarget, calcvTarget, aActual, vActual):
+  values = {
+    'OP_A_TARGET': aTarget,
+    'OP_V_TARGET': vTarget,
+    'CALC_V_TARGET': calcvTarget,
+    'OP_A_ACTUAL': aActual,
+    'OP_V_ACTUAL': vActual,
+  }
+  return packer.make_can_msg("ACC_LOG", 0, values)
