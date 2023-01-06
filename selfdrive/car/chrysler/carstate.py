@@ -185,7 +185,7 @@ class CarState(CarStateBase):
   def get_cruise_signals():
     signals = []
     checks = []
-    if self.CP.carFingerprint in RAM_CARS:
+    if  1 == 1:#CP.carFingerprint in RAM_CARS:
       signals += [
         ("ACC_AVAILABLE", "DAS_3"),
         ("ACC_ACTIVE", "DAS_3"),
@@ -296,7 +296,7 @@ class CarState(CarStateBase):
         ("Center_Stack_1", 1),
         ("Center_Stack_2", 1),
       ]
-    else:
+    else: #pacifica
       signals += [
         ("PRNDL", "GEAR"),
         # ("SPEED_LEFT", "SPEED_1"),
@@ -306,8 +306,8 @@ class CarState(CarStateBase):
         ("GEAR", 50),
         # ("SPEED_1", 100),
       ]
-      signals += CarState.get_cruise_signals()[0]
-      checks += CarState.get_cruise_signals()[1]
+      # signals += CarState.get_cruise_signals()[0]
+      # checks += CarState.get_cruise_signals()[1]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
 
