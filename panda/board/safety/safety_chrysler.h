@@ -36,6 +36,7 @@ typedef struct {
   const int DAS_3;
   const int DAS_6;
   const int LKAS_COMMAND;
+  const int LKAS_HEARTBIT;
   const int CRUISE_BUTTONS;
   const int CENTER_STACK_1;
   const int CENTER_STACK_2;
@@ -53,6 +54,7 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .ECM_5            = 559,  // Throttle position sensor
   .DAS_6            = 678,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 658,  // LKAS controls from DASM
+  .LKAS_HEARTBIT    = 729,  // LKAS HEARTBIT from DASM
   .CRUISE_BUTTONS   = 571,  // Cruise control buttons
   .CENTER_STACK_1   = 816,  // LKAS Button
   .CENTER_STACK_2   = 650,  // LKAS Button
@@ -95,6 +97,7 @@ const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.CRUISE_BUTTONS, 0, 3},
   {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
   {CHRYSLER_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_ADDRS.LKAS_HEARTBIT, 0, 5},
   {CHRYSLER_ADDRS.TESTER, 0, 8},
   {CHRYSLER_ADDRS.DAS_3, 0, 8},
   {CHRYSLER_ADDRS.DAS_3, 2, 8},
@@ -285,7 +288,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     const SteeringLimits limits = (chrysler_platform == CHRYSLER_PACIFICA) ? CHRYSLER_STEERING_LIMITS :
                                   (chrysler_platform == CHRYSLER_RAM_DT) ? CHRYSLER_RAM_DT_STEERING_LIMITS : CHRYSLER_RAM_HD_STEERING_LIMITS;
     if (steer_torque_cmd_checks(desired_torque, -1, limits)) {
-      tx = (chrysler_platform == CHRYSLER_PACIFICA) ? 1 : 0; #ecu disabled issue
+      tx = (chrysler_platform == CHRYSLER_PACIFICA) ? 1 : 0;
     }
   }
 
@@ -318,7 +321,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
 
   // forward all messages from camera except LKAS messages
-  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6) || (addr == chrysler_addrs->DAS_3));
+  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6) || (addr == chrysler_addrs->LKAS_HEARTBIT));
   if ((bus_num == 2) && !is_lkas){
     bus_fwd = 0;
   }

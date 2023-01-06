@@ -1,7 +1,7 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command, create_acc_1_message, create_das_4_message
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_lkas_heartbit,create_cruise_buttons, acc_command, create_acc_1_message, create_das_4_message, create_chime_message
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 
@@ -13,6 +13,7 @@ import math
 
 from common.op_params import opParams
 
+ButtonType = car.CarState.ButtonEvent.Type
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
 BRAKE_CHANGE = 0.06
@@ -96,12 +97,12 @@ class CarController:
 
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
       #LONG
-      das_3_counter = CS.das_3['COUNTER']
+      
 
       if not CC.enabled:
         self.last_brake = None
 
-      max_gear = 9
+      max_gear = 8
 
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
@@ -157,7 +158,19 @@ class CarController:
         decel = None
         
       #ECU Disabled
-      if self.ecu_disabled == 1: #need to init it somewhere
+      if self.CP.carFingerprint not in RAM_CARS:
+        if CS.button_pressed(ButtonType.accOnOff, False):
+          CS.longAvailable = not CS.longAvailable
+          CS.longEnabled = False
+
+        if CS.longAvailable:
+          if CC.cruiseControl.cancel or CS.button_pressed(ButtonType.cancel) or CS.out.brakePressed:
+            CS.longEnabled = False
+          elif CS.button_pressed(ButtonType.accelCruise) or \
+              CS.button_pressed(ButtonType.decelCruise) or \
+              CS.button_pressed(ButtonType.resumeCruise):
+            CS.longEnabled = True
+
         override_request = CS.out.gasPressed or CS.out.brakePressed
         if override_request:
           self.last_brake = None
@@ -166,13 +179,13 @@ class CarController:
           torque = None
           max_gear = 8
           
-        elif not CS.out.cruiseState.enabled:
+        elif not CS.longEnabled or not CS.out.cruiseState.enabled:
           self.last_brake = None
           self.last_torque = None
-          self.max_gear = None
+          self.max_gear = 9
 
-          can_sends.append(create_das_3_message(self.packer, self.frame / 2, 0, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0))
-          can_sends.append(create_das_3_message(self.packer, self.frame / 2, 2, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0))
+          can_sends.append(acc_command(self.packer, self.frame / 2, 0, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0, 1))
+          can_sends.append(acc_command(self.packer, self.frame / 2, 2, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0, 1))
 
         else:
           max_gear = 9
@@ -184,20 +197,24 @@ class CarController:
                              max_gear,
                              decel_req,
                              decel,
-                             0))
-         can_sends.append(acc_command(self.packer, self.frame / 2, 2,
-                             CS.out.cruiseState.available,
-                             CS.out.cruiseState.enabled,
-                             accel_req,
-                             torque,
-                             max_gear,
-                             decel_req,
-                             decel,
-                             0))
+                             0, 1))
+          can_sends.append(acc_command(self.packer, self.frame / 2, 2,
+                              CS.out.cruiseState.available,
+                              CS.out.cruiseState.enabled,
+                              accel_req,
+                              torque,
+                              max_gear,
+                              decel_req,
+                              decel,
+                              0, 1))
         if self.frame % 2 == 0:
           can_sends.append(create_acc_1_message(self.packer, 0, self.frame / 2))
           can_sends.append(create_acc_1_message(self.packer, 2, self.frame / 2))
-          
+
+        if self.frame % 10 == 0:
+          new_msg = create_lkas_heartbit(self.packer, 0, CS.lkasHeartbit)
+          can_sends.append(new_msg)
+
         if self.frame % 6 == 0:
           state = 0
           if CS.out.cruiseState.available:
@@ -214,6 +231,7 @@ class CarController:
           can_sends.append(create_chime_message(self.packer, 2))
           
       else: 
+        das_3_counter = CS.das_3['COUNTER']
         can_sends.append(acc_command(self.packer, das_3_counter, 0, 
                                     1, 
                                     CC.enabled,

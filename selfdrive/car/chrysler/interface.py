@@ -2,8 +2,9 @@
 from cereal import car
 from panda import Panda
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
-from selfdrive.car.chrysler.values import CAR, DBC, RAM_HD, RAM_DT, CarControllerParams
+from selfdrive.car.chrysler.values import CAR, DBC, RAM_HD, RAM_DT, RAM_CARS, CarControllerParams
 from selfdrive.car.interfaces import CarInterfaceBase
+from selfdrive.car.disable_ecu import disable_ecu
 
 GearShifter = car.CarState.GearShifter
 
@@ -20,7 +21,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.radarOffCan = DBC[candidate]['radar'] is None
 
-    ret.steerActuatorDelay = 0.1
+    ret.steerActuatorDelay = 0.4
     ret.steerLimitTimer = 0.4
     stiffnessFactor = 1.0
 
@@ -31,11 +32,11 @@ class CarInterface(CarInterfaceBase):
     elif candidate in RAM_DT:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_CHRYSLER_RAM_DT
 
-    ret.minSteerSpeed = 3.8  # m/s
+    ret.minSteerSpeed = 0  # m/s
     if candidate in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
       # TODO: allow 2019 cars to steer down to 13 m/s if already engaged.
       ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
-
+    tune = ret.longitudinalTuning
     # Chrysler
     if candidate in (CAR.PACIFICA_2017_HYBRID, CAR.PACIFICA_2018, CAR.PACIFICA_2018_HYBRID, CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020):
       ret.mass = 2242. + STD_CARGO_KG
@@ -44,6 +45,17 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[9., 20.], [9., 20.]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15, 0.30], [0.03, 0.05]]
       ret.lateralTuning.pid.kf = 0.00006
+      tune.deadzoneBP = [0]#[0., 9.]
+      tune.deadzoneV = [0]#[.0, .15]
+      tune.kpV = [2.5]
+      tune.kiV = [0.0]
+      #ret.longitudinalActuatorDelayLowerBound = 0.5
+      ret.longitudinalActuatorDelayUpperBound = 0.5 # s
+      ret.stoppingDecelRate = 0.3 
+      #ret.stoppingControl = True
+      ret.startingState = True
+      ret.vEgoStarting = 0.1 #default 0.5, hyundai 0.1
+      ret.startAccel = 2.0
 
     # Jeep
     elif candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
@@ -69,7 +81,6 @@ class CarInterface(CarInterfaceBase):
           if fw.ecu == 'eps' and fw.fwVersion in (b"68273275AF", b"68273275AG", b"68312176AE", b"68312176AG", ):
             ret.minEnableSpeed = 0.
       ret.openpilotLongitudinalControl = True
-      tune = ret.longitudinalTuning
       tune.deadzoneBP = [0., 9.]
       tune.deadzoneV = [.0, .15]
       tune.kpV = [0.25]
@@ -84,7 +95,6 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 16
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
       ret.openpilotLongitudinalControl = True
-      tune = ret.longitudinalTuning
       tune.deadzoneBP = [0., 9.]
       tune.deadzoneV = [.0, .15]
       tune.kpV = [0.25]
@@ -110,7 +120,7 @@ class CarInterface(CarInterfaceBase):
   
   @staticmethod
   def init(CP, logcan, sendcan):
-    if self.ecu_disabled: #need to init this
+    if CP.carFingerprint not in RAM_CARS:
       disable_ecu(logcan, sendcan, bus=0, addr=0x753, com_cont_req=b'\x28\x81\x01', response_offset = -0x280)
       
   def _update(self, c):

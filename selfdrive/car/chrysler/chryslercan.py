@@ -64,7 +64,12 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit):
   }
   return packer.make_can_msg("LKAS_COMMAND", 0, values)
 
-
+def create_lkas_heartbit(packer, value, lkasHeartbit):
+  # LKAS_HEARTBIT (697) LKAS heartbeat
+  values = lkasHeartbit.copy()  # forward what we parsed
+  values["LKAS_DISABLED"] = value
+  return packer.make_can_msg("LKAS_HEARTBIT", 0, values)
+  
 def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resume=False):
   
   if (cancel == True) or (resume == True):
@@ -77,8 +82,8 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def acc_command(packer, counter, bus, available, enabled, accel_req, torque, max_gear, decel_req, decel, das_3):
-  if self.ecu_disabled == 1:
+def acc_command(packer, counter, bus, available, enabled, accel_req, torque, max_gear, decel_req, decel, das_3, not_RAM = 0):
+  if not_RAM == 1:
     values = {
     'ACC_AVAILABLE': available,
     'ACC_ACTIVE': enabled,

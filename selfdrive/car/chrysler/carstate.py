@@ -6,6 +6,16 @@ from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
 
 from common.op_params import opParams
+ButtonType = car.CarState.ButtonEvent.Type
+
+CHECK_BUTTONS = {ButtonType.accOnOff: ["CRUISE_BUTTONS", 'ACC_OnOff'],
+                 ButtonType.cancel: ["CRUISE_BUTTONS", 'ACC_Cancel'],
+                 ButtonType.resumeCruise: ["CRUISE_BUTTONS", 'ACC_Resume'],
+                 ButtonType.accelCruise: ["CRUISE_BUTTONS", 'ACC_Accel'],
+                 ButtonType.decelCruise: ["CRUISE_BUTTONS", 'ACC_Decel'],
+                 ButtonType.followInc: ["CRUISE_BUTTONS", 'ACC_Distance_Inc'],
+                 ButtonType.followDec: ["CRUISE_BUTTONS", 'ACC_Distance_Dec'],
+                 ButtonType.lkasToggle: ["TRACTION_BUTTON", 'TOGGLE_LKAS']}
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -26,8 +36,12 @@ class CarState(CarStateBase):
 
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
-    else:
+    else: #Pacifica
       self.shifter_values = can_define.dv["GEAR"]["PRNDL"]
+      self.lkasHeartbit = None
+      self.longAvailable = False
+      self.longEnabled = False
+      self.allowLong = True
 
   def update(self, cp, cp_cam):
 
@@ -81,22 +95,37 @@ class CarState(CarStateBase):
 
     # cruise state
     cp_cruise = cp_cam if self.CP.carFingerprint in RAM_CARS else cp
-
-    ret.cruiseState.available = cp_cruise.vl["DAS_3"]["ACC_AVAILABLE"] == 1
-    ret.cruiseState.enabled = cp_cruise.vl["DAS_3"]["ACC_ACTIVE"] == 1
-    ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
-    ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
-    ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
-    ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
-    self.das_3 = cp_cruise.vl['DAS_3']
-    self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
-    self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
+    if self.CP.carFingerprint in RAM_CARS:
+      ret.cruiseState.available = cp_cruise.vl["DAS_3"]["ACC_AVAILABLE"] == 1
+      ret.cruiseState.enabled = cp_cruise.vl["DAS_3"]["ACC_ACTIVE"] == 1
+      ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
+      ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
+      ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
+      ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
+      self.das_3 = cp_cruise.vl['DAS_3']
+      self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
+      self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
 
 
     
-    self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
-    self.engineRpm = cp.vl["ECM_1"]["ENGINE_RPM"]
-    self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
+      self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
+      self.engineRpm = cp.vl["ECM_1"]["ENGINE_RPM"]
+      self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
+
+    else:
+      ret.cruiseState.nonAdaptive = False
+      ret.cruiseState.enabled = self.longEnabled
+      ret.cruiseState.available = self.longAvailable
+      ret.cruiseState.standstill = ret.standstill
+      ret.accFaulted = False
+      self.torqMin = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MIN"]
+      self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
+      self.currentGear = cp.vl['TCM_A7']["CurrentGear"]
+      self.engineRpm = cp.vl["ECM_1"]["ENGINE_RPM"]
+      self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
+      self.maxgear = 9
+      self.lkasHeartbit = cp_cam.vl["LKAS_HEARTBIT"]
+
 
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
@@ -107,8 +136,12 @@ class CarState(CarStateBase):
       elif self.lkasbutton ==1 and self.lkasdisabled == 1 and self.lkasbuttonprev == 0:
         self.lkasdisabled = 0
       self.lkasbuttonprev = self.lkasbutton
-    else:
+    else: #Pacifica
       ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
+      button_events = []
+      for buttonType in CHECK_BUTTONS:
+        self.check_button(button_events, buttonType, bool(cp.vl[CHECK_BUTTONS[buttonType][0]][CHECK_BUTTONS[buttonType][1]]))
+      ret.buttonEvents = button_events
 
     # blindspot sensors
     if self.CP.enableBsm:
@@ -120,37 +153,67 @@ class CarState(CarStateBase):
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
     self.cruise_buttons = cp.vl["CRUISE_BUTTONS"]
     return ret
+    
+  def check_button(self, button_events, button_type, pressed):
+    pressed_frames = 0
+    pressed_changed = False
+    for ob in self.out.buttonEvents:
+      if ob.type == button_type:
+        pressed_frames = ob.pressedFrames
+        pressed_changed = ob.pressed != pressed
+        break
+
+    if pressed or pressed_changed:
+      be = car.CarState.ButtonEvent.new_message()
+      be.type = button_type
+      be.pressed = pressed
+      be.pressedFrames = pressed_frames
+
+      if not pressed_changed:
+        be.pressedFrames += 1
+
+      button_events.append(be)
+
+  def button_pressed(self, button_type, pressed=True):
+    for b in self.out.buttonEvents:
+      if b.type == button_type:
+        if b.pressed == pressed:
+          return b
+        break
 
   @staticmethod
   def get_cruise_signals():
-    signals = [
-      ("ACC_AVAILABLE", "DAS_3"),
-      ("ACC_ACTIVE", "DAS_3"),
-      ("ACC_FAULTED", "DAS_3"),
-      ("ACC_STANDSTILL", "DAS_3"),
-      ("COUNTER", "DAS_3"),
-      ("ACC_SET_SPEED_KPH", "DAS_4"),
-      ("ACC_STATE", "DAS_4"),
+    signals = []
+    checks = []
+    if self.CP.carFingerprint in RAM_CARS:
+      signals += [
+        ("ACC_AVAILABLE", "DAS_3"),
+        ("ACC_ACTIVE", "DAS_3"),
+        ("ACC_FAULTED", "DAS_3"),
+        ("ACC_STANDSTILL", "DAS_3"),
+        ("COUNTER", "DAS_3"),
+        ("ACC_SET_SPEED_KPH", "DAS_4"),
+        ("ACC_STATE", "DAS_4"),
 
-      ("ACC_GO", "DAS_3", 0),
-      ("ENGINE_TORQUE_REQUEST", "DAS_3", 0),
-      ("ENGINE_TORQUE_REQUEST_MAX", "DAS_3", 0),
-      ("ACC_DECEL", "DAS_3", 0),
-      ("ACC_DECEL_REQ", "DAS_3", 0),
-      ("ACC_AVAILABLE", "DAS_3", 0),
-      ("DISABLE_FUEL_SHUTOFF", "DAS_3", 0),
-      ("GR_MAX_REQ", "DAS_3", 0),
-      ("STS", "DAS_3", 0),
-      ("COLLISION_BRK_PREP", "DAS_3", 0),
-      ("ACC_BRK_PREP", "DAS_3", 0),
-      ("DISPLAY_REQ", "DAS_3", 0),
-      ("COUNTER", "DAS_3", 0),
-      ("CHECKSUM", "DAS_3", 0),
-    ]
-    checks = [
-      ("DAS_3", 50),
-      ("DAS_4", 50),
-    ]
+        ("ACC_GO", "DAS_3", 0),
+        ("ENGINE_TORQUE_REQUEST", "DAS_3", 0),
+        ("ENGINE_TORQUE_REQUEST_MAX", "DAS_3", 0),
+        ("ACC_DECEL", "DAS_3", 0),
+        ("ACC_DECEL_REQ", "DAS_3", 0),
+        ("ACC_AVAILABLE", "DAS_3", 0),
+        ("DISABLE_FUEL_SHUTOFF", "DAS_3", 0),
+        ("GR_MAX_REQ", "DAS_3", 0),
+        ("STS", "DAS_3", 0),
+        ("COLLISION_BRK_PREP", "DAS_3", 0),
+        ("ACC_BRK_PREP", "DAS_3", 0),
+        ("DISPLAY_REQ", "DAS_3", 0),
+        ("COUNTER", "DAS_3", 0),
+        ("CHECKSUM", "DAS_3", 0),
+      ]
+      checks += [
+        ("DAS_3", 50),
+        ("DAS_4", 50),
+      ]
     return signals, checks
 
   @staticmethod
@@ -192,6 +255,7 @@ class CarState(CarStateBase):
       ("ENGINE_TORQUE", "ECM_1", 0),
       ("ENGINE_TORQ_MIN", "ECM_TRQ", 0),
       ("ENGINE_TORQ_MAX", "ECM_TRQ", 0),
+      ("CurrentGear", "TCM_A7", 0),
     ]
 
     checks = [
@@ -207,6 +271,7 @@ class CarState(CarStateBase):
       ("BCM_1", 1),
       ("ECM_1", 50),
       ("ECM_TRQ", 50),
+      ("TCM_A7", 50),
     ]
 
     if CP.enableBsm:
@@ -234,12 +299,12 @@ class CarState(CarStateBase):
     else:
       signals += [
         ("PRNDL", "GEAR"),
-        ("SPEED_LEFT", "SPEED_1"),
-        ("SPEED_RIGHT", "SPEED_1"),
+        # ("SPEED_LEFT", "SPEED_1"),
+        # ("SPEED_RIGHT", "SPEED_1"),
       ]
       checks += [
         ("GEAR", 50),
-        ("SPEED_1", 100),
+        # ("SPEED_1", 100),
       ]
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
@@ -262,5 +327,15 @@ class CarState(CarStateBase):
       ]
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
+    else:
+      # LKAS_HEARTBIT data needs to be forwarded!
+      forward_lkas_heartbit_signals = [
+        ("AUTO_HIGH_BEAM", "LKAS_HEARTBIT"),
+        ("FORWARD_1", "LKAS_HEARTBIT"),
+        ("FORWARD_2", "LKAS_HEARTBIT"),
+        ("FORWARD_3", "LKAS_HEARTBIT"),
+      ]
 
+      signals += forward_lkas_heartbit_signals
+      checks.append(("LKAS_HEARTBIT", 10))
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)
