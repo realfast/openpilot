@@ -64,7 +64,12 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit):
   }
   return packer.make_can_msg("LKAS_COMMAND", 0, values)
 
-
+def create_lkas_heartbit(packer, value, lkasHeartbit):
+  # LKAS_HEARTBIT (697) LKAS heartbeat
+  values = lkasHeartbit.copy()  # forward what we parsed
+  values["LKAS_DISABLED"] = value
+  return packer.make_can_msg("LKAS_HEARTBIT", 0, values)
+  
 def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resume=False):
   
   if (cancel == True) or (resume == True):
@@ -77,22 +82,59 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def acc_command(packer, counter, enabled, accel_req, torque, max_gear, decel_req, decel, das_3):
-  values = das_3.copy()  # forward what we parsed
-  values['ACC_AVAILABLE'] = 1
-  values['ACC_ACTIVE'] = enabled
-  values['COUNTER'] = counter % 0x10
+def acc_command(packer, counter, bus, available, enabled, accel_req, torque, max_gear, decel_req, decel, das_3, not_RAM = 0):
+  if not_RAM == 1:
+    values = {
+    'ACC_AVAILABLE': available,
+    'ACC_ACTIVE': enabled,
+    'COUNTER': counter % 0x10,
+    'ACC_DECEL_REQ': 0 if decel is None else enabled,
+    'ACC_DECEL': 4 if decel is None else decel, #4 when not braking according to Cabana
+    'ENGINE_TORQUE_REQUEST_MAX': 0 if torque is None else enabled,
+    'ENGINE_TORQUE_REQUEST': 0 if torque is None else torque,
+    'GR_MAX_REQ': 8 if max_gear is None else max_gear,
+  }
+    
+  else: 
+    values = das_3.copy()  # forward what we parsed
+    values['ACC_DECEL_REQ'] = enabled and decel is not None
+    values['ACC_GO'] = accel_req
+    values['ACC_STANDSTILL'] = decel_req
+    if decel is not None:
+      values['ACC_DECEL'] = decel
+      values['ENGINE_TORQUE_REQUEST_MAX'] = enabled and torque is not None
+    if torque is not None:
+      values['ENGINE_TORQUE_REQUEST'] = torque
+    values['ACC_ACTIVE'] = enabled
+    values['COUNTER'] = counter % 0x10
+    values['GR_MAX_REQ'] = max_gear
 
-  values['ACC_GO'] = accel_req
-  values['ACC_STANDSTILL'] = decel_req
-  values['GR_MAX_REQ'] = max_gear
+  return packer.make_can_msg("DAS_3", bus, values)
+def create_acc_1_message(packer, bus, frame):
+  values = {
+    "ACCEL_PERHAPS": 32767,
+    "COUNTER": frame % 0x10,
+  }
 
-  values['ACC_DECEL_REQ'] = enabled and decel is not None
-  if decel is not None:
-    values['ACC_DECEL'] = decel
+  return packer.make_can_msg("ACC_1", bus, values)
 
-  values['ENGINE_TORQUE_REQUEST_MAX'] = enabled and torque is not None
-  if torque is not None:
-    values['ENGINE_TORQUE_REQUEST'] = torque
+def create_das_4_message(packer, bus, state, speed):
+  values = {
+    "ACC_DISTANCE_CONFIG_1": 0x1,
+    "ACC_DISTANCE_CONFIG_2": 0x1,
+    "SPEED_DIGITAL": 0xFE,
+    "ALWAYS_ON": 0x1,
+    "ACC_STATE": state,
+    "ACC_SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
+    "ACC_SET_SPEED_MPH": round(speed * CV.MS_TO_MPH),
+  }
 
-  return packer.make_can_msg("DAS_3", 0, values)
+  return packer.make_can_msg("DAS_4", bus, values) 
+
+def create_chime_message(packer, bus):
+  values = { # 1000ms
+    # "CHIME": chime if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 14,
+    # "CHIME_REQ_L": 1 if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 0,
+    # "CHIME_REQ_R": 1 if (chime_timer > 0 and (gap_timer == 0 or gap_timer == chimegap_time)) else 0
+  }
+  return packer.make_can_msg("CHIME", bus, values)
