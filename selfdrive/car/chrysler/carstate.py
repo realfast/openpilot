@@ -63,11 +63,11 @@ class CarState(CarStateBase):
     ret.gasPressed = ret.gas > 1e-5
 
     # car speed
+    ret.vEgoRaw = cp.vl["ESP_8"]["Vehicle_Speed"] * CV.KPH_TO_MS
     if self.CP.carFingerprint in RAM_CARS:
-      ret.vEgoRaw = cp.vl["ESP_8"]["Vehicle_Speed"] * CV.KPH_TO_MS
-      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
+       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
+            
     else:
-      ret.vEgoRaw = (cp.vl["SPEED_1"]["SPEED_LEFT"] + cp.vl["SPEED_1"]["SPEED_RIGHT"]) / 2.
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["GEAR"]["PRNDL"], None))
     if self.op_params.get('use_smoothed_accel'):
         ret.vEgoRaw = cp.vl["ESP_1"]["Vehicle_Speed"] * CV.KPH_TO_MS
