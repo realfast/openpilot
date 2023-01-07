@@ -38,6 +38,7 @@ class CarController:
     self.max_gear = None
     self.op_params = opParams()
     self.desired_velocity = 0
+    self.calc_velocity = 0
 
   def update(self, CC, CS):
     can_sends = []
@@ -136,11 +137,11 @@ class CarController:
         # power = work * time_for_sample
         # # torque = Power (W) / (RPM * 2 * pi / 60)
         # torque = power/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
-        calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+        self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
         if self.op_params.get('comma_speed'):
           self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
         else:
-          self.desired_velocity = min(calc_velocity, CS.out.cruiseState.speed)
+          self.desired_velocity = min(self.calc_velocity, CS.out.cruiseState.speed)
 
         # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
         # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
@@ -171,7 +172,7 @@ class CarController:
                                     decel,
                                     CS.das_3))
 
-      can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, calc_velocity, CS.out.aEgo, CS.out.vEgo))
+      can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
     # HUD alerts
     if self.frame % 25 == 0:
