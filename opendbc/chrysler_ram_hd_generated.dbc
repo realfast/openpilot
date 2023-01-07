@@ -36,6 +36,10 @@ BO_ 320 ESP_1: 8 XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
  SG_ BRAKE_PRESSED_ACC : 6|1@0+ (1,0) [0|3] "" XXX
 
+BO_ 332 ESP_4: 8 XXX
+ SG_ Yaw_Rate : 7|16@0+ (0.01,-327.68) [-327.68|327.66] "deg/s" XXX
+ SG_ Acceleration : 32|8@1+ (0.08,-10.24) [-10.24|10.08] "m/s2" XXX
+
 BO_ 344 ESP_6: 8 XXX
  SG_ WHEEL_SPEED_FL : 5|14@0+ (0.5,0) [0|8191] "rpm" XXX
  SG_ WHEEL_SPEED_FR : 21|14@0+ (0.5,0) [0|8191] "rpm" XXX
