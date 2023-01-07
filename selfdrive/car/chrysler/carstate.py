@@ -15,7 +15,8 @@ CHECK_BUTTONS = {ButtonType.accOnOff: ["CRUISE_BUTTONS", 'ACC_OnOff'],
                  ButtonType.decelCruise: ["CRUISE_BUTTONS", 'ACC_Decel'],
                  ButtonType.followInc: ["CRUISE_BUTTONS", 'ACC_Distance_Inc'],
                  ButtonType.followDec: ["CRUISE_BUTTONS", 'ACC_Distance_Dec'],
-                 ButtonType.lkasToggle: ["TRACTION_BUTTON", 'TOGGLE_LKAS']}
+                 ButtonType.cruiseOnOff: ["CRUISE_BUTTONS", 'Cruise_OnOff'],
+                 ButtonType.lkasToggle: ["TRACTION_BUTTON", 'TOGGLE_LKAS'],}
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -250,6 +251,7 @@ class CarState(CarStateBase):
       ("ACC_OnOff", "CRUISE_BUTTONS"),
       ("ACC_Distance_Inc", "CRUISE_BUTTONS"),
       ("COUNTER", "CRUISE_BUTTONS"),
+      ("Vehicle_Speed", "ESP_8"),
 
       ("ENGINE_RPM", "ECM_1", 0),
       ("ENGINE_TORQUE", "ECM_1", 0),
@@ -272,6 +274,7 @@ class CarState(CarStateBase):
       ("ECM_1", 50),
       ("ECM_TRQ", 50),
       ("TCM_A7", 50),
+      ("ESP_8", 50),
     ]
 
     if CP.enableBsm:
@@ -284,13 +287,11 @@ class CarState(CarStateBase):
     if CP.carFingerprint in RAM_CARS:
       signals += [
         ("DASM_FAULT", "EPS_3"),
-        ("Vehicle_Speed", "ESP_8"),
         ("Gear_State", "Transmission_Status"),
         ("LKAS_Button", "Center_Stack_1"),
         ("LKAS_Button", "Center_Stack_2"),
       ]
       checks += [
-        ("ESP_8", 50),
         ("EPS_3", 50),
         ("Transmission_Status", 50),
         ("Center_Stack_1", 1),
@@ -301,10 +302,12 @@ class CarState(CarStateBase):
         ("PRNDL", "GEAR"),
         ("SPEED_LEFT", "SPEED_1"),
         ("SPEED_RIGHT", "SPEED_1"),
+        ("TOGGLE_LKAS", "TRACTION_BUTTON"),
       ]
       checks += [
         ("GEAR", 50),
         ("SPEED_1", 100),
+        ("TRACTION_BUTTON", 1),
       ]
       # signals += CarState.get_cruise_signals()[0]
       # checks += CarState.get_cruise_signals()[1]

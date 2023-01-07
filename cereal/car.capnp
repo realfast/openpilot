@@ -269,6 +269,7 @@ struct CarState {
       followDec @13;
       lkasToggle @14;
       accOnOff @15;
+      cruiseOnOff @16;
     }
   }
 
