@@ -52,6 +52,7 @@ class RadarInterface(RadarInterfaceBase):
     self.rcp = _create_radar_can_parser(CP.carFingerprint)
     self.updated_messages = set()
     self.trigger_msg = LAST_MSG
+    self.radar_off_can = CP.radarOffCan
 
   def update(self, can_strings):
     if self.radar_off_can or (self.rcp is None):
