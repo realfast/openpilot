@@ -219,8 +219,8 @@ class CarController:
           state = 0
           if CS.out.cruiseState.available:
             state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
-          can_sends.append(create_das_4_message(self.packer, 0, state, CC.hudcontrol.setSpeed)) #need to double check setSpeed
-          can_sends.append(create_das_4_message(self.packer, 2, state, CC.hudcontrol.setSpeed))
+          can_sends.append(create_das_4_message(self.packer, 0, state, CC.hudControl.setSpeed)) #need to double check setSpeed
+          can_sends.append(create_das_4_message(self.packer, 2, state, CC.hudControl.setSpeed))
 
         if self.frame % 50 == 0:
           # tester present - w/ no response (keeps radar disabled)
