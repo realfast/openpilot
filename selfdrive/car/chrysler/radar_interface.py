@@ -54,7 +54,7 @@ class RadarInterface(RadarInterfaceBase):
     self.trigger_msg = LAST_MSG
 
   def update(self, can_strings):
-    if self.rcp is None:
+    if self.radar_off_can or (self.rcp is None):
       return super().update(None)
 
     vls = self.rcp.update_strings(can_strings)
