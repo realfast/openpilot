@@ -3,6 +3,7 @@ from opendbc.can.parser import CANParser
 from cereal import car
 from selfdrive.car.interfaces import RadarInterfaceBase
 from selfdrive.car.chrysler.values import DBC
+from common.params import Params
 
 RADAR_MSGS_C = list(range(0x2c2, 0x2d4+2, 2))  # c_ messages 706,...,724
 RADAR_MSGS_D = list(range(0x2a2, 0x2b4+2, 2))  # d_ messages
@@ -10,6 +11,9 @@ LAST_MSG = max(RADAR_MSGS_C + RADAR_MSGS_D)
 NUMBER_MSGS = len(RADAR_MSGS_C) + len(RADAR_MSGS_D)
 
 def _create_radar_can_parser(car_fingerprint):
+  params = Params()
+  if params.get_bool("ExperimentalLongitudinalEnabled"):
+    return None
   dbc = DBC[car_fingerprint]['radar']
   if dbc is None:
     return None
