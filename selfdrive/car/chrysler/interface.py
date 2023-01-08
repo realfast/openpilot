@@ -58,6 +58,7 @@ class CarInterface(CarInterfaceBase):
       ret.startingState = True
       ret.vEgoStarting = 0.1 #default 0.5, hyundai 0.1
       ret.startAccel = 2.0
+      ret.pcmCruise = False #no stock set speed
 
     # Jeep
     elif candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
