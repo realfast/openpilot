@@ -41,27 +41,40 @@ class CarController:
 
   def update(self, CC, CS):
     can_sends = []
-
-    lkas_active = CC.latActive and not CS.lkasdisabled
+    if self.CP.carFingerprint in RAM_CARS:
+      lkas_active = CC.latActive and not CS.lkasdisabled
+    else: lkas_active = CC.latActive and self.lkas_control_bit_prev and CC.enabled
 
     # cruise buttons
-    if (CS.button_counter != self.last_button_frame):
-      das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
-      self.last_button_frame = CS.button_counter
-      if self.CP.carFingerprint in RAM_CARS:
-        if CS.cruise_cancel:
-          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
-        else:
-          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
+    if self.CP.carFingerprint in RAM_CARS:
+      if (CS.button_counter != self.last_button_frame):
+        das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
+        self.last_button_frame = CS.button_counter
+        if self.CP.carFingerprint in RAM_CARS:
+          if CS.cruise_cancel:
+            can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
+          else:
+            can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
-       # ACC cancellation
-      elif CC.cruiseControl.cancel:
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, cancel=True))
+        # ACC cancellation
+        elif CC.cruiseControl.cancel:
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, cancel=True))
 
-      # ACC resume from standstill
-      elif CC.cruiseControl.resume:
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
+        # ACC resume from standstill
+        elif CC.cruiseControl.resume:
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
+    else:
+      if CS.button_pressed(ButtonType.accOnOff, False):
+        CS.longAvailable = not CS.longAvailable
+        CS.longEnabled = False
 
+      if CS.longAvailable:
+        if CS.button_pressed(ButtonType.cancel) or CS.out.brakePressed:
+          CS.longEnabled = False
+        elif CS.button_pressed(ButtonType.accelCruise) or \
+            CS.button_pressed(ButtonType.decelCruise) or \
+            CS.button_pressed(ButtonType.resumeCruise):
+          CS.longEnabled = True
     # steering
     if self.frame % 2 == 0:
       
@@ -159,17 +172,7 @@ class CarController:
         
       #ECU Disabled
       if self.CP.carFingerprint not in RAM_CARS:
-        if CS.button_pressed(ButtonType.accOnOff, False):
-          CS.longAvailable = not CS.longAvailable
-          CS.longEnabled = False
-
-        if CS.longAvailable:
-          if CC.cruiseControl.cancel or CS.button_pressed(ButtonType.cancel) or CS.out.brakePressed:
-            CS.longEnabled = False
-          elif CS.button_pressed(ButtonType.accelCruise) or \
-              CS.button_pressed(ButtonType.decelCruise) or \
-              CS.button_pressed(ButtonType.resumeCruise):
-            CS.longEnabled = True
+      
 
         override_request = CS.out.gasPressed or CS.out.brakePressed
         if override_request:
