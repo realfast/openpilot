@@ -330,15 +330,15 @@ class CarState(CarStateBase):
       ]
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
-    else: #Pacifica
-      # LKAS_HEARTBIT data needs to be forwarded!
-      forward_lkas_heartbit_signals = [
-        ("AUTO_HIGH_BEAM", "LKAS_HEARTBIT"),
-        ("FORWARD_1", "LKAS_HEARTBIT"),
-        ("FORWARD_2", "LKAS_HEARTBIT"),
-        ("FORWARD_3", "LKAS_HEARTBIT"),
-      ]
+    # else: #Pacifica
+    #   # LKAS_HEARTBIT data needs to be forwarded!
+    #   forward_lkas_heartbit_signals = [
+    #     ("AUTO_HIGH_BEAM", "LKAS_HEARTBIT"),
+    #     ("FORWARD_1", "LKAS_HEARTBIT"),
+    #     ("FORWARD_2", "LKAS_HEARTBIT"),
+    #     ("FORWARD_3", "LKAS_HEARTBIT"),
+    #   ]
 
-      signals += forward_lkas_heartbit_signals
-      checks.append(("LKAS_HEARTBIT", 10))
+    #   signals += forward_lkas_heartbit_signals
+    #   checks.append(("LKAS_HEARTBIT", 10))
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)

@@ -235,9 +235,9 @@ class CarController:
           can_sends.append(create_acc_1_message(self.packer, 0, self.frame / 2))
           can_sends.append(create_acc_1_message(self.packer, 2, self.frame / 2))
 
-        if self.frame % 10 == 0:
-          new_msg = create_lkas_heartbit(self.packer, 0, CS.lkasHeartbit)
-          can_sends.append(new_msg)
+        # if self.frame % 10 == 0:
+        #   new_msg = create_lkas_heartbit(self.packer, 0, CS.lkasHeartbit)
+        #   can_sends.append(new_msg)
 
         if self.frame % 6 == 0:
           state = 0
