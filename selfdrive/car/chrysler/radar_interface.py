@@ -15,7 +15,7 @@ def _create_radar_can_parser(car_fingerprint):
   if params.get_bool("ExperimentalLongitudinalEnabled"):
     return None
   dbc = DBC[car_fingerprint]['radar']
-  if dbc is None:
+  if dbc is not None: #temporary testing
     return None
 
   msg_n = len(RADAR_MSGS_C)
