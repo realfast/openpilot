@@ -176,11 +176,32 @@ class CarController:
 
         override_request = CS.out.gasPressed or CS.out.brakePressed
         if override_request:
+          self.last_torque = None
           self.last_brake = None
           decel_req = None
           accel_req = 0
           torque = None
-          max_gear = 8
+          self.max_gear = 9
+          decel = None
+
+          can_sends.append(acc_command(self.packer, self.frame / 2, 0,
+                             CS.out.cruiseState.available,
+                             CS.out.cruiseState.enabled,
+                             accel_req,
+                             torque,
+                             max_gear,
+                             decel_req,
+                             decel,
+                             0, 1))
+          can_sends.append(acc_command(self.packer, self.frame / 2, 2,
+                              CS.out.cruiseState.available,
+                              CS.out.cruiseState.enabled,
+                              accel_req,
+                              torque,
+                              max_gear,
+                              decel_req,
+                              decel,
+                              0, 1))
           
         elif not CS.longEnabled or not CS.out.cruiseState.enabled:
           self.last_brake = None
