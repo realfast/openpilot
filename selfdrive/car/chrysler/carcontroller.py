@@ -175,6 +175,7 @@ class CarController:
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
           torque += CS.engineTorque
+        #Value for sending accleration
         accel_req = 1 if self.last_standstill == 1 else 0
         decel_req = 0
         decel = 4
@@ -182,8 +183,9 @@ class CarController:
         stand_still = 0
         self.last_standstill = 0
         
-      #Pacifica
+      #Pacifica 
       if self.CP.carFingerprint not in RAM_CARS:
+        #When stepping on gas/brake
         override_request = CS.out.gasPressed or CS.out.brakePressed
         if override_request:
           self.last_brake = 0
@@ -213,8 +215,8 @@ class CarController:
                               decel_req,
                               decel,
                               0, 1, stand_still))
-          
-        elif not CS.longEnabled or not CS.out.cruiseState.enabled:
+        #OP not enabled  
+        elif not CS.longEnabled or not CS.out.cruiseState.enabled: 
           self.last_brake = None
           self.last_standstill = 0
           self.max_gear = 9
@@ -244,8 +246,7 @@ class CarController:
                               decel,
                               0, 1, stand_still))
 
-        else:
-          max_gear = 9
+        else: #send acceleration torque calculated from above
           can_sends.append(acc_command(self.packer, self.frame / 2, 0,
                              CS.out.cruiseState.available,
                              CS.out.cruiseState.enabled,
