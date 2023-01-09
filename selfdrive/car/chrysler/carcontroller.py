@@ -113,6 +113,8 @@ class CarController:
         decel_req = False
         torque = None
         decel = self.acc_brake(self.accel)
+        if self.op_params.get('actual_decel'):
+          decel = CC.actuators.accel
         max_gear = 8
 
       else:
