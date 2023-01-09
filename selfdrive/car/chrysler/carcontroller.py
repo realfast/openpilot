@@ -97,6 +97,9 @@ class CarController:
       self.lkas_control_bit_prev = lkas_control_bit
 
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
+
+
+
       #LONG
       das_3_counter = CS.das_3['COUNTER']
 
@@ -110,12 +113,15 @@ class CarController:
         
       if CC.actuators.accel < brake_threshold:
         accel_req = False
-        decel_req = False
+        standstill = False
+        if CC.actuators.speed<0.1 and CS.out.standstill:
+          standstill = True
         torque = None
         decel = self.acc_brake(self.accel)
         if self.op_params.get('actual_decel'):
           decel = CC.actuators.accel
         max_gear = 8
+
 
       else:
         time_for_sample = self.op_params.get('long_time_constant')
@@ -123,7 +129,8 @@ class CarController:
         drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
         self.last_brake = None
         accel_req = True
-        decel_req = False
+        standstill = False
+        decel = None
         # delta_accel = CC.actuators.accel - CS.out.aEgo
 
         # distance_moved = ((delta_accel * time_for_sample**2)/2) + (CS.out.vEgo * time_for_sample)
@@ -164,13 +171,11 @@ class CarController:
         else:
           torque += CS.engineTorque
 
-        decel = None
-
       can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
                                     accel_req,
                                     torque,
                                     max_gear,
-                                    decel_req,
+                                    standstill,
                                     decel,
                                     CS.das_3))
 

@@ -74,6 +74,8 @@ class CarInterface(CarInterfaceBase):
       tune.deadzoneV = [.0, .15]
       tune.kpV = [0.25]
       tune.kiV = [0.05]
+      ret.stopAccel = -2.0
+
 
     elif candidate == CAR.RAM_HD:
       stiffnessFactor = 0.35
@@ -91,6 +93,7 @@ class CarInterface(CarInterfaceBase):
       tune.kiV = [0.05]
       ret.longitudinalActuatorDelayUpperBound = 0.5 # s
       ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
+      ret.stopAccel = -2.0
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")
