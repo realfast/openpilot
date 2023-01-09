@@ -128,7 +128,9 @@ class CarController:
         if (decel < -1.9 and decel > -2.1 and CS.out.vEgo == 0):
           stand_still = 1
           self.last_standstill = 1
-        else: stand_still = 0
+        else: 
+          stand_still = 0
+          self.last_standstill = 0
 
       #Acclerating
       else:
