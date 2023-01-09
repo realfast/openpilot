@@ -129,7 +129,9 @@ class CarController:
         torque = 0
         decel = self.acc_brake(self.accel)
         max_gear = 8
-        stand_still = decel < -1.9 and decel > -2.1 and CS.out.vEgo == 0
+        if (decel < -1.9 and decel > -2.1 and CS.out.vEgo == 0): stand_still = 1
+        else: stand_still = 0
+
       #Acclerating
       else:
         time_for_sample = self.op_params.get('long_time_constant')
@@ -179,6 +181,7 @@ class CarController:
         decel_req = 0
         decel = 4
         max_gear = 9
+        stand_still = 0
         
       #Pacifica
       if self.CP.carFingerprint not in RAM_CARS:
@@ -252,7 +255,7 @@ class CarController:
                              max_gear,
                              decel_req,
                              decel,
-                             0, 1))
+                             0, 1, stand_still))
           can_sends.append(acc_command(self.packer, self.frame / 2, 2,
                               CS.out.cruiseState.available,
                               CS.out.cruiseState.enabled,
@@ -261,7 +264,8 @@ class CarController:
                               max_gear,
                               decel_req,
                               decel,
-                              0, 1))
+                              0, 1, stand_still))
+
         if self.frame % 2 == 0:
           can_sends.append(create_acc_1_message(self.packer, 0, self.frame / 2))
           can_sends.append(create_acc_1_message(self.packer, 2, self.frame / 2))
