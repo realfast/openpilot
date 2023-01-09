@@ -4,11 +4,9 @@ from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command, create_acc_1_message, create_das_4_message, create_chime_message#, create_lkas_heartbit
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
-
 from common.numpy_fast import clip
 from common.conversions import Conversions as CV
 from common.params import Params, put_nonblocking
-from cereal import car
 import math
 
 from common.op_params import opParams
@@ -119,7 +117,9 @@ class CarController:
 
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
       #Braking
-      if CC.actuators.accel < brake_threshold: 
+      #if CC.actuators.accel < brake_threshold: 
+      stopping = CC.actuators.longControlState == car.CarControl.Actuators.LongControlState
+      if stopping:
         accel_req = 0
         decel_req = 1
         torque = 0
@@ -172,7 +172,7 @@ class CarController:
           # rough estimate of external forces in N
           total_forces = 650
           #torque required to maintain speed
-          torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
+          torque = (total_forces * CS.out.vEgo * 9.55414)/(-CS.engineRpm * drivetrain_efficiency + 0.001)
 
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
@@ -187,41 +187,11 @@ class CarController:
         
       #Pacifica 
       if self.CP.carFingerprint not in RAM_CARS:
-        #When stepping on gas/brake
-        override_request = CS.out.gasPressed or CS.out.brakePressed
-        if override_request:
-          self.last_brake = 0
-          self.last_standstill = 0
-          decel_req = 0
-          accel_req = 0
-          torque = 0
-          max_gear = 9
-          decel = 0
-          stand_still = 0
-
-          can_sends.append(acc_command(self.packer, self.frame / 2, 0,
-                             CS.out.cruiseState.available,
-                             CS.out.cruiseState.enabled,
-                             accel_req,
-                             torque,
-                             max_gear,
-                             decel_req,
-                             decel,
-                             0, 1, stand_still))
-          can_sends.append(acc_command(self.packer, self.frame / 2, 2,
-                              CS.out.cruiseState.available,
-                              CS.out.cruiseState.enabled,
-                              accel_req,
-                              torque,
-                              max_gear,
-                              decel_req,
-                              decel,
-                              0, 1, stand_still))
-        #OP not enabled  
-        elif not CS.longEnabled or not CS.out.cruiseState.enabled: 
+        #When stepping on gas/brake or OP not enabled
+        override_request = CS.out.gasPressed #or CS.out.brakePressed
+        if override_request or not CS.longEnabled or not CS.out.cruiseState.enabled:
           self.last_brake = None
           self.last_standstill = 0
-          self.max_gear = 9
           decel_req = 0
           accel_req = 0
           torque = 0
@@ -247,6 +217,36 @@ class CarController:
                               decel_req,
                               decel,
                               0, 1, stand_still))
+        # #OP not enabled  
+        # elif not CS.longEnabled or not CS.out.cruiseState.enabled: 
+        #   self.last_brake = None
+        #   self.last_standstill = 0
+        #   self.max_gear = 9
+        #   decel_req = 0
+        #   accel_req = 0
+        #   torque = 0
+        #   max_gear = 9
+        #   decel = 0
+        #   stand_still = 0
+
+        #   can_sends.append(acc_command(self.packer, self.frame / 2, 0,
+        #                      CS.out.cruiseState.available,
+        #                      CS.out.cruiseState.enabled,
+        #                      accel_req,
+        #                      torque,
+        #                      max_gear,
+        #                      decel_req,
+        #                      decel,
+        #                      0, 1, stand_still))
+        #   can_sends.append(acc_command(self.packer, self.frame / 2, 2,
+        #                       CS.out.cruiseState.available,
+        #                       CS.out.cruiseState.enabled,
+        #                       accel_req,
+        #                       torque,
+        #                       max_gear,
+        #                       decel_req,
+        #                       decel,
+        #                       0, 1, stand_still))
 
         else: #send acceleration torque calculated from above
           can_sends.append(acc_command(self.packer, self.frame / 2, 0,
