@@ -36,7 +36,7 @@ class CarController:
 
     # long
     self.last_brake = None
-    self.max_gear = None
+    self.max_gear = 8
     self.op_params = opParams()
     self.desired_velocity = 0
     self.calc_velocity = 0
