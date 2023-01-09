@@ -38,6 +38,8 @@ class CarController:
     self.last_brake = None
     self.max_gear = None
     self.op_params = opParams()
+    self.desired_velocity = 0
+    self.calc_velocity = 0
 
   def update(self, CC, CS):
     can_sends = []
@@ -116,23 +118,25 @@ class CarController:
         self.last_brake = None
 
       max_gear = 8
-
+      stand_still = 0
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
-      if CC.actuators.accel < - self.op_params.get('brake_threshold'):
-        accel_req = False
-        decel_req = False
-        torque = None
+      brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
+      #Braking
+      if CC.actuators.accel < brake_threshold: 
+        accel_req = 0
+        decel_req = 1
+        torque = 0
         decel = self.acc_brake(self.accel)
         max_gear = 8
-
+        stand_still = decel < -1.9 and decel > -2.1 and CS.out.vEgo == 0
+      #Acclerating
       else:
         time_for_sample = self.op_params.get('long_time_constant')
         torque_limits = self.op_params.get('torque_limits')
         drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
         self.last_brake = None
-        accel_req = True
-        decel_req = False
+
         # delta_accel = CC.actuators.accel - CS.out.aEgo
 
         # distance_moved = ((delta_accel * time_for_sample**2)/2) + (CS.out.vEgo * time_for_sample)
@@ -148,10 +152,14 @@ class CarController:
         # power = work * time_for_sample
         # # torque = Power (W) / (RPM * 2 * pi / 60)
         # torque = power/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
-        desired_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+        self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+        if self.op_params.get('comma_speed'):
+          self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
+        else:
+          self.desired_velocity = min(self.calc_velocity, CS.out.cruiseState.speed)
         # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
         # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
-        kinetic_energy = ((self.CP.mass * desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
+        kinetic_energy = ((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
         # convert kinetic energy to torque
         # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
         torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
@@ -167,22 +175,23 @@ class CarController:
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
           torque += CS.engineTorque
-
-        decel = None
+        accel_req = 1
+        decel_req = 0
+        decel = 4
+        max_gear = 9
         
-      #ECU Disabled
+      #Pacifica
       if self.CP.carFingerprint not in RAM_CARS:
-      
-
         override_request = CS.out.gasPressed or CS.out.brakePressed
         if override_request:
-          self.last_torque = None
-          self.last_brake = None
-          decel_req = None
+          self.last_torque = 0
+          self.last_brake = 0
+          decel_req = 0
           accel_req = 0
-          torque = None
-          self.max_gear = 9
-          decel = None
+          torque = 0
+          max_gear = 9
+          decel = 0
+          stand_still = 0
 
           can_sends.append(acc_command(self.packer, self.frame / 2, 0,
                              CS.out.cruiseState.available,
@@ -192,7 +201,7 @@ class CarController:
                              max_gear,
                              decel_req,
                              decel,
-                             0, 1))
+                             0, 1, stand_still))
           can_sends.append(acc_command(self.packer, self.frame / 2, 2,
                               CS.out.cruiseState.available,
                               CS.out.cruiseState.enabled,
@@ -201,15 +210,37 @@ class CarController:
                               max_gear,
                               decel_req,
                               decel,
-                              0, 1))
+                              0, 1, stand_still))
           
         elif not CS.longEnabled or not CS.out.cruiseState.enabled:
           self.last_brake = None
           self.last_torque = None
           self.max_gear = 9
+          decel_req = 0
+          accel_req = 0
+          torque = 0
+          max_gear = 9
+          decel = 0
+          stand_still = 0
 
-          can_sends.append(acc_command(self.packer, self.frame / 2, 0, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0, 1))
-          can_sends.append(acc_command(self.packer, self.frame / 2, 2, CS.out.cruiseState.available, CS.out.cruiseState.enabled, False, False, 8, False, 0, 0, 1))
+          can_sends.append(acc_command(self.packer, self.frame / 2, 0,
+                             CS.out.cruiseState.available,
+                             CS.out.cruiseState.enabled,
+                             accel_req,
+                             torque,
+                             max_gear,
+                             decel_req,
+                             decel,
+                             0, 1, stand_still))
+          can_sends.append(acc_command(self.packer, self.frame / 2, 2,
+                              CS.out.cruiseState.available,
+                              CS.out.cruiseState.enabled,
+                              accel_req,
+                              torque,
+                              max_gear,
+                              decel_req,
+                              decel,
+                              0, 1, stand_still))
 
         else:
           max_gear = 9
