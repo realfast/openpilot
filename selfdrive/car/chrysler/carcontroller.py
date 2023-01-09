@@ -40,6 +40,7 @@ class CarController:
     self.op_params = opParams()
     self.desired_velocity = 0
     self.calc_velocity = 0
+    self.last_standstill = 0
 
   def update(self, CC, CS):
     can_sends = []
@@ -113,12 +114,7 @@ class CarController:
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
       #LONG
       
-
-      if not CC.enabled:
-        self.last_brake = None
-
-      max_gear = 8
-      stand_still = 0
+      #calculating acceleration/torque
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
@@ -129,7 +125,9 @@ class CarController:
         torque = 0
         decel = self.acc_brake(self.accel)
         max_gear = 8
-        if (decel < -1.9 and decel > -2.1 and CS.out.vEgo == 0): stand_still = 1
+        if (decel < -1.9 and decel > -2.1 and CS.out.vEgo == 0):
+          stand_still = 1
+          self.last_standstill = 1
         else: stand_still = 0
 
       #Acclerating
@@ -177,18 +175,19 @@ class CarController:
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
           torque += CS.engineTorque
-        accel_req = 1
+        accel_req = 1 if self.last_standstill == 1 else 0
         decel_req = 0
         decel = 4
         max_gear = 9
         stand_still = 0
+        self.last_standstill = 0
         
       #Pacifica
       if self.CP.carFingerprint not in RAM_CARS:
         override_request = CS.out.gasPressed or CS.out.brakePressed
         if override_request:
-          self.last_torque = 0
           self.last_brake = 0
+          self.last_standstill = 0
           decel_req = 0
           accel_req = 0
           torque = 0
@@ -217,7 +216,7 @@ class CarController:
           
         elif not CS.longEnabled or not CS.out.cruiseState.enabled:
           self.last_brake = None
-          self.last_torque = None
+          self.last_standstill = 0
           self.max_gear = 9
           decel_req = 0
           accel_req = 0
