@@ -177,6 +177,8 @@ class CarController:
         else:
           torque += CS.engineTorque
 
+        torque = max(torque, (0 - self.op_params.get('min_torque')))
+
       can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
                                     accel_go,
                                     torque,
