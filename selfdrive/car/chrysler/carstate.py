@@ -73,7 +73,7 @@ class CarState(CarStateBase):
     if self.op_params.get('use_smoothed_accel'):
         ret.vEgoRaw = cp.vl["ESP_1"]["Vehicle_Speed"] * CV.KPH_TO_MS
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
-    ret.standstill = not ret.vEgoRaw > 0.001
+    ret.standstill = False #not ret.vEgoRaw > 0.001
     ret.wheelSpeeds = self.get_wheel_speeds(
       cp.vl["ESP_6"]["WHEEL_SPEED_FL"],
       cp.vl["ESP_6"]["WHEEL_SPEED_FR"],
