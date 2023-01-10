@@ -117,9 +117,7 @@ class CarController:
         if CC.actuators.speed<0.1 and CS.out.standstill:
           standstill = True
         torque = None
-        decel = self.acc_brake(self.accel)
-        if self.op_params.get('actual_decel'):
-          decel = CC.actuators.accel
+        decel = CC.actuators.accel
         max_gear = 8
 
 
@@ -193,18 +191,3 @@ class CarController:
     new_actuators.steer = self.apply_steer_last / self.params.STEER_MAX
 
     return new_actuators, can_sends
-
-  def acc_brake(self, aTarget):
-    brake_target = aTarget
-    if self.last_brake is None:
-      self.last_brake = min(0., brake_target / 2)
-    else:
-      tBrake = brake_target
-      lBrake = self.last_brake
-      if tBrake < lBrake:
-        diff = min(BRAKE_CHANGE, (lBrake - tBrake) / 2)
-        self.last_brake = max(lBrake - diff, tBrake)
-      elif tBrake - lBrake > 0.01:  # don't let up unless it's a big enough jump
-        diff = min(BRAKE_CHANGE, (tBrake - lBrake) / 2)
-        self.last_brake = min(lBrake + diff, tBrake)
-    return self.last_brake
