@@ -172,7 +172,7 @@ class VCruiseHelper:
             speed = self.v_cruise_kph_last
 
       self.v_cruise_kph = int(round(clip(CS.vEgo * CV.MS_TO_KPH, V_CRUISE_DELTA, V_CRUISE_MAX))) if speed is None else speed
-      
+      return True
     else:
       # initializing is handled by the PCM
       if self.CP.pcmCruise:
