@@ -164,15 +164,25 @@ class VCruiseHelper:
           self.button_change_states[b.type.raw] = {"standstill": CS.cruiseState.standstill, "enabled": enabled}
 
   def initialize_v_cruise(self, CS):
-    # initializing is handled by the PCM
-    if self.CP.pcmCruise:
-      return
+    if self.CP.carName == "chrysler":
+      speed = None
+      if self.v_cruise_kph_last < 250:
+        for b in CS.buttonEvents:
+          if b.type == "resumeCruise":
+            speed = self.v_cruise_kph_last
 
-    # 250kph or above probably means we never had a set speed
-    if any(b.type in (ButtonType.accelCruise, ButtonType.resumeCruise) for b in CS.buttonEvents) and self.v_cruise_kph_last < 250:
-      self.v_cruise_kph = self.v_cruise_kph_last
+      self.v_cruise_kph = int(round(clip(CS.vEgo * CV.MS_TO_KPH, V_CRUISE_DELTA, V_CRUISE_MAX))) if speed is None else speed
+      
     else:
-      self.v_cruise_kph = int(round(clip(CS.vEgo * CV.MS_TO_KPH, V_CRUISE_ENABLE_MIN, V_CRUISE_MAX)))
+      # initializing is handled by the PCM
+      if self.CP.pcmCruise:
+        return
+
+      # 250kph or above probably means we never had a set speed
+      if any(b.type in (ButtonType.accelCruise, ButtonType.resumeCruise) for b in CS.buttonEvents) and self.v_cruise_kph_last < 250:
+        self.v_cruise_kph = self.v_cruise_kph_last
+      else:
+        self.v_cruise_kph = int(round(clip(CS.vEgo * CV.MS_TO_KPH, V_CRUISE_ENABLE_MIN, V_CRUISE_MAX)))
 
     self.v_cruise_cluster_kph = self.v_cruise_kph
 
