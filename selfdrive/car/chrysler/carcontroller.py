@@ -117,9 +117,9 @@ class CarController:
 
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
       #Braking
-      #if CC.actuators.accel < brake_threshold: 
-      stopping = CC.actuators.longControlState == car.CarControl.Actuators.LongControlState
-      if stopping:
+      if CC.actuators.accel < brake_threshold: 
+      #stopping = CC.actuators.longControlState == car.CarControl.Actuators.LongControlState
+      #if stopping:
         accel_req = 0
         decel_req = 1
         torque = 0

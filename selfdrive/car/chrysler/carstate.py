@@ -117,7 +117,7 @@ class CarState(CarStateBase):
       ret.cruiseState.nonAdaptive = False
       ret.cruiseState.enabled = self.longEnabled
       ret.cruiseState.available = self.longAvailable
-      ret.cruiseState.standstill = ret.standstill
+      ret.cruiseState.standstill = False
       ret.accFaulted = False
       self.torqMin = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MIN"]
       self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
