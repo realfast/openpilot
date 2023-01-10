@@ -12,6 +12,9 @@ V_CRUISE_MAX = 145  # kph
 V_CRUISE_MIN = 8  # kph
 V_CRUISE_ENABLE_MIN = 40  # kph
 V_CRUISE_INITIAL = 255  # kph
+V_CRUISE_DELTA = 5  # ACC increments (unit agnostic)
+V_CRUISE_MIN_IMPERIAL = int(20 * CV.MPH_TO_KPH)
+V_CRUISE_DELTA_IMPERIAL = int(V_CRUISE_DELTA * CV.MPH_TO_KPH)
 
 MIN_SPEED = 1.0
 LAT_MPC_N = 16
@@ -53,10 +56,15 @@ class VCruiseHelper:
 
     if CS.cruiseState.available:
       if not self.CP.pcmCruise:
-        # if stock cruise is completely disabled, then we can use our own set speed logic
-        self._update_v_cruise_non_pcm(CS, enabled, is_metric)
-        self.v_cruise_cluster_kph = self.v_cruise_kph
-        self.update_button_timers(CS, enabled)
+        if self.CP.carName == "chrysler":
+          self._update_v_cruise_non_pcm_chrysler(CS, enabled, is_metric)
+          self.v_cruise_cluster_kph = self.v_cruise_kph
+          self.update_button_timers(CS, enabled)
+        else:
+          # if stock cruise is completely disabled, then we can use our own set speed logic
+          self._update_v_cruise_non_pcm(CS, enabled, is_metric)
+          self.v_cruise_cluster_kph = self.v_cruise_kph
+          self.update_button_timers(CS, enabled)
       else:
         self.v_cruise_kph = CS.cruiseState.speed * CV.MS_TO_KPH
         self.v_cruise_cluster_kph = CS.cruiseState.speedCluster * CV.MS_TO_KPH
@@ -113,6 +121,35 @@ class VCruiseHelper:
 
     self.v_cruise_kph = clip(round(self.v_cruise_kph, 1), V_CRUISE_MIN, V_CRUISE_MAX)
 
+  def _update_v_cruise_non_pcm_chrysler(self, CS, enabled, is_metric, reverse_acc_button_change = True):
+    v_cruise_min = V_CRUISE_MIN if is_metric else V_CRUISE_MIN_IMPERIAL
+    if enabled:
+      for b in CS.buttonEvents:
+        short_press = not b.pressed and b.pressedFrames < 30
+        long_press = b.pressed and b.pressedFrames == 30 \
+                     or ((not reverse_acc_button_change) and b.pressedFrames % 50 == 0 and b.pressedFrames > 50)
+
+        if reverse_acc_button_change:
+          sp = short_press
+          short_press = long_press
+          long_press = sp
+
+        if long_press:
+          v_cruise_delta_5 = V_CRUISE_DELTA if is_metric else V_CRUISE_DELTA_IMPERIAL
+          if b.type == car.CarState.ButtonEvent.Type.accelCruise:
+            self.v_cruise_kph += v_cruise_delta_5 - (self.v_cruise_kph % v_cruise_delta_5)
+          elif b.type == car.CarState.ButtonEvent.Type.decelCruise:
+            self.v_cruise_kph -= v_cruise_delta_5 - ((v_cruise_delta_5 - self.v_cruise_kph) % v_cruise_delta_5)
+          self.v_cruise_kph = clip(self.v_cruise_kph, v_cruise_min, V_CRUISE_MAX)
+        elif short_press:
+          v_cruise_delta_1 = 1 if is_metric else CV.MPH_TO_KPH
+          if b.type == car.CarState.ButtonEvent.Type.accelCruise:
+            self.v_cruise_kph += v_cruise_delta_1
+          elif b.type == car.CarState.ButtonEvent.Type.decelCruise:
+            self.v_cruise_kph -= v_cruise_delta_1
+
+    return max(self.v_cruise_kph, v_cruise_min)
+
   def update_button_timers(self, CS, enabled):
     # increment timer for buttons still pressed
     for k in self.button_timers:
@@ -123,7 +160,8 @@ class VCruiseHelper:
       if b.type.raw in self.button_timers:
         # Start/end timer and store current state on change of button pressed
         self.button_timers[b.type.raw] = 1 if b.pressed else 0
-        self.button_change_states[b.type.raw] = {"standstill": CS.cruiseState.standstill, "enabled": enabled}
+        if self.CP.carName != "chrysler":
+          self.button_change_states[b.type.raw] = {"standstill": CS.cruiseState.standstill, "enabled": enabled}
 
   def initialize_v_cruise(self, CS):
     # initializing is handled by the PCM
