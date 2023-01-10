@@ -65,25 +65,27 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit):
   return packer.make_can_msg("LKAS_COMMAND", 0, values)
 
 
-def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resume=False):
+def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resume=False, accel = False, decel = False):
   
-  if (cancel == True) or (resume == True):
+  if (cancel == True) or (resume == True) or (accel == True) or (decel == True):
     values = {
       "ACC_Cancel": cancel,
       "ACC_Resume": resume,
+      "ACC_Accel": accel,
+      "ACC_Decel": decel,
       "COUNTER": frame % 0x10,
     }
   else:
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def acc_command(packer, counter, enabled, accel_req, torque, max_gear, standstill, decel, das_3):
+def acc_command(packer, counter, enabled, accel_go, torque, max_gear, standstill, decel, das_3):
   values = das_3.copy()  # forward what we parsed
   values['ACC_AVAILABLE'] = 1
   values['ACC_ACTIVE'] = enabled
   values['COUNTER'] = counter % 0x10
 
-  values['ACC_GO'] = accel_req
+  # values['ACC_GO'] = accel_go
   values['ACC_STANDSTILL'] = standstill
   values['GR_MAX_REQ'] = max_gear
 

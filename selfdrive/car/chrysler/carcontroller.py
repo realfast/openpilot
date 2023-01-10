@@ -32,6 +32,7 @@ class CarController:
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
+    self.accel_sent = False
 
     # long
     self.last_brake = None
@@ -50,9 +51,16 @@ class CarController:
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
       self.last_button_frame = CS.button_counter
       if self.CP.carFingerprint in RAM_CARS:
-        if CS.cruise_cancel:
+        if self.CP.carFingerprint in RAM_HD and CS.out.cruiseState.standstill and CS.button_counter % 14 == 0 and self.accel_sent == False:
+          self.accel_sent = True
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, accel = True))
+        elif self.CP.carFingerprint in RAM_HD and CS.out.cruiseState.standstill and self.accel_sent == True:
+          self.accel_sent = False
+          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, decel = True))
+        elif CS.cruise_cancel:
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
         else:
+          self.accel_sent = False
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
        # ACC cancellation
@@ -112,7 +120,7 @@ class CarController:
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
         
       if CC.actuators.accel < brake_threshold:
-        accel_req = False
+        accel_go = False
         standstill = False
         if CC.actuators.speed<0.1 and CS.out.standstill:
           standstill = True
@@ -126,7 +134,7 @@ class CarController:
         torque_limits = self.op_params.get('torque_limits')
         drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
         self.last_brake = None
-        accel_req = True
+        accel_go = False
         standstill = False
         decel = None
         # delta_accel = CC.actuators.accel - CS.out.aEgo
@@ -170,7 +178,7 @@ class CarController:
           torque += CS.engineTorque
 
       can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
-                                    accel_req,
+                                    accel_go,
                                     torque,
                                     max_gear,
                                     standstill,
