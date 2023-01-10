@@ -172,7 +172,7 @@ class CarController:
           # rough estimate of external forces in N
           total_forces = 650
           #torque required to maintain speed
-          torque = (total_forces * CS.out.vEgo * 9.55414)/(-CS.engineRpm * drivetrain_efficiency + 0.001)
+          torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
 
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
