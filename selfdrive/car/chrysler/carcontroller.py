@@ -166,8 +166,7 @@ class CarController:
         torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
         torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
-        
-        if CS.engineTorque < 0 and torque > 0:
+        if CS.engineTorque < 0 and torque > 0 and self.CP.carFingerprint in RAM_HD:
           #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
           # rough estimate of external forces in N
           total_forces = 650
