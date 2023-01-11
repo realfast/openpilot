@@ -189,7 +189,7 @@ class CarController:
                                     max_gear,
                                     standstill,
                                     decel,
-                                    CS.das_3))
+                                    CS.das_3, CS.commalong))
 
       can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
