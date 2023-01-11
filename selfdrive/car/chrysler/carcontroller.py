@@ -139,7 +139,7 @@ class CarController:
         drivetrain_efficiency = 0.85
         self.last_brake = None
 
-        self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
+        self.desired_velocity = min(CC.actuators.speed, CC.hudControl.setSpeed)
 
         kinetic_energy = ((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
         
