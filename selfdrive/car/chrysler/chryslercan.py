@@ -81,21 +81,22 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
 
 def acc_command(packer, counter, enabled, accel_go, torque, max_gear, standstill, decel, das_3):
   values = das_3.copy()  # forward what we parsed
-  values['ACC_AVAILABLE'] = 1
-  values['ACC_ACTIVE'] = enabled
-  values['COUNTER'] = counter % 0x10
+  if not das_3['ACC_ACTIVE']:
+    values['ACC_AVAILABLE'] = 1
+    values['ACC_ACTIVE'] = enabled
+    values['COUNTER'] = counter % 0x10
 
-  # values['ACC_GO'] = accel_go
-  values['ACC_STANDSTILL'] = standstill
-  values['GR_MAX_REQ'] = max_gear
+    # values['ACC_GO'] = accel_go
+    values['ACC_STANDSTILL'] = standstill
+    values['GR_MAX_REQ'] = max_gear
 
-  values['ACC_DECEL_REQ'] = enabled and decel is not None
-  if decel is not None:
-    values['ACC_DECEL'] = decel
+    values['ACC_DECEL_REQ'] = enabled and decel is not None
+    if decel is not None:
+      values['ACC_DECEL'] = decel
 
-  values['ENGINE_TORQUE_REQUEST_MAX'] = enabled and torque is not None
-  if torque is not None:
-    values['ENGINE_TORQUE_REQUEST'] = torque
+    values['ENGINE_TORQUE_REQUEST_MAX'] = enabled and torque is not None
+    if torque is not None:
+      values['ENGINE_TORQUE_REQUEST'] = torque
 
   return packer.make_can_msg("DAS_3", 0, values)
 
