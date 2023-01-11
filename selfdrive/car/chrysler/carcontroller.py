@@ -178,7 +178,7 @@ class CarController:
         else:
           torque += CS.engineTorque
         #Value for sending accleration
-        accel_req = 1 if self.last_standstill == 1 else 0
+        accel_req = 1 #if self.last_standstill == 1 else 0
         decel_req = 0
         decel = 4
         max_gear = 9
