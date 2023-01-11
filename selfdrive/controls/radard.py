@@ -175,8 +175,8 @@ class RadarD():
           vision_v_ego = sm['modelV2'].temporalPose.trans[0]
       else:
         vision_v_ego = self.v_ego
-      radarState.leadOne = get_lead(self.v_ego, self.ready, clusters, leads_v3[0], 0, vision_v_ego, low_speed_override=True)
-      radarState.leadTwo = get_lead(self.v_ego, self.ready, clusters, leads_v3[1], 1, vision_v_ego, low_speed_override=False)
+      radarState.leadOne = get_lead(self.v_ego, self.ready, clusters, leads_v3[0], vision_v_ego, low_speed_override=True)
+      radarState.leadTwo = get_lead(self.v_ego, self.ready, clusters, leads_v3[1], vision_v_ego, low_speed_override=False)
     return dat
 
 
