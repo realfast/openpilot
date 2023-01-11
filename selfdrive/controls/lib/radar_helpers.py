@@ -130,7 +130,7 @@ class Cluster():
       "aLeadTau": float(self.aLeadTau)
     }
 
-  def get_RadarState_from_vision(self, lead_msg, lead_index, v_ego, vision_v_ego):
+  def get_RadarState_from_vision(self, lead_msg, v_ego, vision_v_ego):
     # Learn vision model velocity error to correct vLead
     vision_velocity_scale = v_ego / vision_v_ego
     corrected_v_lead = lead_msg.v[0] * vision_velocity_scale
