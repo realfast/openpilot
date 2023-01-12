@@ -94,7 +94,7 @@ class CarState(CarStateBase):
     self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
     self.inputSpeed = cp.vl["TRANS_SPEED"]["INPUT_SPEED"]
     self.tcLocked = cp.vl["TRANS_SPEED"]["TC_LOCKED"]
-    self.tcSlipPct = 1 - (self.inputSpeed/self.engineRpm)
+    self.tcSlipPct = 1 - (self.inputSpeed/(self.engineRpm + .001))
 
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
