@@ -86,6 +86,7 @@ class CarState(CarStateBase):
     self.das_3 = cp_cruise.vl['DAS_3']
     self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
     self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
+    self.commalong = cp_cruise.vl["DAS_4"]["ACC_STATE"] == 2
 
 
     

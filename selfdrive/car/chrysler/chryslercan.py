@@ -79,9 +79,9 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def acc_command(packer, counter, enabled, accel_go, torque, max_gear, standstill, decel, das_3):
+def acc_command(packer, counter, enabled, accel_go, torque, max_gear, standstill, decel, das_3, commalong):
   values = das_3.copy()  # forward what we parsed
-  if not das_3['ACC_ACTIVE']:
+  if commalong:
     values['ACC_AVAILABLE'] = 1
     values['ACC_ACTIVE'] = enabled
     values['COUNTER'] = counter % 0x10
