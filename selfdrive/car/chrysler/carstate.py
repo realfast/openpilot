@@ -126,6 +126,9 @@ class CarState(CarStateBase):
       self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
       self.maxgear = 9
       self.lkasHeartbit = cp_cam.vl["LKAS_HEARTBIT"]
+      self.inputSpeed = cp.v1["TRANS_SPEED"]["INPUT_SPEED"]
+      self.tcLocked = cp.vl["TRANS_SPEED"]["TC_LOCKED"]
+      self.tcSlip = 1 - (self.inputSpeed/self.engineRpm)
 
 
     if self.CP.carFingerprint in RAM_CARS:
@@ -303,11 +306,14 @@ class CarState(CarStateBase):
         ("SPEED_LEFT", "SPEED_1"),
         ("SPEED_RIGHT", "SPEED_1"),
         ("TOGGLE_LKAS", "TRACTION_BUTTON"),
+        ("INPUT_SPEED", "TRANS_SPEED"),
+        ("TC_LOCKED", "TRANS_SPEED"),
       ]
       checks += [
         ("GEAR", 50),
         ("SPEED_1", 100),
         ("TRACTION_BUTTON", 1),
+        ("TRANS_SPEED", 50),
       ]
       # signals += CarState.get_cruise_signals()[0]
       # checks += CarState.get_cruise_signals()[1]
