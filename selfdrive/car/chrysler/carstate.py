@@ -92,7 +92,7 @@ class CarState(CarStateBase):
     self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
     self.engineRpm = cp.vl["ECM_1"]["ENGINE_RPM"]
     self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
-    self.inputSpeed = cp.v1["TRANS_SPEED"]["INPUT_SPEED"]
+    self.inputSpeed = cp.vl["TRANS_SPEED"]["INPUT_SPEED"]
     self.tcLocked = cp.vl["TRANS_SPEED"]["TC_LOCKED"]
     self.tcSlip = 1 - (self.inputSpeed/self.engineRpm)
 
