@@ -92,6 +92,9 @@ class CarState(CarStateBase):
     self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
     self.engineRpm = cp.vl["ECM_1"]["ENGINE_RPM"]
     self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
+    self.inputSpeed = cp.vl["TRANS_SPEED"]["INPUT_SPEED"]
+    self.tcLocked = cp.vl["TRANS_SPEED"]["TC_LOCKED"]
+    self.tcSlipPct = 1 - (self.inputSpeed/(self.engineRpm + .001))
 
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
@@ -187,6 +190,8 @@ class CarState(CarStateBase):
       ("ENGINE_TORQUE", "ECM_1", 0),
       ("ENGINE_TORQ_MIN", "ECM_TRQ", 0),
       ("ENGINE_TORQ_MAX", "ECM_TRQ", 0),
+      ("INPUT_SPEED", "TRANS_SPEED"),
+      ("TC_LOCKED", "TRANS_SPEED"),
     ]
 
     checks = [
@@ -202,6 +207,7 @@ class CarState(CarStateBase):
       ("BCM_1", 1),
       ("ECM_1", 50),
       ("ECM_TRQ", 50),
+      ("TRANS_SPEED", 50),
     ]
 
     if CP.enableBsm:
