@@ -64,6 +64,7 @@ class PIDController():
     if self.islong:
       if self.op_params.get('long_p') != self._k_p or self.op_params.get('long_i') != self._k_i:
         self._update_params()
+        self.reset()
       self.p = float(error) * self._k_p
     
     else:
