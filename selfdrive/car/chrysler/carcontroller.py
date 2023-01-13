@@ -122,7 +122,7 @@ class CarController:
       if CC.actuators.accel < brake_threshold:
         accel_go = False
         standstill = False
-        if CC.actuators.speed<0.1 and CS.out.standstill:
+        if CC.actuators.speed < 0.1 and CS.out.vEgo< 0.001:
           standstill = True
         torque = None
         decel = CC.actuators.accel
@@ -135,6 +135,8 @@ class CarController:
         drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
         self.last_brake = None
         accel_go = False
+        if CS.out.vEgo < 1.0 and CC.actuators.accel > 0:
+          accel_go = True
         standstill = False
         decel = None
         # delta_accel = CC.actuators.accel - CS.out.aEgo
