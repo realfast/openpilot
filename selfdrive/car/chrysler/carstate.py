@@ -91,7 +91,7 @@ class CarState(CarStateBase):
     # cruise state
     cp_cruise = cp_cam if self.CP.carFingerprint in RAM_CARS else cp
 
-    # ret.cruiseState.available = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2, 3, 4)
+    self.stockacc = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (3, 4)
     # ret.cruiseState.enabled = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (2, 4)
     # ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
     # # ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
@@ -104,8 +104,8 @@ class CarState(CarStateBase):
 
 
     ret.cruiseState.nonAdaptive = False
-    ret.cruiseState.enabled = self.longEnabled
-    ret.cruiseState.available = self.longAvailable
+    ret.cruiseState.enabled = self.longEnabled or self.stockacc
+    ret.cruiseState.available = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2, 3, 4)
     ret.cruiseState.standstill = False
     ret.accFaulted = False
     button_events = []
