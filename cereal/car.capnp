@@ -250,7 +250,8 @@ struct CarState {
   struct ButtonEvent {
     pressed @0 :Bool;
     type @1 :Type;
-
+    pressedFrames @2: UInt32;
+    
     enum Type {
       unknown @0;
       leftBlinker @1;
@@ -264,6 +265,11 @@ struct CarState {
       setCruise @9;
       resumeCruise @10;
       gapAdjustCruise @11;
+      followInc @12;
+      followDec @13;
+      lkasToggle @14;
+      accOnOff @15;
+      cruiseOnOff @16;
     }
   }
 

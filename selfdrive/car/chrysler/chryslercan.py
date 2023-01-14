@@ -109,6 +109,24 @@ def acc_command(packer, counter, enabled, accel_go, torque, max_gear, standstill
     values = das_3.copy()  # forward what we parsed
   return packer.make_can_msg("DAS_3", 0, values)
 
+def create_das_4_message(packer, bus, state, speed, das_4, commalong):
+  if commalong:
+    if speed < 9:
+      speed = 9
+    values = {
+      "ACC_DISTANCE_CONFIG_1": 0x1,
+      "ACC_DISTANCE_CONFIG_2": 0x1,
+      "SPEED_DIGITAL": 0xFE,
+      "ALWAYS_ON": 0x1,
+      "ACC_STATE": state,
+      "ACC_SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
+      "ACC_SET_SPEED_MPH": round(speed * CV.MS_TO_MPH),
+    }
+  else:
+    values= das_4.copy()
+
+  return packer.make_can_msg("DAS_4", bus, values) 
+
 def acc_log(packer, aTarget, vTarget, calcvTarget, aActual, vActual):
   values = {
     'OP_A_TARGET': aTarget,

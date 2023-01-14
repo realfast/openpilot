@@ -5,6 +5,17 @@ from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
 
+ButtonType = car.CarState.ButtonEvent.Type
+
+CHECK_BUTTONS = {ButtonType.accOnOff: ["CRUISE_BUTTONS", 'ACC_OnOff'],
+                 ButtonType.cancel: ["CRUISE_BUTTONS", 'ACC_Cancel'],
+                 ButtonType.resumeCruise: ["CRUISE_BUTTONS", 'ACC_Resume'],
+                 ButtonType.accelCruise: ["CRUISE_BUTTONS", 'ACC_Accel'],
+                 ButtonType.decelCruise: ["CRUISE_BUTTONS", 'ACC_Decel'],
+                 ButtonType.followInc: ["CRUISE_BUTTONS", 'ACC_Distance_Inc'],
+                 ButtonType.followDec: ["CRUISE_BUTTONS", 'ACC_Distance_Dec'],
+                 ButtonType.cruiseOnOff: ["CRUISE_BUTTONS", 'Cruise_OnOff'],}
+
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
@@ -20,6 +31,9 @@ class CarState(CarStateBase):
     self.engineRpm = None
     self.torqMin = None
     self.torqMax = None
+    self.longAvailable = False
+    self.longEnabled = False
+    self.allowLong = True
 
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
@@ -77,16 +91,27 @@ class CarState(CarStateBase):
     # cruise state
     cp_cruise = cp_cam if self.CP.carFingerprint in RAM_CARS else cp
 
-    ret.cruiseState.available = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2, 3, 4)
-    ret.cruiseState.enabled = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (2, 4)
-    ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
-    # ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
-    ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
-    ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
+    # ret.cruiseState.available = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2, 3, 4)
+    # ret.cruiseState.enabled = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (2, 4)
+    # ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
+    # # ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
+    # ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
+    # ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
     self.das_3 = cp_cruise.vl['DAS_3']
+    self.das_4 = cp_cruise.vl['DAS_4']
     self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
     self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
-    self.commalong = cp_cruise.vl["DAS_4"]["ACC_STATE"] == 2
+
+
+    ret.cruiseState.nonAdaptive = False
+    ret.cruiseState.enabled = self.longEnabled
+    ret.cruiseState.available = self.longAvailable
+    ret.cruiseState.standstill = False
+    ret.accFaulted = False
+    button_events = []
+    for buttonType in CHECK_BUTTONS:
+      self.check_button(button_events, buttonType, bool(cp.vl[CHECK_BUTTONS[buttonType][0]][CHECK_BUTTONS[buttonType][1]]))
+    ret.buttonEvents = button_events
 
 
     
@@ -120,6 +145,33 @@ class CarState(CarStateBase):
     self.cruise_buttons = cp.vl["CRUISE_BUTTONS"]
     return ret
 
+  def check_button(self, button_events, button_type, pressed):
+    pressed_frames = 0
+    pressed_changed = False
+    for ob in self.out.buttonEvents:
+      if ob.type == button_type:
+        pressed_frames = ob.pressedFrames
+        pressed_changed = ob.pressed != pressed
+        break
+
+    if pressed or pressed_changed:
+      be = car.CarState.ButtonEvent.new_message()
+      be.type = button_type
+      be.pressed = pressed
+      be.pressedFrames = pressed_frames
+
+      if not pressed_changed:
+        be.pressedFrames += 1
+
+      button_events.append(be)
+
+  def button_pressed(self, button_type, pressed=True):
+    for b in self.out.buttonEvents:
+      if b.type == button_type:
+        if b.pressed == pressed:
+          return b
+        break
+
   @staticmethod
   def get_cruise_signals():
     signals = [
@@ -145,6 +197,12 @@ class CarState(CarStateBase):
       ("DISPLAY_REQ", "DAS_3", 0),
       ("COUNTER", "DAS_3", 0),
       ("CHECKSUM", "DAS_3", 0),
+
+      ("ACC_SET_SPEED_MPH", "DAS_4"),
+      ("ACC_DISTANCE_CONFIG_1", "DAS_4"),
+      ("ACC_DISTANCE_CONFIG_2", "DAS_4"),
+      ("SPEED_DIGITAL", "DAS_4"),
+      ("ALWAYS_ON", "DAS_4"),
     ]
     checks = [
       ("DAS_3", 50),

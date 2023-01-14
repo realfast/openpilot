@@ -1,7 +1,7 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command, acc_log
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command, create_das_4_message, acc_log
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 
@@ -13,6 +13,7 @@ import math
 
 from common.op_params import opParams
 
+ButtonType = car.CarState.ButtonEvent.Type
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
 BRAKE_CHANGE = 0.06
@@ -47,6 +48,16 @@ class CarController:
 
     # cruise buttons
     if (CS.button_counter != self.last_button_frame):
+
+      if CS.longAvailable:
+        if CS.button_pressed(ButtonType.cancel) or CS.out.brakePressed:
+          CS.longEnabled = False
+        elif (CS.button_pressed(ButtonType.accelCruise) or \
+            CS.button_pressed(ButtonType.decelCruise) or \
+            CS.button_pressed(ButtonType.resumeCruise)) and CS.out.gearShifter == GearShifter.drive:
+          CS.longEnabled = True
+          self.resume_pressed = 0
+
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
       self.last_button_frame = CS.button_counter
       if self.CP.carFingerprint in RAM_CARS:
@@ -170,9 +181,15 @@ class CarController:
                                     max_gear,
                                     standstill,
                                     decel,
-                                    CS.das_3, CS.commalong))
+                                    CS.das_3, CS.longEnabled))
 
       can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
+
+      if self.frame % 6 == 0:
+          state = 0
+          if CS.out.cruiseState.available:
+            state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
+          can_sends.append(create_das_4_message(self.packer, 0, state, CC.hudControl.setSpeed, CS.das_4, CS.longEnabled))
 
     # HUD alerts
     if self.frame % 25 == 0:
