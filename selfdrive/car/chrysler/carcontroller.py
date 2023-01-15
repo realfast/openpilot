@@ -125,7 +125,7 @@ class CarController:
         standstill = False
         if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
           standstill = True
-        torque = CS.engineTorque
+        torque = -75
         decel = CC.actuators.accel
         max_gear = 8
 
@@ -160,9 +160,10 @@ class CarController:
         if CS.engineTorque < 0 and torque > 0 and self.CP.carFingerprint in RAM_HD:
           #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
           # rough estimate of external forces in N
-          total_forces = 650
-          #torque required to maintain speed
-          torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
+          # total_forces = 650
+          # #torque required to maintain speed
+          # torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
+          torque = 75
 
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
