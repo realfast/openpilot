@@ -79,20 +79,20 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def acc_command(packer, counter, enabled, accel_go, torque, max_gear, standstill, decel, das_3, commalong):
-  if commalong:
-    values = {
-    'ACC_AVAILABLE': 1,
-    'ACC_ACTIVE': enabled,
-    'COUNTER': counter % 0x10,
-    'ACC_DECEL_REQ': enabled and decel is not None,
-    'ACC_DECEL': decel,
-    'ENGINE_TORQUE_REQUEST_MAX': enabled and torque is not None,
-    'ENGINE_TORQUE_REQUEST': torque,
-    'GR_MAX_REQ': 9 if max_gear is None else max_gear,
-    'ACC_STANDSTILL': standstill,#  stand_still,
-    'ACC_GO': accel_go,
-    }
+def acc_command(packer, counter, enabled, accel_req, decel_req, accel_go, torque, max_gear, standstill, decel, das_3):
+  # if commalong:
+  values = {
+  'ACC_AVAILABLE': 1,
+  'ACC_ACTIVE': enabled,
+  'COUNTER': counter % 0x10,
+  'ACC_DECEL_REQ': decel_req,
+  'ACC_DECEL': decel,
+  'ENGINE_TORQUE_REQUEST_MAX': accel_req,
+  'ENGINE_TORQUE_REQUEST': torque,
+  'GR_MAX_REQ': 9 if max_gear is None else max_gear,
+  'ACC_STANDSTILL': standstill,#  stand_still,
+  'ACC_GO': accel_go,
+  }
     # values['ACC_AVAILABLE'] = 1
     # values['ACC_ACTIVE'] = enabled
     # values['COUNTER'] = counter % 0x10
@@ -105,8 +105,8 @@ def acc_command(packer, counter, enabled, accel_go, torque, max_gear, standstill
     # values['ENGINE_TORQUE_REQUEST_MAX'] = enabled and torque is not None
     # values['ENGINE_TORQUE_REQUEST'] = torque
 
-  else:
-    values = das_3.copy()  # forward what we parsed
+  # else:
+  #   values = das_3.copy()  # forward what we parsed
   return packer.make_can_msg("DAS_3", 0, values)
 
 def acc_log(packer, aTarget, vTarget, calcvTarget, aActual, vActual):

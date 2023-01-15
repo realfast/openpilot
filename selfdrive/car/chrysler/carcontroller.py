@@ -35,7 +35,6 @@ class CarController:
     self.accel_sent = False
 
     # long
-    self.last_brake = None
     self.max_gear = None
     self.op_params = opParams()
     self.desired_velocity = 0
@@ -111,49 +110,34 @@ class CarController:
       #LONG
       das_3_counter = CS.das_3['COUNTER']
 
-      if not CC.enabled:
-        self.last_brake = None
-
       max_gear = 8
 
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
         
       if CC.actuators.accel < brake_threshold:
+        accel_req = False
+        decel_req = True
         accel_go = False
         standstill = False
-        if CC.actuators.speed < 0.1 and CS.out.vEgo< 0.001:
+        if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
           standstill = True
-        torque = None
+        torque = CS.engineTorque
         decel = CC.actuators.accel
         max_gear = 8
 
-
       else:
+        accel_req = True
+        decel_req = False
         time_for_sample = self.op_params.get('long_time_constant')
         torque_limits = self.op_params.get('torque_limits')
         drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
-        self.last_brake = None
         accel_go = False
-        if CS.out.vEgo < 1.0 and CC.actuators.accel > 0:
+        if CS.out.vEgo < 0.01 and CC.actuators.accel > 0:
           accel_go = True
         standstill = False
-        decel = None
-        # delta_accel = CC.actuators.accel - CS.out.aEgo
+        decel = 4
 
-        # distance_moved = ((delta_accel * time_for_sample**2)/2) + (CS.out.vEgo * time_for_sample)
-        # torque = (self.CP.mass * delta_accel * distance_moved * time_for_sample)/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
-
-        # # force (N) = mass (kg) * acceleration (m/s^2)
-        # force = self.CP.mass * delta_accel
-        # # distance_moved (m) =  (acceleration(m/s^2) * time(s)^2 / 2) + velocity(m/s) * time(s)
-        # distance_moved = ((delta_accel) * (time_for_sample**2))/2) + (CS.out.vEgo * time_for_sample)
-        # # work (J) = force (N) * distance (m)
-        # work = force * distance_moved
-        # # Power (W)= work(J) * time (s)
-        # power = work * time_for_sample
-        # # torque = Power (W) / (RPM * 2 * pi / 60)
-        # torque = power/((drivetrain_efficiency * CS.engineRpm * 2 * math.pi) / 60)
         self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
         if self.op_params.get('comma_speed'):
           self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
@@ -184,6 +168,8 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
       can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
+                                    accel_req, 
+                                    decel_req,
                                     accel_go,
                                     torque,
                                     max_gear,
