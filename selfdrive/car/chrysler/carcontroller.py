@@ -1,7 +1,7 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, acc_command, acc_log, create_das_4_message
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, das_3_message, acc_log, das_4_message, das_5_message
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 
@@ -39,6 +39,7 @@ class CarController:
     self.op_params = opParams()
     self.desired_velocity = 0
     self.calc_velocity = 0
+    self.speed = 0
 
   def update(self, CC, CS):
     can_sends = []
@@ -110,6 +111,8 @@ class CarController:
       #LONG
       das_3_counter = CS.das_3['COUNTER']
 
+      self.speed = CS.out.cruiseState.speed
+
       max_gear = 8
 
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
@@ -167,7 +170,7 @@ class CarController:
 
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
-      can_sends.append(acc_command(self.packer, das_3_counter, CC.enabled,
+      can_sends.append(das_3_message(self.packer, das_3_counter, CC.enabled,
                                     accel_req, 
                                     decel_req,
                                     accel_go,
@@ -177,13 +180,15 @@ class CarController:
                                     decel,
                                     CS.das_3))
 
-      if self.frame % 6 == 0:
-        state = 0
-        if CS.out.cruiseState.available:
-          state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
-        can_sends.append(create_das_4_message(self.packer, 0, state, CS.out.cruiseState.speed))
+      can_sends.append(das_5_message(self.packer, 0, self.speed))
 
       can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
+
+    if self.frame % 6 == 0:
+      state = 0
+      if CS.out.cruiseState.available:
+        state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
+      can_sends.append(das_4_message(self.packer, 0, state, self.speed))
 
     # HUD alerts
     if self.frame % 25 == 0:

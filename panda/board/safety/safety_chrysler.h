@@ -35,6 +35,7 @@ typedef struct {
   const int ECM_5;
   const int DAS_3;
   const int DAS_4;
+  const int DAS_5;
   const int DAS_6;
   const int LKAS_COMMAND;
   const int CRUISE_BUTTONS;
@@ -50,6 +51,7 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .ECM_5            = 559,  // Throttle position sensor
   .DAS_3            = 500,  // ACC engagement states from DASM
   .DAS_4            = 501,  // ACC engagement states from DASM
+  .DAS_5            = 625,  // ACC engagement states from DASM
   .DAS_6            = 678,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 658,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 571,  // Cruise control buttons
@@ -79,6 +81,7 @@ const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
   .ECM_5            = 559,  // Throttle position sensor
   .DAS_3            = 500,  // ACC engagement states from DASM
   .DAS_4            = 501,  // ACC engagement states from DASM
+  .DAS_5            = 625,  // ACC engagement states from DASM
   .DAS_6            = 629,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 630,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 570,  // Cruise control buttons
@@ -92,6 +95,7 @@ const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.DAS_6, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_3, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_4, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS.DAS_5, 0, 8},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
@@ -107,6 +111,7 @@ const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
   {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_3, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_4, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS.DAS_5, 0, 8},
 };
 
 AddrCheckStruct chrysler_addr_checks[] = {
@@ -293,7 +298,7 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   }
 
   // forward all messages from camera except LKAS messages
-  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6) || (addr == chrysler_addrs->DAS_3) || (addr == chrysler_addrs->DAS_4));
+  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6) || (addr == chrysler_addrs->DAS_3) || (addr == chrysler_addrs->DAS_4) || (addr == chrysler_addrs->DAS_5));
   if ((bus_num == 2) && !is_lkas){
     bus_fwd = 0;
   }

@@ -80,7 +80,7 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def acc_command(packer, counter, enabled, accel_req, decel_req, accel_go, torque, max_gear, standstill, decel, das_3):
+def das_3_message(packer, counter, enabled, accel_req, decel_req, accel_go, torque, max_gear, standstill, decel, das_3):
   # if commalong:
   values = {
   'ACC_AVAILABLE': 1,
@@ -99,7 +99,7 @@ def acc_command(packer, counter, enabled, accel_req, decel_req, accel_go, torque
   #   values = das_3.copy()  # forward what we parsed
   return packer.make_can_msg("DAS_3", 0, values)
 
-def create_das_4_message(packer, bus, state, speed):
+def das_4_message(packer, bus, state, speed):
   values = {
     "ACC_DISTANCE_CONFIG_1": 0x1,
     "ACC_DISTANCE_CONFIG_2": 0x1,
@@ -111,6 +111,17 @@ def create_das_4_message(packer, bus, state, speed):
   }
 
   return packer.make_can_msg("DAS_4", bus, values) 
+
+def das_5_message(packer, bus, speed):
+  values = {
+    "FCW_STATE": 0x1,
+    "FCW_DISTANCE": 0x2,
+    "SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
+    "COUNTER": 0x0,
+    "CHECKSUM": 0xFF,
+  }
+
+  return packer.make_can_msg("DAS_5", bus, values)
 
 def acc_log(packer, aTarget, vTarget, calcvTarget, aActual, vActual):
   values = {
