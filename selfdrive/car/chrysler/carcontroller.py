@@ -112,6 +112,7 @@ class CarController:
       das_3_counter = CS.das_3['COUNTER']
 
       self.speed = CS.out.cruiseState.speed
+      self.stock_acc = self.op_params.get('stock_ACC')
 
       max_gear = 8
 
@@ -171,7 +172,7 @@ class CarController:
 
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
-      can_sends.append(das_3_message(self.packer, das_3_counter, CC.enabled,
+      can_sends.append(das_3_message(self.packer, self.stock_acc, das_3_counter, CC.enabled,
                                     accel_req, 
                                     decel_req,
                                     accel_go,
@@ -181,7 +182,7 @@ class CarController:
                                     decel,
                                     CS.das_3))
 
-      can_sends.append(das_5_message(self.packer, 0, self.speed))
+      can_sends.append(das_5_message(self.packer, self.stock_acc, 0, self.speed, CS.das_5))
 
       can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
@@ -189,7 +190,7 @@ class CarController:
       state = 0
       if CS.out.cruiseState.available:
         state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
-      can_sends.append(das_4_message(self.packer, 0, state, self.speed))
+      can_sends.append(das_4_message(self.packer, self.stock_acc, 0, state, self.speed, CS.das_4))
 
     # HUD alerts
     if self.frame % 25 == 0:

@@ -5,6 +5,8 @@ from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
 
+ButtonType = car.CarState.ButtonEvent.Type
+
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
@@ -84,6 +86,8 @@ class CarState(CarStateBase):
     ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
     ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
     self.das_3 = cp_cruise.vl['DAS_3']
+    self.das_4 = cp_cruise.vl['DAS_4']
+    self.das_5 = cp_cruise.vl['DAS_5']
     self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
     self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
 
@@ -144,10 +148,23 @@ class CarState(CarStateBase):
       ("DISPLAY_REQ", "DAS_3", 0),
       ("COUNTER", "DAS_3", 0),
       ("CHECKSUM", "DAS_3", 0),
+
+
+      ("ACC_DISTANCE_CONFIG_1", "DAS_4", 0),
+      ("ACC_DISTANCE_CONFIG_2", "DAS_4", 0),
+      ("SPEED_DIGITAL", "DAS_4", 0),
+      ("FCW_BRAKE_ENABLED", "DAS_4", 0),
+      ("ACC_SET_SPEED_MPH", "DAS_4", 0),
+      ("FCW_STATE", "DAS_5", 0),
+      ("FCW_DISTANCE", "DAS_5", 0),
+      ("SET_SPEED_KPH", "DAS_5", 0),
+      ("COUNTER1", "DAS_5", 0),
+      ("CHECKSUM1", "DAS_5", 0),
     ]
     checks = [
       ("DAS_3", 50),
       ("DAS_4", 50),
+      ("DAS_5", 50),
     ]
     return signals, checks
 

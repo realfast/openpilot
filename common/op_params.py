@@ -183,6 +183,7 @@ class opParams:
                         'drivetrain_efficiency': Param(0.85, VT.number, live=True),
                         'comma_speed': Param(False, [bool], live=True),
                         'min_torque': Param(0.1, VT.number, live=True),
+                        'stock_ACC': Param(False, [bool], live=True),
                         # 'lane_speed_alerts': Param('silent', str, static=True, hidden=True),
                         # 'min_TR': Param(0.9, NUMBER, 'The minimum allowed following distance in seconds. Default is 0.9 seconds\n'
                         #            'The range is limited from 0.85 to 2.7', live=True),

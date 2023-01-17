@@ -80,46 +80,54 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def das_3_message(packer, counter, enabled, accel_req, decel_req, accel_go, torque, max_gear, standstill, decel, das_3):
-  # if commalong:
-  values = {
-  'ACC_AVAILABLE': 1,
-  'ACC_ACTIVE': enabled,
-  'COUNTER': counter % 0x10,
-  'ACC_DECEL_REQ': decel_req,
-  'ACC_DECEL': decel,
-  'ENGINE_TORQUE_REQUEST_MAX': accel_req,
-  'ENGINE_TORQUE_REQUEST': torque,
-  'GR_MAX_REQ': 9 if max_gear is None else max_gear,
-  'ACC_STANDSTILL': standstill,#  stand_still,
-  'ACC_GO': accel_go,
-  }
+def das_3_message(packer, stock_ACC, counter, enabled, accel_req, decel_req, accel_go, torque, max_gear, standstill, decel, das_3):
+  if not stock_ACC:
+    values = {
+    'ACC_AVAILABLE': 1,
+    'ACC_ACTIVE': enabled,
+    'COUNTER': counter % 0x10,
+    'ACC_DECEL_REQ': decel_req,
+    'ACC_DECEL': decel,
+    'ENGINE_TORQUE_REQUEST_MAX': accel_req,
+    'ENGINE_TORQUE_REQUEST': torque,
+    'GR_MAX_REQ': 9 if max_gear is None else max_gear,
+    'ACC_STANDSTILL': standstill,#  stand_still,
+    'ACC_GO': accel_go,
+    }
 
-  # else:
-  #   values = das_3.copy()  # forward what we parsed
+  else:
+    values = das_3.copy()  # forward what we parsed
   return packer.make_can_msg("DAS_3", 0, values)
 
-def das_4_message(packer, bus, state, speed):
-  values = {
-    "ACC_DISTANCE_CONFIG_1": 0x1,
-    "ACC_DISTANCE_CONFIG_2": 0x1,
-    "SPEED_DIGITAL": 0xFE,
-    "FCW_BRAKE_ENABLED": 0x1,
-    "ACC_STATE": state,
-    "ACC_SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
-    "ACC_SET_SPEED_MPH": round(speed * CV.MS_TO_MPH),
-  }
+def das_4_message(packer, stock_ACC, bus, state, speed, das_4):
+  if not stock_ACC:
+    values = {
+      "ACC_DISTANCE_CONFIG_1": 0x1,
+      "ACC_DISTANCE_CONFIG_2": 0x1,
+      "SPEED_DIGITAL": 0xFE,
+      "FCW_BRAKE_ENABLED": 0x1,
+      "ACC_STATE": state,
+      "ACC_SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
+      "ACC_SET_SPEED_MPH": round(speed * CV.MS_TO_MPH),
+    }
+  
+  else:
+    values = das_4.copy()
 
   return packer.make_can_msg("DAS_4", bus, values) 
 
-def das_5_message(packer, bus, speed):
-  values = {
-    "FCW_STATE": 0x1,
-    "FCW_DISTANCE": 0x2,
-    "SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
-    "COUNTER": 0x0,
-    "CHECKSUM": 0xFF,
-  }
+def das_5_message(packer, stock_ACC, bus, speed, das_5):
+  if not stock_ACC:
+    values = {
+      "FCW_STATE": 0x1,
+      "FCW_DISTANCE": 0x2,
+      "SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
+      "COUNTER1": 0x0,
+      "CHECKSUM1": 0xFF,
+    }
+
+  else:
+    values = das_5.copy()
 
   return packer.make_can_msg("DAS_5", bus, values)
 
