@@ -110,6 +110,9 @@ class CarInterface(CarInterfaceBase):
 
     ret.enableBsm = 720 in fingerprint[0]
 
+    if ret.openpilotLongitudinalControl:
+      ret.pcmCruise = False
+
     return ret
 
   def _update(self, c):
