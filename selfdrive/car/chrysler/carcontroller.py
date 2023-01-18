@@ -111,7 +111,7 @@ class CarController:
       #LONG
       das_3_counter = CS.das_3['COUNTER']
 
-      self.speed = CS.out.cruiseState.speed
+      self.speed = CC.hudControl.setSpeed
       self.stock_acc = self.op_params.get('stock_ACC')
 
       max_gear = 8

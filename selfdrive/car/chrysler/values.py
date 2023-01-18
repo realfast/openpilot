@@ -1,3 +1,4 @@
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
@@ -9,7 +10,7 @@ from selfdrive.car.docs_definitions import CarInfo, Harness
 from selfdrive.car.fw_query_definitions import FwQueryConfig, Request, p16
 
 Ecu = car.CarParams.Ecu
-
+Button = namedtuple('Button', ['event_type', 'can_addr', 'can_msg', 'values'])
 
 class CAR:
   # Chrysler
@@ -47,6 +48,13 @@ class CarControllerParams:
       self.STEER_DELTA_UP = 3
       self.STEER_DELTA_DOWN = 3
       self.STEER_MAX = 261  # higher than this faults the EPS
+    self.BUTTONS = [
+        Button(car.CarState.ButtonEvent.Type.resumeCruise, "CRUISE_BUTTONS", "ACC_Resume", [1]),
+        Button(car.CarState.ButtonEvent.Type.accelCruise, "CRUISE_BUTTONS", "ACC_Accel", [1]),
+        Button(car.CarState.ButtonEvent.Type.decelCruise, "CRUISE_BUTTONS", "ACC_Decel", [1]),
+        Button(car.CarState.ButtonEvent.Type.cancel, "CRUISE_BUTTONS", "ACC_Cancel", [1]),
+        Button(car.CarState.ButtonEvent.Type.gapAdjustCruise, "CRUISE_BUTTONS", "ACC_Distance_Inc", [1]),
+      ]
 
 STEER_THRESHOLD = 120
 

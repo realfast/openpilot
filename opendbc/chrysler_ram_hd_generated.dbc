@@ -117,6 +117,7 @@ BO_ 570 CRUISE_BUTTONS: 3 XXX
 BO_ 625 DAS_5: 8 XXX
  SG_ FCW_STATE : 2|1@1+ (1,0) [0|0] ""  XXX
  SG_ FCW_DISTANCE : 3|2@1+ (1,0) [0|0] ""  XXX
+ SG_ ACCFCW_MESSAGE : 12|4@1+ (1,0) [0|0] ""  XXX
  SG_ SET_SPEED_KPH : 24|8@1+ (1,0) [0|250] "km/h"  XXX
  SG_ WHEEL_TORQUE_REQUEST : 38|15@0+ (1,-7767) [-7767|24999] "Nm"  XXX
  SG_ WHEEL_TORQUE_REQUEST_ACTIVE : 39|1@1+ (1,0) [0|0] ""  XXX
@@ -189,3 +190,11 @@ BO_ 650 Center_Stack_2: 8 XXX
 BO_ 816 Center_Stack_1: 8 XXX
  SG_ LKAS_Button : 53|1@1+ (1,0) [0|0] "" XXX
  SG_ Traction_Button : 54|1@0+ (1,0) [0|1] "" XXX
+
+BO_ 838 DAS_CHIME: 2 XXX
+ SG_ RIGHT_FRONT : 0|1@1+ (1,0) [0|0] ""  XXX
+ SG_ LEFT_FRONT : 1|1@1+ (1,0) [0|0] ""  XXX
+ SG_ RIGH_REAR : 2|1@1+ (1,0) [0|0] ""  XXX
+ SG_ LEFT_REAR : 3|1@1+ (1,0) [0|0] ""  XXX
+ SG_ CHIME_TYPE : 4|4@1+ (1,0) [0|0] ""  XXX
+ SG_ CHIME_RATE : 8|4@1+ (1,0) [0|15] "Hz"  XXX

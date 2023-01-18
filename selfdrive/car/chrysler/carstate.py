@@ -3,13 +3,15 @@ from common.conversions import Conversions as CV
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
-from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
+from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, CarControllerParams
 
-ButtonType = car.CarState.ButtonEvent.Type
+from common.op_params import opParams
 
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
+    self.CCP = CarControllerParams(CP)
+    self.button_states = {button.event_type: False for button in self.CCP.BUTTONS}
     self.CP = CP
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
 
@@ -22,11 +24,28 @@ class CarState(CarStateBase):
     self.engineRpm = None
     self.torqMin = None
     self.torqMax = None
+    self.longEnabled = False
+
+    self.op_params = opParams()
 
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
     else:
       self.shifter_values = can_define.dv["GEAR"]["PRNDL"]
+
+  def create_button_events(self, cp, buttons):
+    button_events = []
+
+    for button in buttons:
+      state = cp.vl[button.can_addr][button.can_msg] in button.values
+      if self.button_states[button.event_type] != state:
+        event = car.CarState.ButtonEvent.new_message()
+        event.type = button.event_type
+        event.pressed = state
+        button_events.append(event)
+      self.button_states[button.event_type] = state
+
+    return button_events
 
   def update(self, cp, cp_cam):
 
@@ -68,6 +87,13 @@ class CarState(CarStateBase):
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_stalk(200, cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1,
                                                                        cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 2)
     ret.genericToggle = cp.vl["STEERING_LEVERS"]["HIGH_BEAM_PRESSED"] == 1
+    
+    # if accelcruise pressed set self.longEnabled to True
+    if cp.vl["CRUISE_BUTTONS"]["ACC_Accel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Decel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Resume"] == 1:
+      self.longEnabled = True
+    
+    elif cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"] == 1 or ret.brakePressed == 1:
+      self.longEnabled = False
 
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
@@ -79,12 +105,17 @@ class CarState(CarStateBase):
     # cruise state
     cp_cruise = cp_cam if self.CP.carFingerprint in RAM_CARS else cp
 
-    ret.cruiseState.available = cp_cruise.vl["DAS_3"]["ACC_AVAILABLE"] == 1
-    ret.cruiseState.enabled = cp_cruise.vl["DAS_3"]["ACC_ACTIVE"] == 1
-    ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
-    ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
-    ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
+    ret.cruiseState.enabled = self.longEnabled
+    ret.cruiseState.available = True
+    ret.cruiseState.nonAdaptive = False
+    ret.cruiseState.standstill = ret.standstill
     ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
+    if self.op_params.get('stock_ACC'):
+      ret.cruiseState.available = cp_cruise.vl["DAS_3"]["ACC_AVAILABLE"] == 1
+      ret.cruiseState.enabled = cp_cruise.vl["DAS_3"]["ACC_ACTIVE"] == 1
+      ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
+      ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
+
     self.das_3 = cp_cruise.vl['DAS_3']
     self.das_4 = cp_cruise.vl['DAS_4']
     self.das_5 = cp_cruise.vl['DAS_5']
@@ -121,6 +152,9 @@ class CarState(CarStateBase):
     self.cruise_cancel = cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
     self.cruise_buttons = cp.vl["CRUISE_BUTTONS"]
+
+    ret.buttonEvents = self.create_button_events(cp, self.CCP.BUTTONS)
+
     return ret
 
   @staticmethod

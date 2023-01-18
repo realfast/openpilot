@@ -5,6 +5,7 @@ from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness,
 from selfdrive.car.chrysler.values import CAR, DBC, RAM_HD, RAM_DT, CarControllerParams
 from selfdrive.car.interfaces import CarInterfaceBase
 
+ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
 
 class CarInterface(CarInterfaceBase):
@@ -115,7 +116,9 @@ class CarInterface(CarInterfaceBase):
     ret = self.CS.update(self.cp, self.cp_cam)
 
     # events
-    events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low])
+    events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.low],
+                                       pcm_enable=not self.CS.CP.openpilotLongitudinalControl,
+                                       enable_buttons=(ButtonType.decelCruise, ButtonType.resumeCruise, ButtonType.accelCruise))
 
     if self.CP.carFingerprint in RAM_DT:
       if self.CS.out.vEgo >= self.CP.minEnableSpeed:
