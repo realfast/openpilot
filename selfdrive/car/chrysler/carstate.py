@@ -91,9 +91,15 @@ class CarState(CarStateBase):
     # if accelcruise pressed set self.longEnabled to True
     if cp.vl["CRUISE_BUTTONS"]["ACC_Accel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Decel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Resume"] == 1:
       self.longEnabled = True
+      if ret.cruiseState.speed == 0:
+        ret.cruiseState.speed = ret.vEgo
+      elif cp.vl["CRUISE_BUTTONS"]["ACC_Accel"] == 1:
+        ret.cruiseState.speed += 1
     
     elif cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"] == 1 or ret.brakePressed == 1:
       self.longEnabled = False
+      if cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"] == 1:
+        ret.cruiseState.speed = 0
 
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
