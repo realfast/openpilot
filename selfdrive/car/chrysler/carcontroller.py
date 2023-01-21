@@ -162,7 +162,7 @@ class CarController:
           torque = torque/CS.tcSlipPct
         torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
-        if CS.engineTorque < 0 and torque > 0 and self.CP.carFingerprint in RAM_HD:
+        if CS.engineTorque < 0 and torque > 0:
           #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
           # rough estimate of external forces in N
           # total_forces = 650
