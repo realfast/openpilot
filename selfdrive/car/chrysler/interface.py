@@ -76,6 +76,9 @@ class CarInterface(CarInterfaceBase):
       tune.kpV = [0.25]
       tune.kiV = [0.05]
       ret.stopAccel = -2.0
+      ret.startingState = True
+      ret.vEgoStarting = 0.1
+      ret.startAccel = 1.0
 
 
     elif candidate == CAR.RAM_HD:
@@ -95,6 +98,9 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalActuatorDelayUpperBound = 0.5 # s
       ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
       ret.stopAccel = -2.0
+      ret.startingState = True
+      ret.vEgoStarting = 0.1
+      ret.startAccel = 1.0
 
     else:
       raise ValueError(f"Unsupported car: {candidate}")

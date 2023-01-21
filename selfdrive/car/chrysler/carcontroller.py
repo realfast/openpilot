@@ -110,6 +110,8 @@ class CarController:
 
       #LONG
       das_3_counter = CS.das_3['COUNTER']
+      stopping = CC.actuators.longControlState == LongCtrlState.stopping
+      starting = CC.actuators.longControlState == LongCtrlState.starting
 
       self.speed = CC.hudControl.setSpeed
       self.stock_acc = self.op_params.get('stock_ACC')
@@ -124,7 +126,8 @@ class CarController:
         decel_req = True
         accel_go = False
         standstill = False
-        if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
+        # if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
+        if stopping and CS.out.vEgo < 0.01:
           standstill = True
         torque = -75
         decel = CC.actuators.accel
@@ -137,7 +140,8 @@ class CarController:
         torque_limits = self.op_params.get('torque_limits')
         drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
         accel_go = False
-        if CS.out.vEgo < 0.01 and CC.actuators.accel > 0:
+        # if CS.out.vEgo < 0.1 and CC.actuators.accel > 0:
+        if starting:
           accel_go = True
         standstill = False
         decel = 4
