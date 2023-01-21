@@ -117,7 +117,7 @@ class CarState(CarStateBase):
     ret.cruiseState.available = True
     ret.cruiseState.nonAdaptive = False
     ret.cruiseState.standstill = ret.standstill
-    ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
+    # ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
     if self.op_params.get('stock_ACC'):
       ret.cruiseState.available = cp_cruise.vl["DAS_3"]["ACC_AVAILABLE"] == 1
       ret.cruiseState.enabled = cp_cruise.vl["DAS_3"]["ACC_ACTIVE"] == 1
