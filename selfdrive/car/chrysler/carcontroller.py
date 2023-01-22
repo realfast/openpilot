@@ -40,6 +40,8 @@ class CarController:
     self.desired_velocity = 0
     self.calc_velocity = 0
     self.speed = 0
+    self.long_active = False
+    self.last_acc = False
 
   def update(self, CC, CS):
     can_sends = []
@@ -57,8 +59,8 @@ class CarController:
         elif self.CP.carFingerprint in RAM_HD and CS.out.cruiseState.standstill and self.accel_sent == True:
           self.accel_sent = False
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, decel = True))
-        elif CS.cruise_cancel:
-          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
+        # elif CS.cruise_cancel:
+        #   can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
         else:
           self.accel_sent = False
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
@@ -112,39 +114,41 @@ class CarController:
       das_3_counter = CS.das_3['COUNTER']
       stopping = CC.actuators.longControlState == LongCtrlState.stopping
       starting = CC.actuators.longControlState == LongCtrlState.starting
-
-      self.speed = CC.hudControl.setSpeed
-      self.stock_acc = self.op_params.get('stock_ACC')
-
-      max_gear = 8
-
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
-      brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
-        
-      if CC.actuators.accel < brake_threshold:
-        accel_req = False
-        decel_req = True
-        accel_go = False
-        standstill = False
-        # if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
-        if stopping and CS.out.vEgo < 0.01:
-          standstill = True
-        torque = -75
-        decel = CC.actuators.accel
-        max_gear = 8
+      self.long_active = CC.enabled
+      self.speed = CC.hudControl.setSpeed
 
-      else:
-        accel_req = True
-        decel_req = False
-        time_for_sample = self.op_params.get('long_time_constant')
-        torque_limits = self.op_params.get('torque_limits')
-        drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
-        accel_go = False
-        # if CS.out.vEgo < 0.1 and CC.actuators.accel > 0:
-        if starting:
-          accel_go = True
-        standstill = False
-        decel = 4
+      self.stock_acc = self.op_params.get('stock_ACC')
+      brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
+      time_for_sample = self.op_params.get('long_time_constant')
+      torque_limits = self.op_params.get('torque_limits')
+      drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
+          
+
+      accel_go = False
+      decel_req = False
+      accel_req = False
+      standstill = False
+      decel = 4
+      torque = -75
+      max_gear = 8
+        
+      if self.last_acc != CC.enabled:
+        self.long_active = True
+
+      elif CC.enabled:
+        if CC.actuators.accel < brake_threshold:
+          decel_req = True
+          # if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
+          if stopping and CS.out.vEgo < 0.01:
+            standstill = True
+          decel = CC.actuators.accel
+
+        else:
+          accel_req = True
+          # if CS.out.vEgo < 0.1 and CC.actuators.accel > 0:
+          if starting:
+            accel_go = True
 
         self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
         if self.op_params.get('comma_speed'):
@@ -175,8 +179,10 @@ class CarController:
           torque += CS.engineTorque
 
         torque = max(torque, (0 - self.op_params.get('min_torque')))
+      
+      self.last_acc = CC.enabled
 
-      can_sends.append(das_3_message(self.packer, self.stock_acc, das_3_counter, CC.enabled,
+      can_sends.append(das_3_message(self.packer, self.stock_acc, das_3_counter, self.long_active,
                                     accel_req, 
                                     decel_req,
                                     accel_go,
