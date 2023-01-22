@@ -111,7 +111,7 @@ class CarController:
 
 
       #LONG
-      das_3_counter = CS.das_3['COUNTER']
+      das_3_counter = self.frame / 2
       stopping = CC.actuators.longControlState == LongCtrlState.stopping
       starting = CC.actuators.longControlState == LongCtrlState.starting
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
