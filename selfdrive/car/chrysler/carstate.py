@@ -5,8 +5,6 @@ from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, CarControllerParams
 
-from common.op_params import opParams
-
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
@@ -26,8 +24,6 @@ class CarState(CarStateBase):
     self.torqMax = None
     self.longEnabled = False
     self.cruisespeed = 0
-
-    self.op_params = opParams()
 
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
@@ -118,17 +114,6 @@ class CarState(CarStateBase):
     ret.cruiseState.nonAdaptive = False
     ret.cruiseState.standstill = ret.standstill
     # ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
-    if self.op_params.get('stock_ACC'):
-      ret.cruiseState.available = cp_cruise.vl["DAS_3"]["ACC_AVAILABLE"] == 1
-      ret.cruiseState.enabled = cp_cruise.vl["DAS_3"]["ACC_ACTIVE"] == 1
-      ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
-      ret.cruiseState.nonAdaptive = cp_cruise.vl["DAS_4"]["ACC_STATE"] in (1, 2)  # 1 NormalCCOn and 2 NormalCCSet
-
-    self.das_3 = cp_cruise.vl['DAS_3']
-    self.das_4 = cp_cruise.vl['DAS_4']
-    self.das_5 = cp_cruise.vl['DAS_5']
-    self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
-    self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
 
 
     
@@ -165,51 +150,6 @@ class CarState(CarStateBase):
     self.cruisespeed = ret.cruiseState.speed
 
     return ret
-
-  @staticmethod
-  def get_cruise_signals():
-    signals = [
-      ("ACC_AVAILABLE", "DAS_3"),
-      ("ACC_ACTIVE", "DAS_3"),
-      ("ACC_FAULTED", "DAS_3"),
-      ("ACC_STANDSTILL", "DAS_3"),
-      ("COUNTER", "DAS_3"),
-      ("ACC_SET_SPEED_KPH", "DAS_4"),
-      ("ACC_STATE", "DAS_4"),
-
-      ("ACC_GO", "DAS_3", 0),
-      ("ENGINE_TORQUE_REQUEST", "DAS_3", 0),
-      ("ENGINE_TORQUE_REQUEST_MAX", "DAS_3", 0),
-      ("ACC_DECEL", "DAS_3", 0),
-      ("ACC_DECEL_REQ", "DAS_3", 0),
-      ("ACC_AVAILABLE", "DAS_3", 0),
-      ("DISABLE_FUEL_SHUTOFF", "DAS_3", 0),
-      ("GR_MAX_REQ", "DAS_3", 0),
-      ("STS", "DAS_3", 0),
-      ("COLLISION_BRK_PREP", "DAS_3", 0),
-      ("ACC_BRK_PREP", "DAS_3", 0),
-      ("DISPLAY_REQ", "DAS_3", 0),
-      ("COUNTER", "DAS_3", 0),
-      ("CHECKSUM", "DAS_3", 0),
-
-
-      ("ACC_DISTANCE_CONFIG_1", "DAS_4", 0),
-      ("ACC_DISTANCE_CONFIG_2", "DAS_4", 0),
-      ("SPEED_DIGITAL", "DAS_4", 0),
-      ("FCW_BRAKE_ENABLED", "DAS_4", 0),
-      ("ACC_SET_SPEED_MPH", "DAS_4", 0),
-      ("FCW_STATE", "DAS_5", 0),
-      ("FCW_DISTANCE", "DAS_5", 0),
-      ("SET_SPEED_KPH", "DAS_5", 0),
-      ("COUNTER1", "DAS_5", 0),
-      ("CHECKSUM1", "DAS_5", 0),
-    ]
-    checks = [
-      ("DAS_3", 50),
-      ("DAS_4", 50),
-      ("DAS_5", 50),
-    ]
-    return signals, checks
 
   @staticmethod
   def get_can_parser(CP):
@@ -302,8 +242,6 @@ class CarState(CarStateBase):
         ("GEAR", 50),
         ("SPEED_1", 100),
       ]
-      signals += CarState.get_cruise_signals()[0]
-      checks += CarState.get_cruise_signals()[1]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
 
@@ -321,7 +259,5 @@ class CarState(CarStateBase):
       signals += [
         ("AUTO_HIGH_BEAM_ON", "DAS_6"),
       ]
-      signals += CarState.get_cruise_signals()[0]
-      checks += CarState.get_cruise_signals()[1]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)

@@ -118,7 +118,6 @@ class CarController:
       self.long_active = CC.enabled
       self.speed = CC.hudControl.setSpeed
 
-      self.stock_acc = self.op_params.get('stock_ACC')
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
       time_for_sample = self.op_params.get('long_time_constant')
       torque_limits = self.op_params.get('torque_limits')
@@ -182,17 +181,16 @@ class CarController:
       
       self.last_acc = CC.enabled
 
-      can_sends.append(das_3_message(self.packer, self.stock_acc, das_3_counter, self.long_active,
+      can_sends.append(das_3_message(self.packer, das_3_counter, self.long_active,
                                     accel_req, 
                                     decel_req,
                                     accel_go,
                                     torque,
                                     max_gear,
                                     standstill,
-                                    decel,
-                                    CS.das_3))
+                                    decel))
 
-      can_sends.append(das_5_message(self.packer, self.stock_acc, 0, self.speed, CS.das_5))
+      can_sends.append(das_5_message(self.packer, 0, self.speed))
 
       can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
@@ -200,7 +198,7 @@ class CarController:
       state = 0
       if CS.out.cruiseState.available:
         state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
-      can_sends.append(das_4_message(self.packer, self.stock_acc, 0, state, self.speed, CS.das_4))
+      can_sends.append(das_4_message(self.packer, 0, state, self.speed))
 
     # HUD alerts
     if self.frame % 25 == 0:
