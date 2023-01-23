@@ -41,6 +41,8 @@ typedef struct {
   const int CRUISE_BUTTONS;
   const int CENTER_STACK_1;
   const int CENTER_STACK_2;
+  const int TESTER;
+  const int CHIME;
 } ChryslerAddrs;
 
 // CAN messages for Chrysler/Jeep platforms
@@ -57,6 +59,8 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .CRUISE_BUTTONS   = 571,  // Cruise control buttons
   .CENTER_STACK_1   = 816,  // LKAS Button
   .CENTER_STACK_2   = 650,  // LKAS Button
+  .TESTER           = 0x753,  // Tester codes
+  .CHIME            = 838, // Chime control
 };
 
 // CAN messages for the 5th gen RAM DT platform
@@ -98,6 +102,15 @@ const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_RAM_HD_ADDRS.DAS_3, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_4, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_5, 0, 8},
+  {CHRYSLER_ADDRS.TESTER, 0, 8},
+  {CHRYSLER_ADDRS.DAS_3, 0, 8},
+  {CHRYSLER_ADDRS.DAS_3, 2, 8},
+  {CHRYSLER_ADDRS.DAS_4, 0, 8},
+  {CHRYSLER_ADDRS.DAS_4, 2, 8},
+  {CHRYSLER_ADDRS.DAS_5, 0, 8},
+  {CHRYSLER_ADDRS.DAS_5, 2, 8},
+  {CHRYSLER_ADDRS.CHIME, 0, 2},
+  {CHRYSLER_ADDRS.CHIME, 2, 2},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
@@ -282,6 +295,12 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
     tx = msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]));
   }
 
+  // ACC for ECU disable
+  if (tx && (addr == chrysler_addrs->DAS_3)) {
+    bool cruise_engaged = GET_BIT(to_send, 21U) == 1U;
+    pcm_cruise_check(cruise_engaged);
+  }
+
   // STEERING
   if (tx && (addr == chrysler_addrs->LKAS_COMMAND)) {
     int start_byte = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 1;
@@ -304,7 +323,12 @@ static int chrysler_tx_hook(CANPacket_t *to_send, bool longitudinal_allowed) {
   //     tx = 0;
   //   }
   // }
-
+   // UDS: Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
+  if (tx && (addr == chrysler_addrs->TESTER)) {
+    if ((GET_BYTES_04(to_send) != 0x00803E02U) || (GET_BYTES_48(to_send) != 0x0U)) {
+      tx = 0;
+    }
+  }
   return tx;
 }
 

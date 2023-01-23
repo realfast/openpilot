@@ -1,7 +1,7 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
-from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, das_3_message, acc_log, das_4_message, das_5_message
+from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, das_3_message, acc_log, das_4_message, das_5_message, create_chime_message
 from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
 from cereal import car
 
@@ -205,6 +205,15 @@ class CarController:
       if CS.lkas_car_model != -1:
         can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS))
         self.hud_count += 1
+
+    if self.CP.carFingerprint not in RAM_CARS:
+      if self.frame % 50 == 0:
+        # tester present - w/ no response (keeps radar disabled)
+        can_sends.append((0x753, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0))
+
+      if self.frame % 100 == 0:
+        can_sends.append(create_chime_message(self.packer, 0))
+        can_sends.append(create_chime_message(self.packer, 2))  
 
     self.frame += 1
 

@@ -135,6 +135,12 @@ class CarState(CarStateBase):
       self.lkasbuttonprev = self.lkasbutton
     else:
       ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
+      self.lkasbutton = (cp.vl["TRACTION_BUTTON"]["TOGGLE_LKAS"] == 1)
+      if self.lkasbutton ==1 and self.lkasdisabled== 0 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 1
+      elif self.lkasbutton ==1 and self.lkasdisabled == 1 and self.lkasbuttonprev == 0:
+        self.lkasdisabled = 0
+      self.lkasbuttonprev = self.lkasbutton
 
     # blindspot sensors
     if self.CP.enableBsm:
@@ -237,10 +243,12 @@ class CarState(CarStateBase):
         ("PRNDL", "GEAR"),
         ("SPEED_LEFT", "SPEED_1"),
         ("SPEED_RIGHT", "SPEED_1"),
+        ("TOGGLE_LKAS", "TRACTION_BUTTON"),
       ]
       checks += [
         ("GEAR", 50),
         ("SPEED_1", 100),
+        ("TRACTION_BUTTON", 1),
       ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
