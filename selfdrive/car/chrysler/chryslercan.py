@@ -80,9 +80,9 @@ def create_cruise_buttons(packer, frame, bus, cruise_buttons, cancel=False, resu
     values = cruise_buttons.copy()
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def das_3_message(packer, counter, enabled, accel_req, decel_req, accel_go, torque, max_gear, standstill, decel):
+def das_3_message(packer, counter, enabled, available, accel_req, decel_req, accel_go, torque, max_gear, standstill, decel):
   values = {
-    'ACC_AVAILABLE': 1,
+    'ACC_AVAILABLE': available,
     'ACC_ACTIVE': enabled,
     'COUNTER': counter % 0x10,
     'ACC_DECEL_REQ': decel_req,

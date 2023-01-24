@@ -151,9 +151,9 @@ class CarController:
 
           self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
           if self.op_params.get('comma_speed'):
-            self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
+            self.desired_velocity = min(CC.actuators.speed, self.speed)
           else:
-            self.desired_velocity = min(self.calc_velocity, CS.out.cruiseState.speed)
+            self.desired_velocity = min(self.calc_velocity, self.speed)
 
           # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
           # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
@@ -182,6 +182,7 @@ class CarController:
       self.last_acc = CC.enabled
 
       can_sends.append(das_3_message(self.packer, das_3_counter, self.long_active,
+                                    CS.out.cruiseState.available,
                                     accel_req, 
                                     decel_req,
                                     accel_go,
