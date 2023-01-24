@@ -45,6 +45,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15, 0.30], [0.03, 0.05]]
       ret.lateralTuning.pid.kf = 0.00006
       ret.openpilotLongitudinalControl = True
+      ret.experimentalLongitudinalAvailable = True
       tune = ret.longitudinalTuning
       tune.deadzoneBP = [0., 9.]
       tune.deadzoneV = [.0, .15]
@@ -80,6 +81,7 @@ class CarInterface(CarInterfaceBase):
           if fw.ecu == 'eps' and fw.fwVersion in (b"68273275AF", b"68273275AG", b"68312176AE", b"68312176AG", ):
             ret.minEnableSpeed = 0.
       ret.openpilotLongitudinalControl = True
+      ret.experimentalLongitudinalAvailable = True
       tune = ret.longitudinalTuning
       tune.deadzoneBP = [0., 9.]
       tune.deadzoneV = [.0, .15]
@@ -100,6 +102,7 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 16
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
       ret.openpilotLongitudinalControl = True
+      ret.experimentalLongitudinalAvailable = True
       tune = ret.longitudinalTuning
       tune.deadzoneBP = [0., 9.]
       tune.deadzoneV = [.0, .15]
