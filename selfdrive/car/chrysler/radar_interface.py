@@ -45,12 +45,17 @@ def _address_to_track(address):
 class RadarInterface(RadarInterfaceBase):
   def __init__(self, CP):
     super().__init__(CP)
-    self.rcp = _create_radar_can_parser(CP.carFingerprint)
+    self.radar_off_can = CP.radarOffCan
     self.updated_messages = set()
     self.trigger_msg = LAST_MSG
 
+    if self.radar_off_can:
+      self.rcp = None
+    else:
+      self.rcp = _create_radar_can_parser(CP.carFingerprint)
+
   def update(self, can_strings):
-    if self.rcp is None:
+    if self.radar_off_can:
       return super().update(None)
 
     vls = self.rcp.update_strings(can_strings)

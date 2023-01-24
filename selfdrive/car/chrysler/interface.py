@@ -20,8 +20,6 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "chrysler"
 
-    ret.radarOffCan = DBC[candidate]['radar'] is None
-
     ret.steerActuatorDelay = 0.4
     ret.steerLimitTimer = 0.4
     stiffnessFactor = 1.0
@@ -130,6 +128,7 @@ class CarInterface(CarInterfaceBase):
 
     if ret.openpilotLongitudinalControl:
       ret.pcmCruise = False
+      ret.radarOffCan = True
 
     return ret
   @staticmethod

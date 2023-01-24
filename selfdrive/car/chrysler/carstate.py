@@ -89,7 +89,7 @@ class CarState(CarStateBase):
     ret.cruiseState.speed = self.cruisespeed
     if cp.vl["CRUISE_BUTTONS"]["ACC_Accel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Decel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Resume"] == 1:
       self.longEnabled = True
-      if ret.cruiseState.speed == 0:
+      if ret.cruiseState.speed == 0 or ret.cruiseState.speed > 45:
         ret.cruiseState.speed = ret.vEgo if ret.vEgo > 20 * CV.MPH_TO_MS else 20 * CV.MPH_TO_MS
       elif cp.vl["CRUISE_BUTTONS"]["ACC_Accel"] == 1:
         ret.cruiseState.speed += 1
