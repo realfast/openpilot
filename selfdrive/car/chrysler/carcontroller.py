@@ -198,7 +198,7 @@ class CarController:
     if self.frame % 6 == 0:
       state = 0
       if CS.out.cruiseState.available:
-        state = 4 if CS.out.cruiseState.enabled else 3 #1/2 for regular cc, 3/4 for ACC
+        state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
       can_sends.append(das_4_message(self.packer, 0, state, self.speed))
 
     # HUD alerts
