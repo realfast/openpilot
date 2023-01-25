@@ -111,7 +111,7 @@ def das_5_message(packer, CP, bus, speed, frame):
   values = {
     "FCW_STATE": 0,
     "FCW_DISTANCE": 0x2,
-    "SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
+    # "SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
     "WHEEL_TORQUE_REQUEST": 25000,
   }
   if CP.carFingerprint in RAM_CARS:
