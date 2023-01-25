@@ -48,10 +48,8 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, CS
   }
 
   if CP.carFingerprint in RAM_CARS:
-    values = {
-      "AUTO_HIGH_BEAM_ON": CS.auto_high_beam,
-      "LKAS_Disabled":CS.lkasdisabled,
-    }
+    values['AUTO_HIGH_BEAM_ON'] = CS.auto_high_beam,
+    values['LKAS_Disabled'] = CS.lkasdisabled,
 
   return packer.make_can_msg("DAS_6", 0, values)
 
@@ -114,16 +112,13 @@ def das_5_message(packer, CP, bus, speed, frame):
     "FCW_STATE": 0,
     "FCW_DISTANCE": 0x2,
     "SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
+    "WHEEL_TORQUE_REQUEST": 25000,
   }
   if CP.carFingerprint in RAM_CARS:
-    values += {
-      "COUNTER1": 0x0,
-      "CHECKSUM1": 0xFF,
-    }
+    values['COUNTER1'] = 0x0,
+    values['CHECKSUM1'] = 0xFF,
   else:
-    values += {
-      "COUNTER": frame % 0x10,
-    }
+    values['COUNTER'] = frame % 0x10,
 
   return packer.make_can_msg("DAS_5", bus, values)
   
