@@ -109,14 +109,21 @@ def das_4_message(packer, bus, state, speed):
 
   return packer.make_can_msg("DAS_4", bus, values) 
 
-def das_5_message(packer, bus, speed):
+def das_5_message(packer, CP, bus, speed, frame):
   values = {
     "FCW_STATE": 0,
     "FCW_DISTANCE": 0x2,
     "SET_SPEED_KPH": round(speed * CV.MS_TO_KPH),
-    "COUNTER1": 0x0,
-    "CHECKSUM1": 0xFF,
   }
+  if CP.carFingerprint in RAM_CARS:
+    values += {
+      "COUNTER1": 0x0,
+      "CHECKSUM1": 0xFF,
+    }
+  else:
+    values += {
+      "COUNTER": frame % 0x10,
+    }
 
   return packer.make_can_msg("DAS_5", bus, values)
   

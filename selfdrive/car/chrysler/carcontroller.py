@@ -191,7 +191,7 @@ class CarController:
                                     standstill,
                                     decel))
 
-      can_sends.append(das_5_message(self.packer, 0, self.speed))
+      can_sends.append(das_5_message(self.packer, self.CP, 0, self.speed, self.frame / 2))
 
       can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
