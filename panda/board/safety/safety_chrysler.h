@@ -225,6 +225,21 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
 
   if (valid) {
 
+    if ((addr == chrysler_addrs->CRUISE_BUTTONS) && (bus == 0)) {
+      bool cancel_button = GET_BIT(to_push, 0U);
+      bool accel_button = GET_BIT(to_push, 2U);
+      bool decel_button = GET_BIT(to_push, 3U);
+      bool resume_button = GET_BIT(to_push, 4U);
+      // exit controls once main or cancel are pressed
+      if (cancel_button) {
+        controls_allowed = 0;
+      }
+      // enter controls on the falling edge of set or resume
+      if ((accel_button || decel_button || resume_button)) {
+        controls_allowed = 1;
+      }
+    }
+
     // Measured EPS torque
     if ((bus == 0) && (addr == chrysler_addrs->EPS_2)) {
       int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
