@@ -2,8 +2,8 @@ const SteeringLimits CHRYSLER_STEERING_LIMITS = {
   .max_steer = 261,
   .max_rt_delta = 112,
   .max_rt_interval = 250000,
-  .max_rate_up = 3,
-  .max_rate_down = 3,
+  .max_rate_up = 6,
+  .max_rate_down = 361,
   .max_torque_error = 80,
   .type = TorqueMotorLimited,
 };
@@ -13,7 +13,7 @@ const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
   .max_rt_delta = 112,
   .max_rt_interval = 250000,
   .max_rate_up = 6,
-  .max_rate_down = 6,
+  .max_rate_down = 361,
   .max_torque_error = 80,
   .type = TorqueMotorLimited,
 };
@@ -23,7 +23,7 @@ const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
   .max_rt_delta = 182,
   .max_rt_interval = 250000,
   .max_rate_up = 14,
-  .max_rate_down = 14,
+  .max_rate_down = 361,
   .max_torque_error = 400,
   .type = TorqueMotorLimited,
 };
