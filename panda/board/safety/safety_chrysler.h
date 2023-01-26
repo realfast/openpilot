@@ -226,18 +226,16 @@ static int chrysler_rx_hook(CANPacket_t *to_push) {
   if (valid) {
 
     if ((addr == chrysler_addrs->CRUISE_BUTTONS) && (bus == 0)) {
-      bool set_button = GET_BIT(to_push, 3U);
-      bool resume_button = GET_BIT(to_push, 4U);
       bool cancel_button = GET_BIT(to_push, 0U);
       bool accel_button = GET_BIT(to_push, 2U);
-
+      bool decel_button = GET_BIT(to_push, 3U);
+      bool resume_button = GET_BIT(to_push, 4U);
       // exit controls once main or cancel are pressed
       if (cancel_button) {
         controls_allowed = 0;
       }
-
       // enter controls on the falling edge of set or resume
-      if ((set_button || resume_button || accel_button)) {
+      if ((accel_button || decel_button || resume_button)) {
         controls_allowed = 1;
       }
     }
