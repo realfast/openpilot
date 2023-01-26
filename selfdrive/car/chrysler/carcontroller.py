@@ -103,9 +103,11 @@ class CarController:
       elif CC.enabled:
         if CC.actuators.accel < brake_threshold:
           decel_req = True
+          # max_gear = 9
           # if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
           if stopping and CS.out.vEgo < 0.01:
             standstill = True
+            # max_gear = 2
           decel = CC.actuators.accel
 
         else:
@@ -130,19 +132,19 @@ class CarController:
             torque = torque/CS.tcSlipPct
           torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
-        if CS.engineTorque < 0 and torque > 0:
-          #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
-          # rough estimate of external forces in N
-          # total_forces = 650
-          # #torque required to maintain speed
-          # torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
-          torque = 75
+          if CS.engineTorque < 0 and torque > 0:
+            #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
+            # rough estimate of external forces in N
+            # total_forces = 650
+            # #torque required to maintain speed
+            # torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
+            torque = 75
 
-        #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
-        else:
-          torque += CS.engineTorque
+          #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
+          else:
+            torque += CS.engineTorque
 
-        torque = max(torque, (0 - self.op_params.get('min_torque')))
+          torque = max(torque, (0 - self.op_params.get('min_torque')))
       
       self.last_acc = CC.enabled
 
