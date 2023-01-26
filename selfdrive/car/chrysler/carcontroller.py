@@ -181,7 +181,7 @@ class CarController:
       
       self.last_acc = CC.enabled
 
-      can_sends.append(das_3_message(self.packer, das_3_counter, self.long_active,
+      can_sends.append(das_3_message(self.packer, 0, das_3_counter, self.long_active,
                                     CS.out.cruiseState.available,
                                     accel_req, 
                                     decel_req,
@@ -191,15 +191,30 @@ class CarController:
                                     standstill,
                                     decel))
 
-      can_sends.append(das_5_message(self.packer, self.CP, 0, self.speed, self.frame / 2))
+      can_sends.append(das_5_message(self.packer, 0, self.CP, self.speed, self.frame / 2))
 
       can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
+
+      if self.CP.carFingerprint not in RAM_CARS:
+        can_sends.append(das_3_message(self.packer, 2, das_3_counter, self.long_active,
+                                      CS.out.cruiseState.available,
+                                      accel_req, 
+                                      decel_req,
+                                      accel_go,
+                                      torque,
+                                      max_gear,
+                                      standstill,
+                                      decel))
+
+        can_sends.append(das_5_message(self.packer, 2, self.CP, self.speed, self.frame / 2))
 
     if self.frame % 6 == 0:
       state = 0
       if CS.out.cruiseState.available:
         state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
       can_sends.append(das_4_message(self.packer, 0, state, self.speed))
+      if self.CP.carFingerprint not in RAM_CARS:
+        can_sends.append(das_4_message(self.packer, 2, state, self.speed))
 
     # HUD alerts
     if self.frame % 25 == 0:
