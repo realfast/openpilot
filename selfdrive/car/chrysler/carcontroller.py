@@ -111,6 +111,7 @@ class CarController:
           if stopping and CS.out.vEgo < 0.01:
             standstill = True
             max_gear = 2
+            torque = 15
           decel = CC.actuators.accel
 
         else:
@@ -142,6 +143,8 @@ class CarController:
             # #torque required to maintain speed
             # torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
             torque = 75
+            if CP.carFingerprint not in RAM_HD:
+              torque = 5
 
           #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
           else:
