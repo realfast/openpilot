@@ -45,8 +45,8 @@ class CarControllerParams:
       self.STEER_DELTA_DOWN = 6
       self.STEER_MAX = 350 # higher than this faults the EPS
     else:
-      self.STEER_DELTA_UP = 6
-      self.STEER_DELTA_DOWN = 6
+      self.STEER_DELTA_UP = 3
+      self.STEER_DELTA_DOWN = 3
       self.STEER_MAX = 261  # higher than this faults the EPS
     self.BUTTONS = [
         Button(car.CarState.ButtonEvent.Type.resumeCruise, "CRUISE_BUTTONS", "ACC_Resume", [1]),

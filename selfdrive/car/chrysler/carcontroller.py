@@ -103,11 +103,10 @@ class CarController:
       elif CC.enabled:
         if CC.actuators.accel < brake_threshold:
           decel_req = True
-          # max_gear = 9
-          # if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
+          max_gear = 9
           if stopping and CS.out.vEgo < 0.01:
             standstill = True
-            # max_gear = 2
+            max_gear = 2
           decel = CC.actuators.accel
 
         else:
@@ -199,7 +198,8 @@ class CarController:
         self.last_lkas_falling_edge = self.frame
 
       # steer torque
-      self.params.STEER_DELTA_DOWN = self.op_params.get('steerDeltaDown')
+      if self.CP.carFingerprint in RAM_CARS:
+        self.params.STEER_DELTA_DOWN = self.op_params.get('steerDeltaDown')
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
       if not lkas_active or not lkas_control_bit or not self.lkas_control_bit_prev:
