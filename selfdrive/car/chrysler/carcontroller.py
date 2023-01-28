@@ -47,6 +47,8 @@ class CarController:
     can_sends = []
 
     lkas_active = CC.latActive and not CS.lkasdisabled
+    stopping = CC.actuators.longControlState == LongCtrlState.stopping
+    starting = CC.actuators.longControlState == LongCtrlState.starting
 
     # cruise buttons
     if (CS.button_counter != self.last_button_frame):
@@ -65,6 +67,10 @@ class CarController:
           self.accel_sent = False
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
+      # Resume accel from standstill
+      elif starting and  CS.button_counter % 14 == 0:
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
+
        # ACC cancellation
       elif CC.cruiseControl.cancel:
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, cancel=True))
@@ -77,8 +83,6 @@ class CarController:
 
     #LONG
       das_3_counter = self.frame / 2
-      stopping = CC.actuators.longControlState == LongCtrlState.stopping
-      starting = CC.actuators.longControlState == LongCtrlState.starting
       self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
       self.long_active = CC.enabled
       self.speed = CC.hudControl.setSpeed
@@ -115,11 +119,11 @@ class CarController:
           if starting:
             accel_go = True
 
-          self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
-          if self.op_params.get('comma_speed'):
-            self.desired_velocity = min(CC.actuators.speed, self.speed)
-          else:
-            self.desired_velocity = min(self.calc_velocity, self.speed)
+          # self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+          # if self.op_params.get('comma_speed'):
+          self.desired_velocity = min(CC.actuators.speed, self.speed)
+          # else:
+          #   self.desired_velocity = min(self.calc_velocity, self.speed)
 
           # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
           # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
