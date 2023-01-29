@@ -49,6 +49,9 @@ class CarController:
     lkas_active = CC.latActive and not CS.lkasdisabled
     stopping = CC.actuators.longControlState == LongCtrlState.stopping
     starting = CC.actuators.longControlState == LongCtrlState.starting
+    self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
+    self.long_active = CC.enabled
+    self.speed = CC.hudControl.setSpeed
 
     # cruise buttons
     if (CS.button_counter != self.last_button_frame):
@@ -68,7 +71,7 @@ class CarController:
           can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
       # Resume accel from standstill
-      elif starting and  CS.button_counter % 14 == 0:
+      elif self.accel > 0 and self.long_active and CS.out.vEgo < 0.1 and  CS.button_counter % 14 == 0:
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
 
        # ACC cancellation
@@ -83,9 +86,6 @@ class CarController:
 
     #LONG
       das_3_counter = self.frame / 2
-      self.accel = clip(CC.actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
-      self.long_active = CC.enabled
-      self.speed = CC.hudControl.setSpeed
 
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
       time_for_sample = self.op_params.get('long_time_constant')
