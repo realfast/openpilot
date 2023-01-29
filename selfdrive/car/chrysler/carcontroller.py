@@ -103,48 +103,36 @@ class CarController:
         
       if self.last_acc != CC.enabled:
         self.long_active = True
+        self.go_sent = 0
+
 
       elif CC.enabled:
         if CC.actuators.accel < brake_threshold:
-          decel_req = True
-          max_gear = 9
-          if stopping and CS.out.vEgo < 0.01:
-            standstill = True
-            max_gear = 2
-            torque = 15
-          decel = CC.actuators.accel
+          accel_req = False
+          decel_req = False
+          torque = None
+          decel = self.accel
+          max_gear = 8
+          self.go_sent = 0
 
         else:
-          accel_req = True
-          # if CS.out.vEgo < 0.1 and CC.actuators.accel > 0:
-          if starting:
-            accel_go = True
+          time_for_sample = .25
+          torque_limits = 30
+          drivetrain_efficiency = 0.85
+          accel_req = 1
+          decel_req = False
+          decel = None
+          accel_go = 1 if self.go_sent < 10 else 0
+          self.go_sent += 1 
+          
+          desired_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+          kinetic_energy = ((self.CP.mass * desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
 
-          # self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
-          # if self.op_params.get('comma_speed'):
-          self.desired_velocity = min(CC.actuators.speed, self.speed)
-          # else:
-          #   self.desired_velocity = min(self.calc_velocity, self.speed)
-
-          # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
-          # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
-          kinetic_energy = ((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
-          # convert kinetic energy to torque
-          # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
           torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
-          if not CS.tcLocked and CS.tcSlipPct > 0:
-            torque = torque/CS.tcSlipPct
-          torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
+          torque = clip(torque, 0.01, torque_limits) 
 
-          if CS.engineTorque < 0 and torque > 0:
-            #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
-            # rough estimate of external forces in N
-            # total_forces = 650
-            # #torque required to maintain speed
-            # torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
-            torque = 75
-            if self.CP.carFingerprint not in RAM_HD:
-              torque = 5
+          if CS.engineTorque < 0:
+            torque = 15
 
           #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
           else:
