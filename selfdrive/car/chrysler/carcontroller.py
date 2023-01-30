@@ -51,8 +51,8 @@ class CarController:
       lkas_control_bit = self.lkas_control_bit_prev
       if CS.out.vEgo > self.CP.minSteerSpeed:
         lkas_control_bit = True
-      elif any(fw.ecu == 'eps' and fw.fwVersion[:3] >= b"684" for fw in car_fw):
-        if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
+      elif self.CP.carFingerprint not in RAM_CARS:
+        if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0) and self.CP.minSteerSpeed > 17:
           lkas_control_bit = False
       elif self.CP.carFingerprint in RAM_CARS:
         if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
