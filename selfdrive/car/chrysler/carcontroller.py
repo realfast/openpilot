@@ -91,54 +91,54 @@ class CarController:
       time_for_sample = self.op_params.get('long_time_constant')
       torque_limits = self.op_params.get('torque_limits')
       drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
-          
 
-      accel_go = False
-      decel_req = False
-      accel_req = False
-      standstill = False
-      decel = None
-      torque = None
-      max_gear = 8
-        
-      if self.last_acc != CC.enabled:
-        self.long_active = True
+
+      if CS.out.gasPressed or CS.out.brakePressed or self.last_acc != CC.enabled:
+        accel_go = False
+        decel_req = False
+        accel_req = False
+        standstill = False
+        torque = None
+        decel = None
+        max_gear = 8
+        self.go_sent = 0
+        if self.last_acc != CC.enabled and CC.enabled:
+          self.long_active = True
+
+
+      elif CC.actuators.accel < brake_threshold:
+        accel_go = False
+        decel_req = False
+        accel_req = False
+        standstill = False
+        torque = None
+        decel = self.accel
+        max_gear = 8
         self.go_sent = 0
 
+      else:
+        time_for_sample = .25
+        torque_limits = 30
+        drivetrain_efficiency = 0.85
+        accel_req = True
+        decel_req = False
+        accel_go = 1 if self.go_sent < 10 else 0
+        self.go_sent += 1 
+        
+        desired_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+        kinetic_energy = ((self.CP.mass * desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
 
-      elif CC.enabled:
-        if CC.actuators.accel < brake_threshold:
-          accel_req = False
-          decel_req = False
-          torque = None
-          decel = self.accel
-          max_gear = 8
-          self.go_sent = 0
+        torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
+        torque = clip(torque, 0.01, torque_limits) 
 
+        if CS.engineTorque < 0:
+          torque = 15
+
+        #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
-          time_for_sample = .25
-          torque_limits = 30
-          drivetrain_efficiency = 0.85
-          accel_req = 1
-          decel_req = False
-          decel = None
-          accel_go = 1 if self.go_sent < 10 else 0
-          self.go_sent += 1 
-          
-          desired_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
-          kinetic_energy = ((self.CP.mass * desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2)
+          torque += CS.engineTorque
 
-          torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
-          torque = clip(torque, 0.01, torque_limits) 
-
-          if CS.engineTorque < 0:
-            torque = 15
-
-          #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
-          else:
-            torque += CS.engineTorque
-
-          torque = max(torque, (0 - self.op_params.get('min_torque')))
+        torque = max(torque, (0 - self.op_params.get('min_torque')))
       
       self.last_acc = CC.enabled
 
