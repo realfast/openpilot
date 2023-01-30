@@ -97,8 +97,8 @@ class CarController:
       decel_req = False
       accel_req = False
       standstill = False
-      decel = 4
-      torque = 0
+      decel = None
+      torque = None
       max_gear = 8
         
       if self.last_acc != CC.enabled:
