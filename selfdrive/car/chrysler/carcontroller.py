@@ -93,7 +93,7 @@ class CarController:
       drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
 
 
-      if CS.out.gasPressed or CS.out.brakePressed or self.last_acc != CC.enabled:
+      if not CC.enabled or CS.out.gasPressed or CS.out.brakePressed or self.last_acc != CC.enabled:
         accel_go = False
         decel_req = False
         accel_req = False
