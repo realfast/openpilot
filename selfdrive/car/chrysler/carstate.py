@@ -42,11 +42,10 @@ class CarState(CarStateBase):
 
     # car speed
     if self.CP.carFingerprint in RAM_CARS:
-      ret.vEgoRaw = cp.vl["ESP_8"]["Vehicle_Speed"] * CV.KPH_TO_MS
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
     else:
-      ret.vEgoRaw = (cp.vl["SPEED_1"]["SPEED_LEFT"] + cp.vl["SPEED_1"]["SPEED_RIGHT"]) / 2.
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["GEAR"]["PRNDL"], None))
+    ret.vEgoRaw = cp.vl["ESP_8"]["Vehicle_Speed"] * CV.KPH_TO_MS
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = not ret.vEgoRaw > 0.001
     ret.wheelSpeeds = self.get_wheel_speeds(
@@ -126,6 +125,7 @@ class CarState(CarStateBase):
       ("WHEEL_SPEED_RR", "ESP_6"),
       ("WHEEL_SPEED_RL", "ESP_6"),
       ("WHEEL_SPEED_FR", "ESP_6"),
+      ("Vehicle_Speed", "ESP_8"),
       ("STEERING_ANGLE", "STEERING"),
       ("STEERING_ANGLE_HP", "STEERING"),
       ("STEERING_RATE", "STEERING"),
@@ -142,6 +142,7 @@ class CarState(CarStateBase):
     checks = [
       # sig_address, frequency
       ("ESP_1", 50),
+      ("ESP_8", 50),
       ("EPS_2", 100),
       ("ESP_6", 50),
       ("STEERING", 100),
@@ -162,11 +163,9 @@ class CarState(CarStateBase):
     if CP.carFingerprint in RAM_CARS:
       signals += [
         ("DASM_FAULT", "EPS_3"),
-        ("Vehicle_Speed", "ESP_8"),
         ("Gear_State", "Transmission_Status"),
       ]
       checks += [
-        ("ESP_8", 50),
         ("EPS_3", 50),
         ("Transmission_Status", 50),
       ]
