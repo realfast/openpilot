@@ -15,6 +15,7 @@ class CarState(CarStateBase):
     self.auto_high_beam = 0
     self.button_counter = 0
     self.lkas_car_model = -1
+    self.auto_start_stop_disabled = 0
 
     if CP.carFingerprint in RAM_CARS:
       self.shifter_values = can_define.dv["Transmission_Status"]["Gear_State"]
@@ -93,6 +94,7 @@ class CarState(CarStateBase):
 
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
+    self.auto_start_stop_disabled = cp.vl["AUTO_STOP_START"]["AUTO_STOP_START_DASH"]
 
     return ret
 
@@ -177,10 +179,12 @@ class CarState(CarStateBase):
         ("PRNDL", "GEAR"),
         ("SPEED_LEFT", "SPEED_1"),
         ("SPEED_RIGHT", "SPEED_1"),
+        ("AUTO_STOP_START_DASH", "AUTO_STOP_START"),
       ]
       checks += [
         ("GEAR", 50),
         ("SPEED_1", 100),
+        ("AUTO_STOP_START", 10),
       ]
       signals += CarState.get_cruise_signals()[0]
       checks += CarState.get_cruise_signals()[1]
