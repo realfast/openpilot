@@ -86,6 +86,7 @@ class CarState(CarStateBase):
     else:
       ret.steerFaultTemporary = cp.vl["EPS_2"]["LKAS_TEMPORARY_FAULT"] == 1
       ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
+      self.auto_start_stop_disabled = cp.vl["AUTO_STOP_START"]["AUTO_STOP_START_DASH"]
 
     # blindspot sensors
     if self.CP.enableBsm:
@@ -94,7 +95,7 @@ class CarState(CarStateBase):
 
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
-    self.auto_start_stop_disabled = cp.vl["AUTO_STOP_START"]["AUTO_STOP_START_DASH"]
+    
 
     return ret
 

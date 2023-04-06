@@ -290,11 +290,9 @@ static const addr_checks* chrysler_init(uint16_t param) {
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
     chrysler_rx_checks = (addr_checks){chrysler_ram_dt_addr_checks, CHRYSLER_RAM_DT_ADDR_CHECK_LEN};
   } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
-#ifdef ALLOW_DEBUG
     chrysler_platform = CHRYSLER_RAM_HD;
     chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
     chrysler_rx_checks = (addr_checks){chrysler_ram_hd_addr_checks, CHRYSLER_RAM_HD_ADDR_CHECK_LEN};
-#endif
   } else {
     chrysler_platform = CHRYSLER_PACIFICA;
     chrysler_addrs = &CHRYSLER_ADDRS;
