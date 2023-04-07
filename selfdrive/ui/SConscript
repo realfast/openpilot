@@ -10,7 +10,7 @@ if arch == 'larch64':
   base_libs.append('EGL')
 
 maps = arch in ['larch64', 'x86_64']
-# screenrecorder = arch in ['larch64']
+screenrecorder = arch in ['larch64']
 
 if maps and arch == 'x86_64':
   rpath = [Dir(f"#third_party/mapbox-gl-native-qt/{arch}").srcnode().abspath]
@@ -64,11 +64,11 @@ qt_src = ["main.cc", "qt/sidebar.cc", "qt/onroad.cc", "qt/body.cc",
           "qt/offroad/driverview.cc", "qt/offroad/experimental_mode.cc"]
 
 # include dashcam / screenrecorder
-# if screenrecorder:
-#   qt_src += ["qt/screenrecorder/screenrecorder.cc", "qt/screenrecorder/omx_encoder.cc"]
-#   qt_env['CPPPATH'] += ["qt/screenrecorder/openmax/include/"]
-#   qt_libs += ['OmxCore', 'gsl', 'CB', 'avformat', 'avcodec', 'swscale', 'avutil', 'yuv', 'pthread']
-#   qt_env['CPPDEFINES'] += ["ENABLE_DASHCAM"]
+if screenrecorder:
+  qt_src += ["qt/screenrecorder/screenrecorder.cc", "qt/screenrecorder/omx_encoder.cc"]
+  qt_env['CPPPATH'] += ["qt/screenrecorder/openmax/include/"]
+  qt_libs += ['OmxCore', 'gsl', 'CB', 'avformat', 'avcodec', 'swscale', 'avutil', 'yuv', 'pthread']
+  qt_env['CPPDEFINES'] += ["ENABLE_DASHCAM"]
 
 qt_env.Program("_ui", qt_src + [asset_obj], LIBS=qt_libs)
 if GetOption('test'):
