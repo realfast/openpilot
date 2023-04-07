@@ -123,8 +123,6 @@ static int honda_rx_hook(CANPacket_t *to_push) {
                                  honda_get_checksum, honda_compute_checksum, honda_get_counter, NULL);
 
   if (valid) {
-    const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || \
-                            ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
     int pt_bus = honda_get_pt_bus();
 
     int addr = GET_ADDR(to_push);
@@ -141,44 +139,46 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // 0x326 for all Bosch and some Nidec, 0x1A6 for some Nidec
     if ((addr == 0x326) || (addr == 0x1A6)) {
       acc_main_on = GET_BIT(to_push, ((addr == 0x326) ? 28U : 47U));
-      if (!acc_main_on) {
-        controls_allowed = 0;
-      }
-    }
-
-    // enter controls when PCM enters cruise state
-    if (pcm_cruise && (addr == 0x17C)) {
-      const bool cruise_engaged = GET_BIT(to_push, 38U) != 0U;
-      // engage on rising edge
-      if (cruise_engaged && !cruise_engaged_prev) {
+      if (acc_main_on && ((alternative_experience & ALT_EXP_ENABLE_MADS) || (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE))) {
         controls_allowed = 1;
       }
-
-      // Since some Nidec cars can brake down to 0 after the PCM disengages,
-      // we don't disengage when the PCM does.
-      if (!cruise_engaged && (honda_hw != HONDA_NIDEC)) {
+      if (!acc_main_on && acc_main_on_prev) {
+        disengageFromBrakes = false;
         controls_allowed = 0;
+        controls_allowed_long = 0;
       }
-      cruise_engaged_prev = cruise_engaged;
+      acc_main_on_prev = acc_main_on;
     }
 
     // state machine to enter and exit controls for button enabling
     // 0x1A6 for the ILX, 0x296 for the Civic Touring
     if (((addr == 0x1A6) || (addr == 0x296)) && (bus == pt_bus)) {
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
+      int button2 = ((GET_BYTE(to_push, (addr == 0x296) ? 0 : 5) & 0x0CU) >> 2);
 
       // exit controls once main or cancel are pressed
-      if ((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) {
+      if (button == HONDA_BTN_MAIN) {
+        disengageFromBrakes = false;
         controls_allowed = 0;
+        controls_allowed_long = 0;
+      }
+
+      if (button == HONDA_BTN_CANCEL) {
+        controls_allowed_long = 0;
       }
 
       // enter controls on the falling edge of set or resume
       bool set = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_SET);
       bool res = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_RESUME);
-      if (acc_main_on && !pcm_cruise && (set || res)) {
+      if (acc_main_on && (set || res)) {
         controls_allowed = 1;
+        controls_allowed_long = 1;
       }
       cruise_button_prev = button;
+
+      if ((button2 == 1) && ((alternative_experience & ALT_EXP_ENABLE_MADS) || (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE))) {
+        controls_allowed = 1;
+      }
     }
 
     // user brake signal on 0x17C reports applied brake from computer brake on accord

@@ -166,7 +166,9 @@ typedef struct {
 void safety_tick(const addr_checks *addr_checks);
 
 // This can be set by the safety hooks
+bool disengageFromBrakes = false;
 bool controls_allowed = false;
+bool controls_allowed_long = false;
 bool relay_malfunction = false;
 bool gas_interceptor_detected = false;
 int gas_interceptor_prev = 0;
@@ -177,6 +179,10 @@ bool brake_pressed_prev = false;
 bool regen_braking = false;
 bool regen_braking_prev = false;
 bool cruise_engaged_prev = false;
+bool acc_main_on_prev = false;
+bool lfa_pressed_prev = false;
+bool set_me_prev = false;
+bool lkas_pressed_prev = false;
 float vehicle_speed = 0;
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
@@ -216,6 +222,16 @@ struct sample_t angle_meas;         // last 6 steer angles
 // Setting this flag is used for allowing the full -5.0 to +4.0 m/s^2 at lower speeds
 // See ISO 15622:2018 for more information.
 #define ALT_EXP_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
+
+// Enable the ability to enable sunnypilot Automatic Lane Centering and ACC/SCC independently of each other. This
+// will enable MADS and allow other features to be used.
+// Enable the ability to re-engage sunnypilot Automatic Lane Centering only (NOT ACC/SCC) on brake release while MADS
+// is enabled.
+#define ALT_EXP_ENABLE_MADS 16
+
+// Enable the ability to disable disengaging lateral control on brake press while MADS is enabled.
+// The feature must be gated behind this flag per geohot's comment on the comma community Discord server.
+#define ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE 32
 
 int alternative_experience = 0;
 

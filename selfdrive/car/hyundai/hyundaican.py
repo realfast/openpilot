@@ -6,7 +6,8 @@ hyundai_checksum = crcmod.mkCrcFun(0x11D, initCrc=0xFD, rev=False, xorOut=0xdf)
 def create_lkas11(packer, frame, car_fingerprint, apply_steer, steer_req,
                   torque_fault, lkas11, sys_warning, sys_state, enabled,
                   left_lane, right_lane,
-                  left_lane_depart, right_lane_depart):
+                  left_lane_depart, right_lane_depart,
+                  lateral_paused, blinking_icon):
   values = lkas11
   values["CF_Lkas_LdwsSysState"] = sys_state
   values["CF_Lkas_SysWarning"] = 3 if sys_warning else 0
@@ -21,7 +22,8 @@ def create_lkas11(packer, frame, car_fingerprint, apply_steer, steer_req,
                          CAR.IONIQ_EV_2020, CAR.IONIQ_PHEV, CAR.KIA_SELTOS, CAR.ELANTRA_2021, CAR.GENESIS_G70_2020,
                          CAR.ELANTRA_HEV_2021, CAR.SONATA_HYBRID, CAR.KONA_EV, CAR.KONA_HEV, CAR.KONA_EV_2022,
                          CAR.SANTA_FE_2022, CAR.KIA_K5_2021, CAR.IONIQ_HEV_2022, CAR.SANTA_FE_HEV_2022,
-                         CAR.SANTA_FE_PHEV_2022, CAR.KIA_STINGER_2022, CAR.KIA_K5_HEV_2020):
+                         CAR.SANTA_FE_PHEV_2022, CAR.KIA_STINGER_2022, CAR.KIA_K5_HEV_2020, CAR.ELANTRA_2022_NON_SCC,
+                         CAR.GENESIS_G70_2021_NON_SCC):
     values["CF_Lkas_LdwsActivemode"] = int(left_lane) + (int(right_lane) << 1)
     values["CF_Lkas_LdwsOpt_USM"] = 2
 
@@ -31,7 +33,8 @@ def create_lkas11(packer, frame, car_fingerprint, apply_steer, steer_req,
     # FcwOpt_USM 2 = Green car + lanes
     # FcwOpt_USM 1 = White car + lanes
     # FcwOpt_USM 0 = No car + lanes
-    values["CF_Lkas_FcwOpt_USM"] = 2 if enabled else 1
+    values["CF_Lkas_FcwOpt_USM"] = 2 if steer_req else 2 if blinking_icon else 1 if\
+                                   lateral_paused else 1
 
     # SysWarning 4 = keep hands on wheel
     # SysWarning 5 = keep hands on wheel (red)
@@ -48,7 +51,7 @@ def create_lkas11(packer, frame, car_fingerprint, apply_steer, steer_req,
     # SysState 1-2 = white car + lanes
     # SysState 3 = green car + lanes, green steering wheel
     # SysState 4 = green car + lanes
-    values["CF_Lkas_LdwsSysState"] = 3 if enabled else 1
+    values["CF_Lkas_LdwsSysState"] = 3 if steer_req else 1
     values["CF_Lkas_LdwsOpt_USM"] = 2  # non-2 changes above SysState definition
 
     # these have no effect
@@ -87,21 +90,22 @@ def create_clu11(packer, frame, clu11, button, car_fingerprint):
   return packer.make_can_msg("CLU11", bus, values)
 
 
-def create_lfahda_mfc(packer, enabled, hda_set_speed=0):
+def create_lfahda_mfc(packer, enabled, lat_active, lateral_paused, blinking_icon, hda_set_speed=0):
   values = {
-    "LFA_Icon_State": 2 if enabled else 0,
+    "LFA_Icon_State": 2 if lat_active else 3 if blinking_icon else 1 if lateral_paused else 0,
     "HDA_Active": 1 if hda_set_speed else 0,
     "HDA_Icon_State": 2 if hda_set_speed else 0,
     "HDA_VSetReq": hda_set_speed,
   }
   return packer.make_can_msg("LFAHDA_MFC", 0, values)
 
-def create_acc_commands(packer, enabled, accel, upper_jerk, idx, lead_visible, set_speed, stopping, long_override):
+def create_acc_commands(packer, enabled, accel, upper_jerk, idx, lead_visible, set_speed, stopping, long_override, main_enabled,
+                        CS, escc):
   commands = []
 
   scc11_values = {
-    "MainMode_ACC": 1,
-    "TauGapSet": 4,
+    "MainMode_ACC": 1 if main_enabled else 0,
+    "TauGapSet": CS.gac_tr,
     "VSetDis": set_speed if enabled else 0,
     "AliveCounterACC": idx % 0x10,
     "ObjValid": 1, # close lead makes controls tighter
@@ -118,6 +122,11 @@ def create_acc_commands(packer, enabled, accel, upper_jerk, idx, lead_visible, s
     "aReqRaw": accel,
     "aReqValue": accel,  # stock ramps up and down respecting jerk limit until it reaches aReqRaw
     "CR_VSM_Alive": idx % 0xF,
+
+    "AEB_CmdAct": CS.escc_cmd_act,
+    "CF_VSM_Warn": CS.escc_aeb_warning,
+    "CF_VSM_DecCmdAct": CS.escc_aeb_dec_cmd_act,
+    "CR_VSM_DecCmd": CS.escc_aeb_dec_cmd,
   }
   scc12_dat = packer.make_can_msg("SCC12", 0, scc12_values)[2]
   scc12_values["CR_VSM_ChkSum"] = 0x10 - sum(sum(divmod(i, 16)) for i in scc12_dat) % 0x10
@@ -138,9 +147,14 @@ def create_acc_commands(packer, enabled, accel, upper_jerk, idx, lead_visible, s
   # https://github.com/commaai/opendbc/commit/9ddcdb22c4929baf310295e832668e6e7fcfa602
   fca11_values = {
     "CR_FCA_Alive": idx % 0xF,
-    "PAINT1_Status": 1,
-    "FCA_DrvSetStatus": 1,
-    "FCA_Status": 1, # AEB disabled
+    "PAINT1_Status": 0 if escc else 1,
+    "FCA_DrvSetStatus": 0 if escc else 1,
+    "FCA_Status": 0 if escc else 1, # AEB disabled
+
+    "FCA_CmdAct": CS.escc_cmd_act,
+    "CF_VSM_Warn": CS.escc_aeb_warning,
+    "CF_VSM_DecCmdAct": CS.escc_aeb_dec_cmd_act,
+    "CR_VSM_DecCmd": CS.escc_aeb_dec_cmd,
   }
   fca11_dat = packer.make_can_msg("FCA11", 0, fca11_values)[2]
   fca11_values["CR_FCA_ChkSum"] = hyundai_checksum(fca11_dat[:7])
@@ -148,7 +162,7 @@ def create_acc_commands(packer, enabled, accel, upper_jerk, idx, lead_visible, s
 
   return commands
 
-def create_acc_opt(packer):
+def create_acc_opt(packer, escc):
   commands = []
 
   scc13_values = {
@@ -159,8 +173,8 @@ def create_acc_opt(packer):
   commands.append(packer.make_can_msg("SCC13", 0, scc13_values))
 
   fca12_values = {
-    "FCA_DrvSetState": 2,
-    "FCA_USM": 1, # AEB disabled
+    "FCA_DrvSetState": 0 if escc else 2,
+    "FCA_USM": 0 if escc else 1, # AEB disabled
   }
   commands.append(packer.make_can_msg("FCA12", 0, fca12_values))
 

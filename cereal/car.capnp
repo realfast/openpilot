@@ -65,6 +65,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     lowBattery @48;
     vehicleModelInvalid @50;
     accFaulted @51;
+    accFaultedTemp @115;
     sensorDataInvalid @52;
     commIssue @53;
     commIssueAvgFreq @109;
@@ -113,7 +114,22 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     canBusMissing @111;
     controlsdLagging @112;
     resumeBlocked @113;
-    steerTimeLimit @115;
+    manualSteeringRequired @116;
+    manualLongitudinalRequired @117;
+    silentPedalPressed @118;
+    silentButtonEnable @119;
+    silentBrakeHold @120;
+    silentWrongGear @121;
+    spReverseGear @122;
+    preKeepHandsOnWheel @123;
+    promptKeepHandsOnWheel @124;
+    keepHandsOnWheel @125;
+    speedLimitActive @126;
+    speedLimitValueChange @127;
+    e2eLongStop @128;
+    e2eLongStart @129;
+    controlsMismatchLong @130;
+    cruiseEngageBlocked @131;
 
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
@@ -205,6 +221,27 @@ struct CarState {
   # clutch (manual transmission only)
   clutchPressed @28 :Bool;
 
+  madsEnabled @46 :Bool;
+  leftBlinkerOn @47 :Bool;
+  rightBlinkerOn @48 :Bool;
+  disengageByBrake @49 :Bool;
+  belowLaneChangeSpeed @50 :Bool;
+  accEnabled @51 :Bool;
+  latActive @52 :Bool;
+  gapAdjustCruiseTr @53 :Int32;
+  endToEndLong @54 :Bool;
+  customStockLong @55 :CustomStockLong;
+
+  struct CustomStockLong {
+    cruiseButton @0 :Int16;
+    finalSpeedKph @1 :Float32;
+    vCruiseKphPrev @2 :Float32;
+    targetSpeed @3 :Float32;
+    vSetDis @4 :Float32;
+    speedDiff @5 :Float32;
+    buttonType @6 :Int16;
+  }
+
   # blindspot sensors
   leftBlindspot @33 :Bool; # Is there something blocking the left lane change
   rightBlindspot @34 :Bool; # Is there something blocking the right lane change
@@ -228,6 +265,7 @@ struct CarState {
     speedOffset @3 :Float32;
     standstill @4 :Bool;
     nonAdaptive @5 :Bool;
+    speedLimit @7 :Float32;
   }
 
   enum GearShifter {
@@ -266,7 +304,7 @@ struct CarState {
 
   # deprecated
   errorsDEPRECATED @0 :List(CarEvent.EventName);
-  brakeLightsDEPRECATED @19 :Bool;
+  brakeLights @19 :Bool;
   steeringRateLimitedDEPRECATED @29 :Bool;
   canMonoTimesDEPRECATED @12: List(UInt64);
 }
@@ -312,6 +350,7 @@ struct CarControl {
   enabled @0 :Bool;
   latActive @11: Bool;
   longActive @12: Bool;
+  vCruise @17 :Float32;  # actual set speed
 
   # Actuator commands as computed by controlsd
   actuators @6 :Actuators;
@@ -400,6 +439,7 @@ struct CarControl {
       prompt @6;
       promptRepeat @7;
       promptDistracted @8;
+      promptStarting @9;
     }
   }
 
@@ -426,6 +466,8 @@ struct CarParams {
   enableBsm @56 :Bool;       # blind spot monitoring
   flags @64 :UInt32;         # flags for car specific quirks
   experimentalLongitudinalAvailable @71 :Bool;
+  pcmCruiseSpeed @72 :Bool;  # is openpilot's state tied to the PCM's cruise speed?
+  customStockLongAvailable @73 :Bool;
 
   minEnableSpeed @7 :Float32;
   minSteerSpeed @8 :Float32;

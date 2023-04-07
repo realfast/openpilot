@@ -105,14 +105,13 @@ class IsoTpParallelQuery:
 
       for tx_addr, msg in msgs.items():
         try:
-          dat, rx_in_progress = msg.recv()
+          dat, updated = msg.recv()
         except Exception:
           cloudlog.exception(f"Error processing UDS response: {tx_addr}")
           request_done[tx_addr] = True
           continue
 
-        # Extend timeout for each consecutive ISO-TP frame to avoid timing out on long responses
-        if rx_in_progress:
+        if updated:
           response_timeouts[tx_addr] = time.monotonic() + timeout
 
         if not dat:
@@ -124,7 +123,6 @@ class IsoTpParallelQuery:
 
         if response_valid:
           if counter + 1 < len(self.request):
-            response_timeouts[tx_addr] = time.monotonic() + timeout
             msg.send(self.request[counter + 1])
             request_counter[tx_addr] += 1
           else:

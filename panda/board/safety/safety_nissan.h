@@ -33,6 +33,9 @@ AddrCheckStruct nissan_addr_checks[] = {
   {.msg = {{0x454, 0, 8, .expected_timestep = 100000U},
            {0x454, 1, 8, .expected_timestep = 100000U},
            {0x1cc, 0, 4, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
+  {.msg = {{0x239, 0, 8, .expected_timestep = 50000U},
+           {0x1B6, 1, 8, .expected_timestep = 100000U},
+           {0x1B6, 2, 8, .expected_timestep = 100000U}}}, // PRO_PILOT (100Hz) / CRUISE_THROTTLE (50Hz)
 };
 #define NISSAN_ADDR_CHECK_LEN (sizeof(nissan_addr_checks) / sizeof(nissan_addr_checks[0]))
 addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
@@ -91,6 +94,24 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
     if ((addr == 0x30f) && (((bus == 2) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps)))) {
       bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1U;
       pcm_cruise_check(cruise_engaged);
+    }
+
+    if (((addr == 0x1B6) && (((bus == 1) && !nissan_alt_eps) || ((bus == 2) && nissan_alt_eps))) || ((addr == 0x239) && (bus == 0))) {
+      if ((addr == 0x1B6) && (((bus == 1) && !nissan_alt_eps) || ((bus == 2) && nissan_alt_eps))) {
+        acc_main_on = GET_BIT(to_push, 36U) != 0U;
+      }
+      if ((addr == 0x239) && (bus == 0)) {
+        acc_main_on = GET_BIT(to_push, 17U) != 0U;
+      }
+      if (acc_main_on && ((alternative_experience & ALT_EXP_ENABLE_MADS) || (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE))) {
+        controls_allowed = 1;
+      }
+      if (!acc_main_on && acc_main_on_prev) {
+        disengageFromBrakes = false;
+        controls_allowed = 0;
+        controls_allowed_long = 0;
+      }
+      acc_main_on_prev = acc_main_on;
     }
 
     generic_rx_checks((addr == 0x169) && (bus == 0));

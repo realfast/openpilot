@@ -17,6 +17,7 @@ int get_health_pkt(void *dat) {
   health->ignition_can_pkt = (uint8_t)(ignition_can);
 
   health->controls_allowed_pkt = controls_allowed;
+  health->controls_allowed_long_pkt = controls_allowed_long;
   health->gas_interceptor_detected_pkt = gas_interceptor_detected;
   health->safety_tx_blocked_pkt = safety_tx_blocked;
   health->safety_rx_invalid_pkt = safety_rx_invalid;
