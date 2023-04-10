@@ -39,6 +39,11 @@ AddrCheckStruct toyota_addr_checks[] = {
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
 };
+
+const int TOYOTA_PARAM_MADS_LTA_MSG = 1;
+
+bool toyota_mads_lta_msg = false;
+
 #define TOYOTA_ADDR_CHECKS_LEN (sizeof(toyota_addr_checks) / sizeof(toyota_addr_checks[0]))
 addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 
@@ -75,7 +80,24 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &toyota_rx_checks,
                                  toyota_get_checksum, toyota_compute_checksum, NULL, NULL);
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (valid && (GET_BUS(to_push) == 2U)) {
+    int addr = GET_ADDR(to_push);
+    if ((addr == 0x412) && !toyota_mads_lta_msg) {
+      bool set_me = (GET_BYTE(to_push, 0) & 0xC0) > 0; // LKAS_HUD
+      if (set_me && !set_me_prev && ((alternative_experience & ALT_EXP_ENABLE_MADS) || (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE))) {
+        controls_allowed = 1;
+      }
+      set_me_prev = set_me;
+    }
+
+    if ((addr == 0x412) && toyota_mads_lta_msg) {
+      bool set_me = (GET_BYTE(to_push, 3) & 0x40) > 0; // LDA_ON_MESSAGE
+      if (set_me && !set_me_prev && ((alternative_experience & ALT_EXP_ENABLE_MADS) || (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE))) {
+        controls_allowed = 1;
+      }
+      set_me_prev = set_me;
+    }
+  } else if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     // get eps motor torque (0.66 factor in dbc)
@@ -105,6 +127,19 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       if (!gas_interceptor_detected) {
         gas_pressed = ((GET_BYTE(to_push, 0) >> 4) & 1U) == 0U;
       }
+    }
+
+    if (addr == 0x1D3) {
+      acc_main_on = GET_BIT(to_push, 15U) != 0U;
+      if (acc_main_on && ((alternative_experience & ALT_EXP_ENABLE_MADS) || (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE))) {
+        controls_allowed = 1;
+      }
+      if (!acc_main_on && acc_main_on_prev) {
+        disengageFromBrakes = false;
+        controls_allowed = 0;
+        controls_allowed_long = 0;
+      }
+      acc_main_on_prev = acc_main_on;
     }
 
     if (addr == 0xaa) {
@@ -232,6 +267,7 @@ static const addr_checks* toyota_init(uint16_t param) {
 #else
   toyota_lta = false;
 #endif
+  toyota_mads_lta_msg = GET_FLAG(param, TOYOTA_PARAM_MADS_LTA_MSG);
   return &toyota_rx_checks;
 }
 

@@ -26,11 +26,7 @@ const SteeringLimits MAZDA_STEERING_LIMITS = {
 const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}, {MAZDA_LKAS_HUD, 0, 8}};
 
 AddrCheckStruct mazda_addr_checks[] = {
-  {.msg = {{MAZDA_CRZ_CTRL,     0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MAZDA_CRZ_BTNS,     0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{MAZDA_STEER_TORQUE, 0, 8, .expected_timestep = 12000U}, { 0 }, { 0 }}},
-  {.msg = {{MAZDA_ENGINE_DATA,  0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MAZDA_PEDALS,       0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+
 };
 #define MAZDA_ADDR_CHECKS_LEN (sizeof(mazda_addr_checks) / sizeof(mazda_addr_checks[0]))
 addr_checks mazda_rx_checks = {mazda_addr_checks, MAZDA_ADDR_CHECKS_LEN};
@@ -57,6 +53,17 @@ static int mazda_rx_hook(CANPacket_t *to_push) {
     if (addr == MAZDA_CRZ_CTRL) {
       bool cruise_engaged = GET_BYTE(to_push, 0) & 0x8U;
       pcm_cruise_check(cruise_engaged);
+
+      acc_main_on = GET_BIT(to_push, 17U) != 0U;
+      if (acc_main_on && ((alternative_experience & ALT_EXP_ENABLE_MADS) || (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE))) {
+        controls_allowed = 1;
+      }
+      if (!acc_main_on && acc_main_on_prev) {
+        disengageFromBrakes = false;
+        controls_allowed = 0;
+        controls_allowed_long = 0;
+      }
+      acc_main_on_prev = acc_main_on;
     }
 
     if (addr == MAZDA_ENGINE_DATA) {
@@ -99,7 +106,7 @@ static int mazda_tx_hook(CANPacket_t *to_send) {
       // allow resume spamming while controls allowed, but
       // only allow cancel while contrls not allowed
       bool cancel_cmd = (GET_BYTE(to_send, 0) == 0x1U);
-      if (!controls_allowed && !cancel_cmd) {
+      if (!(controls_allowed && controls_allowed_long) && !cancel_cmd) {
         tx = 0;
       }
     }

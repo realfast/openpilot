@@ -26,6 +26,8 @@ class CarState(CarStateBase):
 
     ret = car.CarState.new_message()
 
+    self.prev_mads_enabled = self.mads_enabled
+
     # lock info
     ret.doorOpen = any([cp.vl["BCM_1"]["DOOR_OPEN_FL"],
                         cp.vl["BCM_1"]["DOOR_OPEN_FR"],
@@ -36,6 +38,7 @@ class CarState(CarStateBase):
     # brake pedal
     ret.brake = 0
     ret.brakePressed = cp.vl["ESP_1"]['Brake_Pedal_State'] == 1  # Physical brake pedal switch
+    ret.brakeLights = bool(cp.vl["ESP_1"]["BRAKE_PRESSED_ACC"])
 
     # gas pedal
     ret.gas = cp.vl["ECM_5"]["Accelerator_Position"]
@@ -59,8 +62,8 @@ class CarState(CarStateBase):
     )
 
     # button presses
-    ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_stalk(200, cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1,
-                                                                       cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 2)
+    ret.leftBlinker, ret.rightBlinker = ret.leftBlinkerOn, ret.rightBlinkerOn = self.update_blinker_from_stalk(200, cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1,
+                                                                                                                    cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 2)
     ret.genericToggle = cp.vl["STEERING_LEVERS"]["HIGH_BEAM_PRESSED"] == 1
 
     # steering wheel
@@ -95,7 +98,6 @@ class CarState(CarStateBase):
 
     self.lkas_car_model = cp_cam.vl["DAS_6"]["CAR_MODEL"]
     self.button_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
-    
 
     return ret
 
@@ -125,6 +127,7 @@ class CarState(CarStateBase):
       ("DOOR_OPEN_RL", "BCM_1"),
       ("DOOR_OPEN_RR", "BCM_1"),
       ("Brake_Pedal_State", "ESP_1"),
+      ("BRAKE_PRESSED_ACC", "ESP_1"),
       ("Accelerator_Position", "ECM_5"),
       ("WHEEL_SPEED_FL", "ESP_6"),
       ("WHEEL_SPEED_RR", "ESP_6"),

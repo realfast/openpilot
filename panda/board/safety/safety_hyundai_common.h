@@ -14,6 +14,7 @@ enum {
   HYUNDAI_BTN_NONE = 0,
   HYUNDAI_BTN_RESUME = 1,
   HYUNDAI_BTN_SET = 2,
+  HYUNDAI_BTN_GAP = 3,
   HYUNDAI_BTN_CANCEL = 4,
 };
 
@@ -48,18 +49,19 @@ void hyundai_common_cruise_state_check(const int cruise_engaged) {
   if (!hyundai_longitudinal) {
     if (cruise_engaged && !cruise_engaged_prev && (hyundai_last_button_interaction < HYUNDAI_PREV_BUTTON_SAMPLES)) {
       controls_allowed = 1;
+      controls_allowed_long = 1;
     }
 
     if (!cruise_engaged) {
-      controls_allowed = 0;
+      controls_allowed_long = 0;
     }
     cruise_engaged_prev = cruise_engaged;
   }
 }
 
 void hyundai_common_cruise_buttons_check(const int cruise_button, const int main_button) {
-  if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_CANCEL) ||
-      (main_button != 0)) {
+  if ((cruise_button == HYUNDAI_BTN_RESUME) || (cruise_button == HYUNDAI_BTN_SET) || (cruise_button == HYUNDAI_BTN_GAP) ||
+      (cruise_button == HYUNDAI_BTN_CANCEL) || (main_button != 0)) {
     hyundai_last_button_interaction = 0U;
   } else {
     hyundai_last_button_interaction = MIN(hyundai_last_button_interaction + 1U, HYUNDAI_PREV_BUTTON_SAMPLES);
@@ -71,11 +73,12 @@ void hyundai_common_cruise_buttons_check(const int cruise_button, const int main
     bool res = (cruise_button != HYUNDAI_BTN_RESUME) && (cruise_button_prev == HYUNDAI_BTN_RESUME);
     if (set || res) {
       controls_allowed = 1;
+      controls_allowed_long = 1;
     }
 
     // exit controls on cancel press
     if (cruise_button == HYUNDAI_BTN_CANCEL) {
-      controls_allowed = 0;
+      controls_allowed_long = 0;
     }
 
     cruise_button_prev = cruise_button;
