@@ -2,7 +2,7 @@ from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, das_3_message, acc_log, das_4_message, das_5_message
-from selfdrive.car.chrysler.values import CAR, RAM_CARS, RAM_DT, RAM_HD, CarControllerParams
+from selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, RAM_HD, CarControllerParams, ChryslerFlags
 from cereal import car
 
 from common.numpy_fast import clip
@@ -43,7 +43,7 @@ class CarController:
     self.long_active = False
     self.last_acc = False
 
-  def update(self, CC, CS):
+  def update(self, CC, CS, now_nanos):
     can_sends = []
 
     lkas_active = CC.latActive and not CS.lkasdisabled
@@ -74,9 +74,8 @@ class CarController:
         can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
 
     # steering
-    if self.frame % 2 == 0:
-      
-      lkas_control_bit = self.lkas_control_bit_prev
+    if self.frame % self.params.STEER_STEP == 0:
+
       # TODO: can we make this more sane? why is it different for all the cars?
       if self.CP.carFingerprint in RAM_DT:
         if CS.out.vEgo >= self.CP.minEnableSpeed and CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
@@ -85,7 +84,7 @@ class CarController:
           lkas_control_bit = False
       elif CS.out.vEgo > self.CP.minSteerSpeed:
         lkas_control_bit = True
-      elif self.CP.carFingerprint in (CAR.PACIFICA_2019_HYBRID, CAR.PACIFICA_2020, CAR.JEEP_CHEROKEE_2019):
+      elif self.CP.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
         if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
           lkas_control_bit = False
       elif self.CP.carFingerprint in RAM_HD:
@@ -212,5 +211,6 @@ class CarController:
 
     new_actuators = CC.actuators.copy()
     new_actuators.steer = self.apply_steer_last / self.params.STEER_MAX
+    new_actuators.steerOutputCan = self.apply_steer_last
 
     return new_actuators, can_sends

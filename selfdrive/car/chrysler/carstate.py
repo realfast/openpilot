@@ -149,6 +149,7 @@ class CarState(CarStateBase):
         self.lkasdisabled = 0
       self.lkasbuttonprev = self.lkasbutton
     else:
+      ret.steerFaultTemporary = cp.vl["EPS_2"]["LKAS_TEMPORARY_FAULT"] == 1
       ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
 
     # blindspot sensors
@@ -235,6 +236,7 @@ class CarState(CarStateBase):
       ("COUNTER", "EPS_2",),
       ("COLUMN_TORQUE", "EPS_2"),
       ("EPS_TORQUE_MOTOR", "EPS_2"),
+      ("LKAS_TEMPORARY_FAULT", "EPS_2"),
       ("LKAS_STATE", "EPS_2"),
       ("ACC_Cancel", "CRUISE_BUTTONS"),
       ("ACC_Distance_Dec", "CRUISE_BUTTONS"),
