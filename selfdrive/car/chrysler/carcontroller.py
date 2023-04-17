@@ -76,6 +76,7 @@ class CarController:
     # steering
     if self.frame % self.params.STEER_STEP == 0:
 
+      lkas_control_bit = self.lkas_control_bit_prev
       # TODO: can we make this more sane? why is it different for all the cars?
       if self.CP.carFingerprint in RAM_DT:
         if CS.out.vEgo >= self.CP.minEnableSpeed and CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
