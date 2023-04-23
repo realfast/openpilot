@@ -62,10 +62,11 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit):
   return packer.make_can_msg("LKAS_COMMAND", 0, values)
 
 
-def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
+def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False, on=False):
   values = {
     "ACC_Cancel": cancel,
     "ACC_Resume": resume,
+    "ACC_OnOff": on,
     "COUNTER": frame % 0x10,
   }
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)

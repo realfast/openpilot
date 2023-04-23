@@ -44,8 +44,12 @@ class CarController:
         can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CS.madsEnabled, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
         self.hud_count += 1
       
-    if not CS.auto_start_stop_disabled and self.frame % 150 == 0 and not self.CP.carFingerprint in RAM_CARS:
-      can_sends.append((0x355, 0, b"\xF0\xFF\x03\x00\x00\x0C\x24\xFF", 0))     
+    if not self.CP.carFingerprint in RAM_CARS and self.frame < 6000:
+      if not CS.auto_start_stop_disabled and self.frame % 150 == 0:
+        can_sends.append((0x355, 0, b"\xF0\xFF\x03\x00\x00\x0C\x24\xFF", 0))
+      if not CS.out.cruiseState.available and self.frame % 150 == 0:
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, on=True))
+    
     
 
     # steering
