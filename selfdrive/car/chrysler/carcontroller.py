@@ -48,7 +48,7 @@ class CarController:
       if not CS.auto_start_stop_disabled and self.frame % 150 == 0:
         can_sends.append((0x355, 0, b"\xF0\xFF\x03\x00\x00\x0C\x24\xFF", 0))
       if not CS.out.cruiseState.available and self.frame % 150 == 0:
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 0, on=True))
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, 2, on=True))
     
     
 
