@@ -273,7 +273,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
   }
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if ((addr == chrysler_addrs->CRUISE_BUTTONS) && (chrysler_platform == CHRYSLER_PACIFICA)) {
+  if ((addr == chrysler_addrs->CRUISE_BUTTONS)) {
     const bool is_cancel = GET_BYTE(to_send, 0) == 0x1U;
     const bool is_resume = GET_BYTE(to_send, 0) == 0x10U;
     const bool is_on = GET_BYTE(to_send, 1) == 0x1U;
@@ -291,9 +291,9 @@ static int chrysler_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   int addr = GET_ADDR(to_fwd);
 
   // forward to camera
-  const bool is_ram_cruise = (chrysler_platform != CHRYSLER_PACIFICA) && (addr== chrysler_addrs->CRUISE_BUTTONS);
+  //const bool is_ram_cruise = (chrysler_platform != CHRYSLER_PACIFICA) && (addr== chrysler_addrs->CRUISE_BUTTONS);
 
-  if ((bus_num == 0) && !is_ram_cruise) {
+  if ((bus_num == 0)) {
     bus_fwd = 2;
   }
 
