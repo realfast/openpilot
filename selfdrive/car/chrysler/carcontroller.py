@@ -171,7 +171,7 @@ class CarController:
             torque = torque/CS.tcSlipPct
           torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
-        if CS.engineTorque < 0 and torque > 0:
+        if current_engine_torque < 0 and torque > 0:
           #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
           # rough estimate of external forces in N
           # total_forces = 650
@@ -181,7 +181,7 @@ class CarController:
 
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
-          torque += CS.engineTorque
+          torque += current_engine_torque
 
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
