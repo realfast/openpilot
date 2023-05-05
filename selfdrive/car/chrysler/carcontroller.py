@@ -139,6 +139,8 @@ class CarController:
       decel = 4
       torque = -75
       max_gear = 8
+
+      current_engine_torque = CS.engineTorque
         
       if self.last_acc != CC.enabled:
         self.long_active = True
