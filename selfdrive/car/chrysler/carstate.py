@@ -140,7 +140,7 @@ class CarState(CarStateBase):
 
     if self.CP.carFingerprint in RAM_DT:
       #calculate the input speed from the output speed and gear ratio
-      self.inputSpeed = cp.vl["TRANS_SPEED"]["OUTPUT_SPEED"]/cp.vl["TRANS_SPEED"]["RATIO"]
+      self.inputSpeed = cp.vl["TRANS_SPEED"]["OUTPUT_SPEED"]/cp.vl["TRANS_SPEED"]["RATIO"] + 0.0001
 
     self.tcSlipPct = (self.inputSpeed/(self.engineRpm + 0.001)) + 0.001
 
