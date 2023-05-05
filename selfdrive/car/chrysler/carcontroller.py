@@ -18,7 +18,7 @@ import logging
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 
-logging.basicConfig(filename='/tmp/comma.log', format='%(message)s')
+logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
 
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
@@ -186,7 +186,7 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
         #if CC.enabled:
-        logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921, self.long_active, CS.out.gasPressed, CS.tcLocked, CS.tcSlipPct)
+        logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, CC.actuators.speed, CS.out.cruiseState.speed, self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921, self.long_active, CS.out.gasPressed, CS.tcLocked, CS.tcSlipPct, CS.inputSpeed)
       
       self.last_acc = CC.enabled
 
@@ -221,5 +221,6 @@ class CarController:
     new_actuators = CC.actuators.copy()
     new_actuators.steer = self.apply_steer_last / self.params.STEER_MAX
     new_actuators.steerOutputCan = self.apply_steer_last
+    new_actuators.accel = self.accel
 
     return new_actuators, can_sends
