@@ -26,6 +26,8 @@ class CarState(CarStateBase):
     self.torqMax = None
     self.longEnabled = False
     self.cruisespeed = 0
+    self.transOutputSpeed = 0
+    self.transGearRatio = 0
 
     self.op_params = opParams()
 
@@ -140,7 +142,9 @@ class CarState(CarStateBase):
 
     if self.CP.carFingerprint in RAM_DT:
       #calculate the input speed from the output speed and gear ratio
-      self.inputSpeed = cp.vl["TRANS_SPEED"]["OUTPUT_SPEED"]/cp.vl["TRANS_SPEED"]["RATIO"] + 0.0001
+      self.transOutputSpeed = cp.vl["TRANS_SPEED"]["OUTPUT_SPEED"] = 1
+      self.transGearRatio = cp.vl["TRANS_SPEED"]["RATIO"] = 1
+      self.inputSpeed = self.transOutputSpeed/self.transGearRatio
 
     self.tcSlipPct = (self.inputSpeed/(self.engineRpm + 0.001)) + 0.001
 
