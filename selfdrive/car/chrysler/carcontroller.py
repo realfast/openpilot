@@ -186,7 +186,7 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
         if CC.enabled:
-          logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', min(CC.actuators.speed, CS.out.cruiseState.speed), CC.actuators.accel, CS.out.aEgo*2.2369362921, CS.out.vEgo*2.2369362921, CS.out.vEgoRaw*2.2369362921, self.calc_velocity, self.desired_velocity, torque, current_engine_torque, CS.engineRpm, CS.out.cruiseState.speed*2.2369362921)
+          logging.info('%s,%s,%s,%s,%s,%s,%s', self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921)
       
       self.last_acc = CC.enabled
 
