@@ -163,7 +163,7 @@ class CarController:
 
           # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
           # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
-          kinetic_energy = abs(((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo **2)/2))
+          kinetic_energy = ((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo **2)/2)
           # convert kinetic energy to torque
           # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
           torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
@@ -185,8 +185,8 @@ class CarController:
 
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
-        if CC.enabled:
-          logging.info('%s,%s,%s,%s,%s,%s,%s', self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921)
+        #if CC.enabled:
+        logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s', self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921, self.long_active, CS.out.gasPressed)
       
       self.last_acc = CC.enabled
 
