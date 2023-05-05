@@ -159,7 +159,8 @@ class CarController:
           if starting:
             accel_go = True
 
-          self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+          #self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+          self.calc_velocity = (self.accel * time_for_sample) + CS.out.vEgo
           if self.op_params.get('comma_speed'):
             self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
           else:
@@ -190,7 +191,7 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
         if CC.enabled:
-          logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', min(CC.actuators.speed, CS.out.cruiseState.speed), self.accel, CS.out.aEgo*2.2369362921, CS.out.vEgo*2.2369362921, CS.out.vEgoRaw*2.2369362921, self.calc_velocity, self.desired_velocity, torque, current_engine_torque, CS.engineRpm, CS.out.cruiseState.speed*2.2369362921)
+          logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', min(CC.actuators.speed, CS.out.cruiseState.speed), CC.actuators.accel, CS.out.aEgo*2.2369362921, CS.out.vEgo*2.2369362921, CS.out.vEgoRaw*2.2369362921, self.calc_velocity, self.desired_velocity, torque, current_engine_torque, CS.engineRpm, CS.out.cruiseState.speed*2.2369362921)
       
       self.last_acc = CC.enabled
 
