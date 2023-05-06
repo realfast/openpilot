@@ -144,7 +144,7 @@ class CarState(CarStateBase):
       #calculate the input speed from the output speed and gear ratio
       self.transOutputSpeed = cp.vl["TRANS_SPEED"]["OUTPUT_SPEED"]
       self.transGearRatio = cp.vl["TRANS_SPEED"]["RATIO"]
-      self.inputSpeed = (self.transOutputSpeed + .001)/(self.transGearRatio + .001)
+      self.inputSpeed = (self.transOutputSpeed + .001)*(self.transGearRatio + .001)
 
     self.tcSlipPct = (self.inputSpeed/(self.engineRpm + 0.001)) + 0.001
 
