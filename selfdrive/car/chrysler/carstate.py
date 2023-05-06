@@ -3,7 +3,7 @@ from common.conversions import Conversions as CV
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
-from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, CarControllerParams
+from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, RAM_DT, CarControllerParams
 
 from common.op_params import opParams
 
@@ -26,6 +26,8 @@ class CarState(CarStateBase):
     self.torqMax = None
     self.longEnabled = False
     self.cruisespeed = 0
+    self.transOutputSpeed = 0
+    self.transGearRatio = 0
 
     self.op_params = opParams()
 
@@ -137,6 +139,13 @@ class CarState(CarStateBase):
     self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
     self.inputSpeed = cp.vl["TRANS_SPEED"]["INPUT_SPEED"]
     self.tcLocked = cp.vl["TRANS_SPEED"]["TC_LOCKED"]
+
+    if self.CP.carFingerprint in RAM_DT:
+      #calculate the input speed from the output speed and gear ratio
+      self.transOutputSpeed = cp.vl["TRANS_SPEED"]["OUTPUT_SPEED"]
+      self.transGearRatio = cp.vl["TRANS_SPEED"]["RATIO"]
+      self.inputSpeed = (self.transOutputSpeed + .001)*(self.transGearRatio + .001)
+
     self.tcSlipPct = (self.inputSpeed/(self.engineRpm + 0.001)) + 0.001
 
     if self.CP.carFingerprint in RAM_CARS:
@@ -293,6 +302,11 @@ class CarState(CarStateBase):
         ("Transmission_Status", 50),
         ("Center_Stack_1", 1),
         ("Center_Stack_2", 1),
+      ]
+    if CP.carFingerprint in RAM_DT:
+      signals+= [
+        ("RATIO", "TRANS_SPEED"),
+        ("OUTPUT_SPEED", "TRANS_SPEED"),
       ]
     else:
       signals += [

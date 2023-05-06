@@ -43,6 +43,7 @@ BO_ 133 TRANS_SPEED: 8 XXX
  SG_ TC_LOCKED : 17|1@1+ (1,0) [0|0] ""  XXX
  SG_ OUTPUT_SPEED : 31|16@0+ (1,0) [0|65534] "rpm" XXX
  SG_ INPUT_SPEED : 47|16@0+ (1,0) [0|65534] "rpm"  XXX
+ SG_ RATIO : 11|4@0+ (1,0) [0|15] "" XXX
 
 BO_ 139 ESP_6: 8 XXX
  SG_ WHEEL_SPEED_FL : 5|14@0+ (0.5,0) [0|8191] "rpm" XXX
@@ -212,3 +213,5 @@ CM_ SG_ 250 Auto_High_Beam "1 = HIGH BEAMS OK 0 = HIGH BEAMS OFF ";
 CM_ SG_ 250 LKAS_LANE_LINES "9 = LEFT CAUTION, 11 = VERY LEFT CAUTION 10 = RIGHT CAUTION, 14 = VERY RIGHT, 4 = NO LINES DETECTED, 3 = LINES DETECTED, SYSTEM ACTIVE";
 CM_ SG_ 464 Driver_Seatbelt_Status "1 unbuckled 0 buckled";
 CM_ SG_ 792 High_Beam_Lever_Status "1 is high beam, 0 reg";
+
+VAL_ 133 RATIO  1 "4.71" 2 "3.14" 3 "2.11" 4 "1.67" 5 "1.28" 6 "1.00" 7 "0.84" 8 "0.67";

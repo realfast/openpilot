@@ -13,6 +13,13 @@ import math
 
 from common.op_params import opParams
 
+import logging
+
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
+
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
 BRAKE_CHANGE = 0.06
@@ -132,6 +139,8 @@ class CarController:
       decel = 4
       torque = -75
       max_gear = 8
+
+      current_engine_torque = CS.engineTorque
         
       if self.last_acc != CC.enabled:
         self.long_active = True
@@ -150,15 +159,11 @@ class CarController:
           if starting:
             accel_go = True
 
-          self.calc_velocity = ((self.accel-CS.out.aEgo) * time_for_sample) + CS.out.vEgo
-          if self.op_params.get('comma_speed'):
-            self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
-          else:
-            self.desired_velocity = min(self.calc_velocity, CS.out.cruiseState.speed)
+          self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
 
           # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
           # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
-          kinetic_energy = abs(((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo**2)/2))
+          kinetic_energy = ((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo **2)/2)
           # convert kinetic energy to torque
           # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
           torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
@@ -166,7 +171,7 @@ class CarController:
             torque = torque/CS.tcSlipPct
           torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
-        if CS.engineTorque < 0 and torque > 0:
+        if current_engine_torque < 0 and torque > 0:
           #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
           # rough estimate of external forces in N
           # total_forces = 650
@@ -176,9 +181,12 @@ class CarController:
 
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
-          torque += CS.engineTorque
+          torque += current_engine_torque
 
         torque = max(torque, (0 - self.op_params.get('min_torque')))
+
+      #if CC.enabled:
+      logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, CC.actuators.speed, CS.out.cruiseState.speed, self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921, self.long_active, CS.out.gasPressed, CS.tcLocked, CS.tcSlipPct, CS.inputSpeed, CS.transOutputSpeed, CS.transGearRatio)
       
       self.last_acc = CC.enabled
 
@@ -213,5 +221,6 @@ class CarController:
     new_actuators = CC.actuators.copy()
     new_actuators.steer = self.apply_steer_last / self.params.STEER_MAX
     new_actuators.steerOutputCan = self.apply_steer_last
+    new_actuators.accel = self.accel
 
     return new_actuators, can_sends
