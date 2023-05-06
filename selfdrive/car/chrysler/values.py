@@ -208,6 +208,7 @@ FW_VERSIONS = {
       b'68453511AC',
       b'68453513AD',
       b'68453514AD',
+      b'68510283AG',
       b'68527375AD',
     ],
     (Ecu.srs, 0x744, None): [
@@ -216,6 +217,7 @@ FW_VERSIONS = {
       b'68473844AB',
       b'68490898AA',
       b'68500728AA',
+      b'68615033AA',
     ],
     (Ecu.abs, 0x747, None): [
       b'68292406AH',
@@ -229,8 +231,11 @@ FW_VERSIONS = {
       b'68438456AF',
       b'68535469AB',
       b'68535470AC',
+      b'68586307AB',
     ],
     (Ecu.fwdRadar, 0x753, None): [
+      b'04672892AB',
+      b'04672932AB',
       b'68320950AH',
       b'68320950AI',
       b'68320950AJ',
@@ -240,7 +245,6 @@ FW_VERSIONS = {
       b'68475160AE',
       b'68475160AF',
       b'68475160AG',
-      b'04672892AB',
     ],
     (Ecu.eps, 0x75A, None): [
       b'68273275AF', #S0
@@ -254,8 +258,10 @@ FW_VERSIONS = {
       b'68522585AB',
       b'68552788AA',
       b'68552790AA',
+      b'68585112AB',
     ],
     (Ecu.engine, 0x7e0, None): [
+      b'05036065AE ',
       b'68448163AJ',
       b'68448165AK',
       b'68500630AD',
@@ -265,6 +271,7 @@ FW_VERSIONS = {
       b'68378758AM ',
     ],
     # (Ecu.transmission, 0x7e1, None): [
+    #   b'05036069AA',
     #   b'68360078AL',
     #   b'68360080AM',
     #   b'68360081AM',
@@ -289,13 +296,14 @@ FW_VERSIONS = {
     (Ecu.combinationMeter, 0x742, None): [
       b'68361606AH',
       b'68437735AC',
+      b'68437746AD',
       b'68492693AD',
       b'68525485AB', #TODO: CHECK in newest updat on dongle 5c05760b592aee2c
       b'68525487AB',
       b'68525498AB',
-
     ],
     (Ecu.srs, 0x744, None): [
+      b'68346749AB',
       b'68399794AC',
       b'68428503AA',
       b'68428505AA',
@@ -328,6 +336,7 @@ FW_VERSIONS = {
       b'52370931CT',
       b'52401032AE',
       b'52421132AF',
+      b'68527616AD ',
       b'M2370131MB',
       b'M2421132MB',
       b'           ',

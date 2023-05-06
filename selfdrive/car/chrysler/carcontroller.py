@@ -8,17 +8,17 @@ from cereal import car
 from common.numpy_fast import clip
 from common.conversions import Conversions as CV
 from common.params import Params, put_nonblocking
-from cereal import car
+
 import math
 
 from common.op_params import opParams
 
 import logging
 
-for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
+#for handler in logging.root.handlers[:]:
+    #logging.root.removeHandler(handler)
 
-logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
+#logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
 
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
@@ -186,7 +186,7 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
       #if CC.enabled:
-      logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, CC.actuators.speed, CS.out.cruiseState.speed, self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921, self.long_active, CS.out.gasPressed, CS.tcLocked, CS.tcSlipPct, CS.inputSpeed, CS.transOutputSpeed, CS.transGearRatio)
+      #logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, CC.actuators.speed, CS.out.cruiseState.speed, self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921, self.long_active, CS.out.gasPressed, CS.tcLocked, CS.tcSlipPct, CS.inputSpeed, CS.transOutputSpeed, CS.transGearRatio)
       
       self.last_acc = CC.enabled
 
