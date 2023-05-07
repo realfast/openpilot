@@ -80,12 +80,12 @@ class CarInterface(CarInterfaceBase):
       tune = ret.longitudinalTuning
       tune.deadzoneBP = [0., 9.]
       tune.deadzoneV = [.0, .15]
-      tune.kpV = [0.25]
-      tune.kiV = [0.05]
       ret.stopAccel = -2.0
       ret.startingState = True
       ret.vEgoStarting = 0.1
       ret.startAccel = 1.0
+      ret.longitudinalActuatorDelayUpperBound = .25
+      ret.longitudinalActuatorDelayLowerBound = .25
 
 
     elif candidate == CAR.RAM_HD:
@@ -100,8 +100,6 @@ class CarInterface(CarInterfaceBase):
       tune = ret.longitudinalTuning
       tune.deadzoneBP = [0., 9.]
       tune.deadzoneV = [.0, .15]
-      tune.kpV = [0.25]
-      tune.kiV = [0.05]
       ret.longitudinalActuatorDelayUpperBound = 0.5 # s
       ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
       ret.stopAccel = -2.0
