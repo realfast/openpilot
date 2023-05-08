@@ -115,8 +115,6 @@ class CarController:
 
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
 
-
-
       #LONG
       das_3_counter = self.frame / 2
       stopping = CC.actuators.longControlState == LongCtrlState.stopping
@@ -125,12 +123,10 @@ class CarController:
       self.long_active = CC.enabled
       self.speed = CC.hudControl.setSpeed
 
-      self.stock_acc = self.op_params.get('stock_ACC')
       brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
       time_for_sample = self.op_params.get('long_time_constant')
       torque_limits = self.op_params.get('torque_limits')
       drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
-          
 
       accel_go = False
       decel_req = False
@@ -148,14 +144,12 @@ class CarController:
       elif CC.enabled:
         if CC.actuators.accel < brake_threshold:
           decel_req = True
-          # if CC.actuators.speed < 0.1 and CS.out.vEgo < 0.1:
           if stopping and CS.out.vEgo < 0.01:
             standstill = True
           decel = CC.actuators.accel
 
-        else:
+        elif not CS.out.gasPressed:
           accel_req = True
-          # if CS.out.vEgo < 0.1 and CC.actuators.accel > 0:
           if starting:
             accel_go = True
 
@@ -164,15 +158,17 @@ class CarController:
           # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
           # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
           kinetic_energy = ((self.CP.mass * self.desired_velocity **2)/2) - ((self.CP.mass * CS.out.vEgo **2)/2)
+
           # convert kinetic energy to torque
           # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
           torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
+
           if not CS.tcLocked and CS.tcSlipPct > 0:
             torque = torque/CS.tcSlipPct
           torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
         if current_engine_torque < 0 and torque > 0:
-          #If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
+          # If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
           # rough estimate of external forces in N
           # total_forces = 650
           # #torque required to maintain speed
@@ -190,7 +186,7 @@ class CarController:
       
       self.last_acc = CC.enabled
 
-      can_sends.append(das_3_message(self.packer, self.stock_acc, das_3_counter, self.long_active,
+      can_sends.append(das_3_message(self.packer, False, das_3_counter, self.long_active,
                                     accel_req, 
                                     decel_req,
                                     accel_go,
@@ -200,15 +196,15 @@ class CarController:
                                     decel,
                                     CS.das_3))
 
-      can_sends.append(das_5_message(self.packer, self.stock_acc, 0, self.speed, CS.das_5))
+      can_sends.append(das_5_message(self.packer, False, 0, self.speed, CS.das_5))
 
-      can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
+      #can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
     if self.frame % 6 == 0:
       state = 0
       if CS.out.cruiseState.available:
         state = 2 if CS.out.cruiseState.enabled else 1 #1/2 for regular cc, 3/4 for ACC
-      can_sends.append(das_4_message(self.packer, self.stock_acc, 0, state, self.speed, CS.das_4))
+      can_sends.append(das_4_message(self.packer, False, 0, state, self.speed, CS.das_4))
 
     # HUD alerts
     if self.frame % 25 == 0:

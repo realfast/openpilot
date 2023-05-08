@@ -83,8 +83,8 @@ class CarInterface(CarInterfaceBase):
       ret.startingState = True
       ret.vEgoStarting = 0.1
       ret.startAccel = 1.0
-      ret.longitudinalActuatorDelayUpperBound = 0.25
-      ret.longitudinalActuatorDelayLowerBound = 0.25
+      ret.longitudinalActuatorDelayUpperBound = .25
+      ret.longitudinalActuatorDelayLowerBound = .25
 
 
     elif candidate == CAR.RAM_HD:
