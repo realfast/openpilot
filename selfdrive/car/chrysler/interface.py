@@ -75,17 +75,18 @@ class CarInterface(CarInterfaceBase):
         for fw in car_fw:
           if fw.ecu == 'eps' and fw.fwVersion in (b"68273275AF", b"68273275AG", b"68312176AE", b"68312176AG", ):
             ret.minEnableSpeed = 0.
-      ret.openpilotLongitudinalControl = True
-      tune = ret.longitudinalTuning
-      tune.deadzoneBP = [0., 9.]
-      tune.deadzoneV = [.0, .15]
-      ret.stopAccel = -2.0
-      ret.startingState = True
-      ret.vEgoStarting = 0.1
-      ret.startAccel = 1.0
-      ret.longitudinalActuatorDelayUpperBound = .25
-      ret.longitudinalActuatorDelayLowerBound = .25
 
+      ret.vEgoStopping = .05 # Speed at which the car goes into stopping state
+      ret.vEgoStarting = .1 # Speed at which the car goes into starting state
+      ret.stoppingControl = True # Does the car allow full control even at lows speeds when stopping
+      ret.stopAccel = -2 # Required acceleration to keep vehicle stationary
+      # old value .8 pulled .3 from Toyota GM uses 2
+      ret.stoppingDecelRate = 2 # m/s^2/s while trying to stop
+      ret.startAccel = .5 # Required acceleration to get car moving
+      ret.startingState = True # Does this car make use of special starting state
+      ret.longitudinalActuatorDelayUpperBound = 0.15 # Gas/Brake actuator delay in seconds, lower bound
+      ret.longitudinalActuatorDelayLowerBound = 0.15 # Gas/Brake actuator delay in seconds, upper bound
+      ret.openpilotLongitudinalControl = True # is openpilot doing the longitudinal control?
 
     elif candidate == CAR.RAM_HD:
       stiffnessFactor = 0.35

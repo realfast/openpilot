@@ -15,10 +15,10 @@ from common.op_params import opParams
 
 import logging
 
-#for handler in logging.root.handlers[:]:
-    #logging.root.removeHandler(handler)
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
 
-#logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
+logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
 
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
@@ -123,10 +123,10 @@ class CarController:
       self.long_active = CC.enabled
       self.speed = CC.hudControl.setSpeed
 
-      brake_threshold = -self.op_params.get('brake_threshold') if CS.out.vEgo > 2.25 else 0
-      time_for_sample = self.op_params.get('long_time_constant')
-      torque_limits = self.op_params.get('torque_limits')
-      drivetrain_efficiency = self.op_params.get('drivetrain_efficiency')
+      brake_threshold = -.5 if CS.out.vEgo > 2.25 else 0
+      time_for_sample = 1
+      torque_limits = 6
+      drivetrain_efficiency = .85
 
       accel_go = False
       decel_req = False
@@ -142,18 +142,23 @@ class CarController:
         self.long_active = True
 
       elif CC.enabled:
-        if CC.actuators.accel < brake_threshold:
+        if self.accel <= brake_threshold:
           decel_req = True
+          decel = self.accel
+          #decel = min(self.accel, -0.2)
+          
           if stopping and CS.out.vEgo < 0.01:
             standstill = True
-          decel = CC.actuators.accel
 
         elif not CS.out.gasPressed:
           accel_req = True
+          
           if starting:
             accel_go = True
 
-          self.desired_velocity = min(CC.actuators.speed, CS.out.cruiseState.speed)
+          # calculate desired velocity
+          self.calc_velocity = ((self.accel - CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+          self.desired_velocity = min(self.calc_velocity, self.speed)
 
           # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
           # use the kinetic energy from the desired velocity - the kinetic energy from the current velocity to get the change in velocity
@@ -165,6 +170,7 @@ class CarController:
 
           if not CS.tcLocked and CS.tcSlipPct > 0:
             torque = torque/CS.tcSlipPct
+
           torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
 
         if current_engine_torque < 0 and torque > 0:
@@ -182,7 +188,7 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
       #if CC.enabled:
-      #logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, CC.actuators.speed, CS.out.cruiseState.speed, self.desired_velocity, CS.out.aEgo, CS.out.vEgo, torque, current_engine_torque, CS.engineRpm, CS.out.vEgo*2.2369362921, self.long_active, CS.out.gasPressed, CS.tcLocked, CS.tcSlipPct, CS.inputSpeed, CS.transOutputSpeed, CS.transGearRatio)
+      #logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, self.accel, CS.out.vEgo, self.calc_velocity, self.desired_velocity, CS.out.aEgo, self.speed, len(self.sm['longitudinalPlan'].speeds))
       
       self.last_acc = CC.enabled
 
@@ -198,7 +204,7 @@ class CarController:
 
       can_sends.append(das_5_message(self.packer, False, 0, self.speed, CS.das_5))
 
-      #can_sends.append(acc_log(self.packer, CC.actuators.accel, CC.actuators.speed, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
+      #can_sends.append(acc_log(self.packer, CC.actuators.accel, 0, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
     if self.frame % 6 == 0:
       state = 0
@@ -211,7 +217,6 @@ class CarController:
       if CS.lkas_car_model != -1:
         can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS))
         self.hud_count += 1
-
     self.frame += 1
 
     new_actuators = CC.actuators.copy()

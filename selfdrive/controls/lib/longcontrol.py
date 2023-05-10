@@ -5,8 +5,6 @@ from selfdrive.controls.lib.drive_helpers import CONTROL_N, apply_deadzone
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.modeld.constants import T_IDXS
 
-from common.op_params import opParams
-
 LongCtrlState = car.CarControl.Actuators.LongControlState
 
 
@@ -55,15 +53,10 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target,
 class LongControl:
   def __init__(self, CP):
     self.CP = CP
-    self.op_params = opParams()
-
-    self.kp = self.op_params.get('long_p')
-    self.ki = self.op_params.get('long_i')
-
     self.long_control_state = LongCtrlState.off  # initialized to off
-    self.pid = PIDController((CP.longitudinalTuning.kpBP, self.kp),
-                             (CP.longitudinalTuning.kiBP, self.ki),
-                             k_f=CP.longitudinalTuning.kf, rate=1 / DT_CTRL, islong=True)
+    self.pid = PIDController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
+                             (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
+                             k_f=CP.longitudinalTuning.kf, rate=1 / DT_CTRL)
     self.v_pid = 0.0
     self.last_output_accel = 0.0
 
@@ -73,10 +66,6 @@ class LongControl:
     self.v_pid = v_pid
 
   def update(self, active, CS, long_plan, accel_limits, t_since_plan):
-    self.stoppingDecelRate = self.op_params.get('stopping_decel_rate')
-    self.longitudinalActuatorDelayUpperBound = self.op_params.get('long_act_delay_upper')
-    self.longitudinalActuatorDelayLowerBound = self.op_params.get('long_act_delay_lower')
-    
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
     # Interp control trajectory
     speeds = long_plan.speeds
@@ -87,13 +76,13 @@ class LongControl:
       v_target_lower = interp(self.CP.longitudinalActuatorDelayLowerBound + t_since_plan, T_IDXS[:CONTROL_N], speeds)
       a_target_lower = 2 * (v_target_lower - v_target_now) / self.CP.longitudinalActuatorDelayLowerBound - a_target_now
 
-      v_target_upper = interp(self.longitudinalActuatorDelayUpperBound + t_since_plan, T_IDXS[:CONTROL_N], speeds)
-      a_target_upper = 2 * (v_target_upper - v_target_now) / self.longitudinalActuatorDelayUpperBound - a_target_now
+      v_target_upper = interp(self.CP.longitudinalActuatorDelayUpperBound + t_since_plan, T_IDXS[:CONTROL_N], speeds)
+      a_target_upper = 2 * (v_target_upper - v_target_now) / self.CP.longitudinalActuatorDelayUpperBound - a_target_now
 
       v_target = min(v_target_lower, v_target_upper)
       a_target = min(a_target_lower, a_target_upper)
 
-      v_target_1sec = interp(self.longitudinalActuatorDelayUpperBound + t_since_plan + 1.0, T_IDXS[:CONTROL_N], speeds)
+      v_target_1sec = interp(self.CP.longitudinalActuatorDelayUpperBound + t_since_plan + 1.0, T_IDXS[:CONTROL_N], speeds)
     else:
       v_target = 0.0
       v_target_now = 0.0
@@ -115,7 +104,7 @@ class LongControl:
     elif self.long_control_state == LongCtrlState.stopping:
       if output_accel > self.CP.stopAccel:
         output_accel = min(output_accel, 0.0)
-        output_accel -= self.stoppingDecelRate * DT_CTRL
+        output_accel -= self.CP.stoppingDecelRate * DT_CTRL
       self.reset(CS.vEgo)
 
     elif self.long_control_state == LongCtrlState.starting:
@@ -140,4 +129,4 @@ class LongControl:
 
     self.last_output_accel = clip(output_accel, accel_limits[0], accel_limits[1])
 
-    return self.last_output_accel, v_target
+    return self.last_output_accel
