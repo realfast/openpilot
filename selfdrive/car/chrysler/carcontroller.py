@@ -13,12 +13,12 @@ import math
 
 from common.op_params import opParams
 
-import logging
+# import logging
 
-for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
+# for handler in logging.root.handlers[:]:
+#     logging.root.removeHandler(handler)
 
-logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
+# logging.basicConfig(filename='/tmp/comma.csv', format='%(message)s')
 
 LongCtrlState = car.CarControl.Actuators.LongControlState
 # braking
@@ -182,7 +182,7 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
       #if CC.enabled:
-      logging.info('%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, CC.actuators.speed, CS.out.vEgo, self.CP.startAccel, self.CP.stopAccel, CS.out.cruiseState.speed, starting, stopping)
+      #logging.info('%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, CC.actuators.speed, CS.out.vEgo, self.CP.startAccel, self.CP.stopAccel, CS.out.cruiseState.speed, starting, stopping)
       
       self.last_acc = CC.enabled
 
