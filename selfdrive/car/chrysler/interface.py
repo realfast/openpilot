@@ -84,8 +84,8 @@ class CarInterface(CarInterfaceBase):
       ret.stoppingDecelRate = 2 # m/s^2/s while trying to stop
       ret.startAccel = .5 # Required acceleration to get car moving
       ret.startingState = True # Does this car make use of special starting state
-      ret.longitudinalActuatorDelayUpperBound = .5 # Gas/Brake actuator delay in seconds, lower bound
-      ret.longitudinalActuatorDelayLowerBound = .5 # Gas/Brake actuator delay in seconds, upper bound
+      ret.longitudinalActuatorDelayUpperBound = 0.15 # Gas/Brake actuator delay in seconds, lower bound
+      ret.longitudinalActuatorDelayLowerBound = 0.15 # Gas/Brake actuator delay in seconds, upper bound
       ret.openpilotLongitudinalControl = True # is openpilot doing the longitudinal control?
 
     elif candidate == CAR.RAM_HD:

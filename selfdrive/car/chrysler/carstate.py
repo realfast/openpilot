@@ -92,18 +92,10 @@ class CarState(CarStateBase):
     ret.genericToggle = cp.vl["STEERING_LEVERS"]["HIGH_BEAM_PRESSED"] == 1
     
     # if accelcruise pressed set self.longEnabled to True
-    ret.cruiseState.speed = self.cruisespeed
     if cp.vl["CRUISE_BUTTONS"]["ACC_Accel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Decel"] == 1 or cp.vl["CRUISE_BUTTONS"]["ACC_Resume"] == 1:
       self.longEnabled = True
-      if ret.cruiseState.speed == 0:
-        ret.cruiseState.speed = ret.vEgo if ret.vEgo > 20 * CV.MPH_TO_MS else 20 * CV.MPH_TO_MS
-      elif cp.vl["CRUISE_BUTTONS"]["ACC_Accel"] == 1:
-        ret.cruiseState.speed += 1
-    
     elif cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"] == 1 or ret.brakePressed == 1:
       self.longEnabled = False
-      if cp.vl["CRUISE_BUTTONS"]["ACC_Cancel"] == 1:
-        ret.cruiseState.speed = 0
 
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
@@ -119,6 +111,7 @@ class CarState(CarStateBase):
     ret.cruiseState.available = True
     ret.cruiseState.nonAdaptive = False
     ret.cruiseState.standstill = ret.standstill
+    ret.cruiseState.speed = cp_cruise.vl["DAS_4"]["ACC_SET_SPEED_KPH"] * CV.KPH_TO_MS
     # ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
     if self.op_params.get('stock_ACC'):
       ret.cruiseState.available = cp_cruise.vl["DAS_3"]["ACC_AVAILABLE"] == 1

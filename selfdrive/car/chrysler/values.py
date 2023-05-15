@@ -35,7 +35,7 @@ class CAR:
 
 
 class CarControllerParams:
-  ACCEL_MAX = 2.0  # m/s2
+  ACCEL_MAX = 1.5  # m/s2
   ACCEL_MIN = -2.0  # m/s2
 
   def __init__(self, CP):
@@ -245,6 +245,7 @@ FW_VERSIONS = {
       b'68475160AE',
       b'68475160AF',
       b'68475160AG',
+      b'04672892AB',
     ],
     (Ecu.eps, 0x75A, None): [
       b'68273275AF', #S0
