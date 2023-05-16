@@ -188,7 +188,7 @@ class CarController:
         torque = max(torque, (0 - self.op_params.get('min_torque')))
 
       #if CC.enabled:
-      #logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, self.accel, CS.out.vEgo, self.calc_velocity, self.desired_velocity, CS.out.aEgo, self.speed, len(self.sm['longitudinalPlan'].speeds))
+      #logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, self.accel, CS.out.vEgo, self.calc_velocity, self.desired_velocity, CS.out.aEgo, self.speed, current_engine_torque, torque, CS.engineRpm, accel_req, decel_req)
       
       self.last_acc = CC.enabled
 
