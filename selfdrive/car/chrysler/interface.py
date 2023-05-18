@@ -80,12 +80,11 @@ class CarInterface(CarInterfaceBase):
       ret.vEgoStarting = .1 # Speed at which the car goes into starting state
       ret.stoppingControl = True # Does the car allow full control even at lows speeds when stopping
       ret.stopAccel = -2 # Required acceleration to keep vehicle stationary
-      # old value .8 pulled .3 from Toyota GM uses 2
-      ret.stoppingDecelRate = 2 # m/s^2/s while trying to stop
+      ret.stoppingDecelRate = 2 # brake_travel/s while trying to stop
       ret.startAccel = .5 # Required acceleration to get car moving
       ret.startingState = True # Does this car make use of special starting state
-      ret.longitudinalActuatorDelayUpperBound = 0.5 # Gas/Brake actuator delay in seconds, lower bound
-      ret.longitudinalActuatorDelayLowerBound = 0.5 # Gas/Brake actuator delay in seconds, upper bound
+      ret.longitudinalActuatorDelayUpperBound = 0.25 # Gas/Brake actuator delay in seconds, lower bound
+      ret.longitudinalActuatorDelayLowerBound = 0.25 # Gas/Brake actuator delay in seconds, upper bound
       ret.openpilotLongitudinalControl = True # is openpilot doing the longitudinal control?
       tune = ret.longitudinalTuning
       tune.kpBP = [0, 17.8816, 26.8224]

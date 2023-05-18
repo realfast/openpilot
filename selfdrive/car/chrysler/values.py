@@ -35,8 +35,8 @@ class CAR:
 
 
 class CarControllerParams:
-  ACCEL_MAX = 1.5  # m/s2
-  ACCEL_MIN = -2.0  # m/s2
+  ACCEL_MAX = 3.5  # m/s2
+  ACCEL_MIN = -4.0  # m/s2
 
   def __init__(self, CP):
     self.STEER_STEP = 2  # 50 Hz

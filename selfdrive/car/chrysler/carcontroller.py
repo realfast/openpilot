@@ -6,10 +6,6 @@ from selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, RAM_HD, CarControlle
 from cereal import car
 
 from common.numpy_fast import clip
-from common.conversions import Conversions as CV
-from common.params import Params, put_nonblocking
-
-import math
 
 from common.op_params import opParams
 
@@ -42,13 +38,23 @@ class CarController:
     self.accel_sent = False
 
     # long
-    self.max_gear = None
+    self.max_gear = 8
     self.op_params = opParams()
     self.desired_velocity = 0
     self.calc_velocity = 0
     self.speed = 0
     self.long_active = False
     self.last_acc = False
+    self.decel_req = False
+    self.accel_go = False
+    self.accel_req = False
+    self.standstill = False
+    self.decel = 4
+    self.torque = -75
+    self.time_for_sample = .25
+    self.torque_limits = 6
+    self.drivetrain_efficiency = .85
+    self.brake_prep = False
 
   def update(self, CC, CS, now_nanos):
     can_sends = []
@@ -123,41 +129,37 @@ class CarController:
       self.long_active = CC.enabled
       self.speed = CC.hudControl.setSpeed
 
-      brake_threshold = -.5 if CS.out.vEgo > 2.25 else 0
-      time_for_sample = 1
-      torque_limits = 6
-      drivetrain_efficiency = .85
-
-      accel_go = False
-      decel_req = False
-      accel_req = False
-      standstill = False
-      decel = 4
-      torque = -75
-      max_gear = 8
-
-      current_engine_torque = CS.engineTorque
+      brake_threshold = -.25 #if CS.out.vEgo > 2.25 else 0
+      self.brake_prep = CC.hudControl.leadVisible
         
       if self.last_acc != CC.enabled:
         self.long_active = True
 
-      elif CC.enabled:
-        if self.accel <= brake_threshold:
-          decel_req = True
-          decel = self.accel
-          #decel = min(self.accel, -0.2)
+      elif CC.enabled and not CS.out.gasPressed:
+        if self.accel <= brake_threshold or (self.decel_req and self.accel <= 0):
+          self.accel_req = False
+          self.decel_req = True
+          self.decel = self.accel
+
+          # if CC.hudControl.leadVisible:
+          #   self.decel *= 1.75
           
           if stopping and CS.out.vEgo < 0.01:
-            standstill = True
+            self.standstill = True
+          else:
+            self.standstill = False
 
-        elif not CS.out.gasPressed:
-          accel_req = True
+        else:
+          self.accel_req = True
+          self.decel_req = False
           
           if starting:
-            accel_go = True
+            self.accel_go = True
+          else:
+            self.accel_go = False
 
           # calculate desired velocity
-          self.calc_velocity = ((self.accel - CS.out.aEgo) * time_for_sample) + CS.out.vEgo
+          self.calc_velocity = ((self.accel - CS.out.aEgo) * self.time_for_sample) + CS.out.vEgo
           self.desired_velocity = min(self.calc_velocity, self.speed)
 
           # kinetic energy (J) = 1/2 * mass (kg) * velocity (m/s)^2
@@ -166,45 +168,53 @@ class CarController:
 
           # convert kinetic energy to torque
           # torque(NM) = (kinetic energy (J) * 9.55414 (Nm/J) * time(s))/RPM
-          torque = (kinetic_energy * 9.55414 * time_for_sample)/(drivetrain_efficiency * CS.engineRpm + 0.001)
+          self.torque = (kinetic_energy * 9.55414 * self.time_for_sample)/(self.drivetrain_efficiency * CS.engineRpm + 0.001)
 
           if not CS.tcLocked and CS.tcSlipPct > 0:
-            torque = torque/CS.tcSlipPct
+            self.torque = self.torque/CS.tcSlipPct
 
-          torque = clip(torque, -torque_limits, torque_limits) # clip torque to -6 to 6 Nm for sanity
+          self.torque = clip(self.torque, -self.torque_limits, self.torque_limits) # clip torque to -6 to 6 Nm for sanity
 
-        if current_engine_torque < 0 and torque > 0:
+        if CS.engineTorque < 0 and self.torque > 0:
           # If the engine is producing negative torque, we need to return to a reasonable torque value quickly.
           # rough estimate of external forces in N
           # total_forces = 650
           # #torque required to maintain speed
           # torque = (total_forces * CS.out.vEgo * 9.55414)/(CS.engineRpm * drivetrain_efficiency + 0.001)
-          torque = 75
+          self.torque = 75
 
         #If torque is positive, add the engine torque to the torque we calculated. This is because the engine torque is the torque the engine is producing.
         else:
-          torque += current_engine_torque
+          self.torque += CS.engineTorque
 
-        torque = max(torque, (0 - self.op_params.get('min_torque')))
+        self.torque = max(self.torque, (0 - self.op_params.get('min_torque')))
+
+      else:
+        self.accel_req = False
+        self.decel_req = False
+        self.accel_go = False
+        self.standstill = False
+        self.torque = -75
 
       #if CC.enabled:
-      #logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, self.accel, CS.out.vEgo, self.calc_velocity, self.desired_velocity, CS.out.aEgo, self.speed, current_engine_torque, torque, CS.engineRpm, accel_req, decel_req)
+      logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, self.accel, CS.out.vEgo, CS.out.aEgo, self.accel_req, self.decel_req, self.calc_velocity, self.desired_velocity, self.speed, CS.engineTorque, self.torque, CS.engineRpm)
       
       self.last_acc = CC.enabled
 
       can_sends.append(das_3_message(self.packer, False, das_3_counter, self.long_active,
-                                    accel_req, 
-                                    decel_req,
-                                    accel_go,
-                                    torque,
-                                    max_gear,
-                                    standstill,
-                                    decel,
+                                    self.accel_req, 
+                                    self.decel_req,
+                                    self.accel_go,
+                                    self.torque,
+                                    self.max_gear,
+                                    self.standstill,
+                                    self.decel,
+                                    self.brake_prep,
                                     CS.das_3))
 
       can_sends.append(das_5_message(self.packer, False, 0, self.speed, CS.das_5))
 
-      #can_sends.append(acc_log(self.packer, CC.actuators.accel, 0, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
+      can_sends.append(acc_log(self.packer, CC.actuators.accel, 0, self.calc_velocity, CS.out.aEgo, CS.out.vEgo))
 
     if self.frame % 6 == 0:
       state = 0
