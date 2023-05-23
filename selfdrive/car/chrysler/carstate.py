@@ -281,6 +281,12 @@ class CarState(CarStateBase):
       ]
       checks.append(("BSM_1", 2))
 
+    if CP.carFingerprint in RAM_DT:
+      signals+= [
+        ("RATIO", "TRANS_SPEED"),
+        ("OUTPUT_SPEED", "TRANS_SPEED"),
+      ]
+
     if CP.carFingerprint in RAM_CARS:
       signals += [
         ("DASM_FAULT", "EPS_3"),
@@ -295,11 +301,6 @@ class CarState(CarStateBase):
         ("Transmission_Status", 50),
         ("Center_Stack_1", 1),
         ("Center_Stack_2", 1),
-      ]
-    if CP.carFingerprint in RAM_DT:
-      signals+= [
-        ("RATIO", "TRANS_SPEED"),
-        ("OUTPUT_SPEED", "TRANS_SPEED"),
       ]
     else:
       signals += [
