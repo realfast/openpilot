@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from common.realtime import sec_since_boot
-from common.numpy_fast import clip
+from common.numpy_fast import clip, interp
 from system.swaglog import cloudlog
 from selfdrive.modeld.constants import index_function
 from selfdrive.controls.lib.radar_helpers import _LEAD_ACCEL_TAU
@@ -279,9 +279,12 @@ class LongitudinalMpc:
 
   def process_lead(self, lead):
     v_ego = self.x0[1]
+    a_ego = self.x0[2]
+    additional_dist_a_bp = [ -2.5, -1.5 ]
+    additional_dist_m_bp = [  2.,    0. ]
     if lead is not None and lead.status:
-      x_lead = lead.dRel
-      v_lead = lead.vLead
+      x_lead = lead.dRel - interp(a_ego, additional_dist_a_bp, additional_dist_m_bp) 
+      v_lead = lead.vLead 
       a_lead = lead.aLeadK
       a_lead_tau = lead.aLeadTau
     else:
