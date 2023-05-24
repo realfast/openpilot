@@ -87,12 +87,8 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalActuatorDelayLowerBound = 0.25 # Gas/Brake actuator delay in seconds, upper bound
       ret.openpilotLongitudinalControl = True # is openpilot doing the longitudinal control?
       tune = ret.longitudinalTuning
-
-
       tune.kpBP = [0, 17.8816, 26.8224]
       tune.kpV = [3.5, 1.5, 1.0]
-      #tune.kiBP = [1.]
-      #tune.kiV = [1.]
 
     elif candidate == CAR.RAM_HD:
       stiffnessFactor = 0.35
