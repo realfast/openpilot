@@ -338,6 +338,7 @@ FW_VERSIONS = {
       b'68525485AB', #TODO: CHECK in newest updat on dongle 5c05760b592aee2c
       b'68525487AB',
       b'68525498AB',
+      b'68528791AF',
     ],
     (Ecu.srs, 0x744, None): [
       b'68346749AB',
@@ -345,6 +346,7 @@ FW_VERSIONS = {
       b'68428503AA',
       b'68428505AA',
       b'68428507AA',
+      b'68544596AC',
     ],
     (Ecu.abs, 0x747, None): [
       b'68334977AH',
@@ -362,10 +364,12 @@ FW_VERSIONS = {
       b'68462657AE',
       b'68484694AD',
       b'68484694AE',
+      b'04672934AB',
     ],
     (Ecu.eps, 0x761, None): [
       b'68421036AC',
       b'68507906AB',
+      b'68534023AC',
     ],
     (Ecu.engine, 0x7e0, None): [
       b'52370131AF',
@@ -377,6 +381,7 @@ FW_VERSIONS = {
       b'68527616AD ',
       b'M2370131MB',
       b'M2421132MB',
+      b'52421332AF',
       b'           ',
     ],
     (Ecu.gateway, 0x18DACBF1, None): [
