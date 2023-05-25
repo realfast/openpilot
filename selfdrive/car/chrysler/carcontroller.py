@@ -1,6 +1,6 @@
 from opendbc.can.packer import CANPacker
 from common.realtime import DT_CTRL
-from selfdrive.car import apply_toyota_steer_torque_limits
+from selfdrive.car import apply_meas_steer_torque_limits
 from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_command, create_cruise_buttons, das_3_message, acc_log, das_4_message, das_5_message
 from selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, RAM_HD, CarControllerParams, ChryslerFlags
 from cereal import car
@@ -113,8 +113,8 @@ class CarController:
 
       # steer torque
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
-      apply_steer = apply_toyota_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
-      if not lkas_active or not lkas_control_bit or not self.lkas_control_bit_prev:
+      apply_steer = apply_meas_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
+      if not lkas_active or not lkas_control_bit:
         apply_steer = 0
       self.apply_steer_last = apply_steer
       self.lkas_control_bit_prev = lkas_control_bit
