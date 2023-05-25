@@ -18,10 +18,6 @@ public:
 
   static std::string get_serial() { return "cccccc"; }
 
-  static std::map<std::string, std::string> get_init_logs() {
-    return {};
-  }
-
   static void reboot() {}
   static void poweroff() {}
   static void set_brightness(int percent) {}

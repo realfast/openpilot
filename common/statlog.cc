@@ -5,7 +5,6 @@
 #include "common/statlog.h"
 #include "common/util.h"
 
-#include <cstdarg>
 #include <stdio.h>
 #include <mutex>
 #include <zmq.h>

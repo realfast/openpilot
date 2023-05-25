@@ -1,7 +1,6 @@
 # distutils: language = c++
 # cython: c_string_encoding=ascii, language_level=3
 
-from cython.operator cimport dereference as deref, preincrement as preinc
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp.unordered_set cimport unordered_set
@@ -52,7 +51,7 @@ cdef class CANParser:
       self.address_to_msg_name[msg.address] = name
       self.vl[msg.address] = {}
       self.vl[name] = self.vl[msg.address]
-      self.vl_all[msg.address] = {}
+      self.vl_all[msg.address] = defaultdict(list)
       self.vl_all[name] = self.vl_all[msg.address]
       self.ts_nanos[msg.address] = {}
       self.ts_nanos[name] = self.ts_nanos[msg.address]
@@ -102,29 +101,37 @@ cdef class CANParser:
       message_options_v.push_back(mpo)
 
     self.can = new cpp_CANParser(bus, dbc_name, message_options_v, signal_options_v)
-    self.update_strings([])
+    self.update_vl()
 
-  def update_strings(self, strings, sendcan=False):
-    for v in self.vl_all.values():
-      for l in v.values():
-        l.clear()
-
-    cdef vector[SignalValue] new_vals
+  cdef unordered_set[uint32_t] update_vl(self):
     cdef unordered_set[uint32_t] updated_addrs
 
-    self.can.update_strings(strings, new_vals, sendcan)
-    cdef vector[SignalValue].iterator it = new_vals.begin()
-    cdef SignalValue* cv
-    while it != new_vals.end():
-      cv = &deref(it)
+    new_vals = self.can.query_latest()
+    for cv in new_vals:
       # Cast char * directly to unicode
       cv_name = <unicode>cv.name
       self.vl[cv.address][cv_name] = cv.value
-      self.vl_all[cv.address][cv_name] = cv.all_values
+      self.vl_all[cv.address][cv_name].extend(cv.all_values)
       self.ts_nanos[cv.address][cv_name] = cv.ts_nanos
       updated_addrs.insert(cv.address)
-      preinc(it)
 
+    return updated_addrs
+
+  def update_string(self, dat, sendcan=False):
+    for v in self.vl_all.values():
+      v.clear()
+
+    self.can.update_string(dat, sendcan)
+    return self.update_vl()
+
+  def update_strings(self, strings, sendcan=False):
+    for v in self.vl_all.values():
+      v.clear()
+
+    updated_addrs = set()
+    for s in strings:
+      self.can.update_string(s, sendcan)
+      updated_addrs.update(self.update_vl())
     return updated_addrs
 
   @property

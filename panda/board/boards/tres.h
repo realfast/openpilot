@@ -19,9 +19,9 @@ void tres_set_bootkick(bool enabled){
 }
 
 bool tres_ignition_prev = false;
-void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
+void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
   UNUSED(usb_enum);
-  if ((ignition && !tres_ignition_prev) || harness_inserted) {
+  if (ignition && !tres_ignition_prev) {
     // enable bootkick on rising edge of ignition
     tres_set_bootkick(true);
   } else if (heartbeat_seen) {
@@ -62,7 +62,11 @@ void tres_init(void) {
   uart_init(&uart_ring_som_debug, 115200);
 
   // SPI init
-  gpio_spi_init();
+  set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 12, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 13, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 14, GPIO_AF5_SPI4);
+  register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
@@ -93,10 +97,7 @@ const board board_tres = {
   .has_spi = true,
   .has_canfd = true,
   .has_rtc_battery = true,
-  .fan_max_rpm = 6600U,
-  .avdd_mV = 1800U,
-  .fan_stall_recovery = false,
-  .fan_enable_cooldown_time = 3U,
+  .fan_max_rpm = 6500U,  // TODO: verify this, copied from dos
   .init = tres_init,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,

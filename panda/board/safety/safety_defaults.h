@@ -27,9 +27,9 @@ static int nooutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return false;
 }
 
-static int default_fwd_hook(int bus_num, int addr) {
+static int default_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   UNUSED(bus_num);
-  UNUSED(addr);
+  UNUSED(to_fwd);
   return -1;
 }
 
@@ -65,9 +65,9 @@ static int alloutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return true;
 }
 
-static int alloutput_fwd_hook(int bus_num, int addr) {
+static int alloutput_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+  UNUSED(to_fwd);
   int bus_fwd = -1;
-  UNUSED(addr);
 
   if (alloutput_passthrough) {
     if (bus_num == 0) {

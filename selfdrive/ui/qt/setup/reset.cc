@@ -11,11 +11,14 @@
 #define NVME "/dev/nvme0n1"
 #define USERDATA "/dev/disk/by-partlabel/userdata"
 
-void Reset::doErase() {
-  // best effort to wipe nvme
+void Reset::doReset() {
+  // best effort to wipe nvme and sd card
   std::system("sudo umount " NVME);
   std::system("yes | sudo mkfs.ext4 " NVME);
 
+  // we handle two cases here
+  //  * user-prompted factory reset
+  //  * recovering from a corrupt userdata by formatting
   int rm = std::system("sudo rm -rf /data/*");
   std::system("sudo umount " USERDATA);
   int fmt = std::system("yes | sudo mkfs.ext4 " USERDATA);
@@ -27,26 +30,22 @@ void Reset::doErase() {
   rebootBtn->show();
 }
 
-void Reset::startReset() {
-  body->setText(tr("Resetting device...\nThis may take up to a minute."));
-  rejectBtn->hide();
-  rebootBtn->hide();
-  confirmBtn->hide();
-#ifdef __aarch64__
-  QTimer::singleShot(100, this, &Reset::doErase);
-#endif
-}
-
 void Reset::confirm() {
   const QString confirm_txt = tr("Are you sure you want to reset your device?");
   if (body->text() != confirm_txt) {
     body->setText(confirm_txt);
   } else {
-    startReset();
+    body->setText(tr("Resetting device..."));
+    rejectBtn->hide();
+    rebootBtn->hide();
+    confirmBtn->hide();
+#ifdef __aarch64__
+    QTimer::singleShot(100, this, &Reset::doReset);
+#endif
   }
 }
 
-Reset::Reset(ResetMode mode, QWidget *parent) : QWidget(parent) {
+Reset::Reset(bool recover, QWidget *parent) : QWidget(parent) {
   QVBoxLayout *main_layout = new QVBoxLayout(this);
   main_layout->setContentsMargins(45, 220, 45, 45);
   main_layout->setSpacing(0);
@@ -57,7 +56,7 @@ Reset::Reset(ResetMode mode, QWidget *parent) : QWidget(parent) {
 
   main_layout->addSpacing(60);
 
-  body = new QLabel(tr("Press confirm to erase all content and settings. Press cancel to resume boot."));
+  body = new QLabel(tr("System reset triggered. Press confirm to erase all content and settings. Press cancel to resume boot."));
   body->setWordWrap(true);
   body->setStyleSheet("font-size: 80px; font-weight: light;");
   main_layout->addWidget(body, 1, Qt::AlignTop | Qt::AlignLeft);
@@ -83,16 +82,10 @@ Reset::Reset(ResetMode mode, QWidget *parent) : QWidget(parent) {
   blayout->addWidget(confirmBtn);
   QObject::connect(confirmBtn, &QPushButton::clicked, this, &Reset::confirm);
 
-  bool recover = mode == ResetMode::RECOVER;
   rejectBtn->setVisible(!recover);
   rebootBtn->setVisible(recover);
   if (recover) {
-    body->setText(tr("Unable to mount data partition. Partition may be corrupted. Press confirm to erase and reset your device."));
-  }
-
-  // automatically start if we're just finishing up an ABL reset
-  if (mode == ResetMode::FORMAT) {
-    startReset();
+    body->setText(tr("Unable to mount data partition. Press confirm to reset your device."));
   }
 
   setStyleSheet(R"(
@@ -115,17 +108,9 @@ Reset::Reset(ResetMode mode, QWidget *parent) : QWidget(parent) {
 }
 
 int main(int argc, char *argv[]) {
-  ResetMode mode = ResetMode::USER_RESET;
-  if (argc > 1) {
-    if (strcmp(argv[1], "--recover") == 0) {
-      mode = ResetMode::RECOVER;
-    } else if (strcmp(argv[1], "--format") == 0) {
-      mode = ResetMode::FORMAT;
-    }
-  }
-
+  bool recover = argc > 1 && strcmp(argv[1], "--recover") == 0;
   QApplication a(argc, argv);
-  Reset reset(mode);
+  Reset reset(recover);
   setMainWindow(&reset);
   return a.exec();
 }

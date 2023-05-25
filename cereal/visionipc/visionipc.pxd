@@ -3,7 +3,6 @@
 
 from libcpp.string cimport string
 from libcpp.vector cimport vector
-from libcpp.set cimport set
 from libc.stdint cimport uint32_t, uint64_t
 from libcpp cimport bool
 
@@ -41,5 +40,3 @@ cdef extern from "cereal/visionipc/visionipc_client.h":
     VisionBuf * recv(VisionIpcBufExtra *, int)
     bool connect(bool)
     bool is_connected()
-    @staticmethod
-    set[VisionStreamType] getAvailableStreams(string, bool)

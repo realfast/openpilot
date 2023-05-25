@@ -34,7 +34,7 @@ bool is_elf(char *fname) {
 void Setup::download(QString url) {
   CURL *curl = curl_easy_init();
   if (!curl) {
-    emit finished(url, tr("Something went wrong. Reboot the device."));
+    emit finished(false);
     return;
   }
 
@@ -53,24 +53,15 @@ void Setup::download(QString url) {
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, (USER_AGENT + version).c_str());
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
-  curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 
   int ret = curl_easy_perform(curl);
   long res_status = 0;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res_status);
-
-  if (ret != CURLE_OK || res_status != 200) {
-    emit finished(url, tr("Ensure the entered URL is valid, and the device’s internet connection is good."));
-  } else if (!is_elf(tmpfile)) {
-    emit finished(url, tr("No custom software found at this URL."));
-  } else {
+  if (ret == CURLE_OK && res_status == 200 && is_elf(tmpfile)) {
     rename(tmpfile, "/tmp/installer");
-
-    FILE *fp_url = fopen("/tmp/installer_url", "w");
-    fprintf(fp_url, "%s", url.toStdString().c_str());
-    fclose(fp_url);
-
-    emit finished(url);
+    emit finished(true);
+  } else {
+    emit finished(false);
   }
 
   curl_slist_free_all(list);
@@ -243,10 +234,10 @@ QWidget * Setup::downloading() {
   return widget;
 }
 
-QWidget * Setup::download_failed(QLabel *url, QLabel *body) {
+QWidget * Setup::download_failed() {
   QWidget *widget = new QWidget();
   QVBoxLayout *main_layout = new QVBoxLayout(widget);
-  main_layout->setContentsMargins(55, 185, 55, 55);
+  main_layout->setContentsMargins(55, 225, 55, 55);
   main_layout->setSpacing(0);
 
   QLabel *title = new QLabel(tr("Download Failed"));
@@ -255,13 +246,7 @@ QWidget * Setup::download_failed(QLabel *url, QLabel *body) {
 
   main_layout->addSpacing(67);
 
-  url->setWordWrap(true);
-  url->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-  url->setStyleSheet("font-family: \"JetBrains Mono\"; font-size: 64px; font-weight: 400; margin-right: 100px;");
-  main_layout->addWidget(url);
-
-  main_layout->addSpacing(48);
-
+  QLabel *body = new QLabel(tr("Ensure the entered URL is valid, and the device’s internet connection is good."));
   body->setWordWrap(true);
   body->setAlignment(Qt::AlignTop | Qt::AlignLeft);
   body->setStyleSheet("font-size: 80px; font-weight: 300; margin-right: 100px;");
@@ -286,7 +271,7 @@ QWidget * Setup::download_failed(QLabel *url, QLabel *body) {
   restart->setProperty("primary", true);
   blayout->addWidget(restart);
   QObject::connect(restart, &QPushButton::clicked, this, [=]() {
-    setCurrentIndex(1);
+    setCurrentIndex(2);
   });
 
   widget->setStyleSheet(R"(
@@ -319,19 +304,15 @@ Setup::Setup(QWidget *parent) : QStackedWidget(parent) {
   downloading_widget = downloading();
   addWidget(downloading_widget);
 
-  QLabel *url_label = new QLabel();
-  QLabel *body_label = new QLabel();
-  failed_widget = download_failed(url_label, body_label);
+  failed_widget = download_failed();
   addWidget(failed_widget);
 
-  QObject::connect(this, &Setup::finished, [=](const QString &url, const QString &error) {
-    qDebug() << "finished" << url << error;
-    if (error.isEmpty()) {
-      // hide setup on success
+  QObject::connect(this, &Setup::finished, [=](bool success) {
+    // hide setup on success
+    qDebug() << "finished" << success;
+    if (success) {
       QTimer::singleShot(3000, this, &QWidget::hide);
     } else {
-      url_label->setText(url);
-      body_label->setText(error);
       setCurrentWidget(failed_widget);
     }
   });

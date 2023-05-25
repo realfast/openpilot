@@ -135,9 +135,6 @@ class HardwareBase(ABC):
   def get_networks(self):
     pass
 
-  def has_internal_panda(self) -> bool:
-    return False
-
   def reset_internal_panda(self):
     pass
 

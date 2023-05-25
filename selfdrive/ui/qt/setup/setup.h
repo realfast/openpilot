@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QLabel>
 #include <QStackedWidget>
 #include <QString>
 #include <QWidget>
@@ -16,13 +15,13 @@ private:
   QWidget *getting_started();
   QWidget *network_setup();
   QWidget *downloading();
-  QWidget *download_failed(QLabel *url, QLabel *body);
+  QWidget *download_failed();
 
   QWidget *failed_widget;
   QWidget *downloading_widget;
 
 signals:
-  void finished(const QString &url, const QString &error = "");
+  void finished(bool success);
 
 public slots:
   void nextPage();

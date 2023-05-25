@@ -1,9 +1,8 @@
 #pragma once
 
+#include <mutex>
 #include <atomic>
 #include <cstdint>
-#include <mutex>
-#include <string>
 #include <vector>
 
 #ifndef __APPLE__

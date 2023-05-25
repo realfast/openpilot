@@ -22,11 +22,10 @@ uint32_t unused_read_current(void) {
   return 0U;
 }
 
-void unused_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
+void unused_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
   UNUSED(ignition);
   UNUSED(usb_enum);
   UNUSED(heartbeat_seen);
-  UNUSED(harness_inserted);
 }
 
 bool unused_read_som_gpio(void) {

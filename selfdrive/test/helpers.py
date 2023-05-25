@@ -2,9 +2,8 @@ import os
 import time
 from functools import wraps
 
-import cereal.messaging as messaging
-from selfdrive.manager.process_config import managed_processes
 from system.hardware import PC
+from selfdrive.manager.process_config import managed_processes
 from system.version import training_version, terms_version
 
 
@@ -16,11 +15,6 @@ def set_params_enabled():
   params.put_bool("OpenpilotEnabledToggle", True)
   params.put_bool("Passive", False)
 
-  # valid calib
-  msg = messaging.new_message('liveCalibration')
-  msg.liveCalibration.validBlocks = 20
-  msg.liveCalibration.rpyCalib = [0.0, 0.0, 0.0]
-  params.put("CalibrationParams", msg.to_bytes())
 
 def phone_only(f):
   @wraps(f)

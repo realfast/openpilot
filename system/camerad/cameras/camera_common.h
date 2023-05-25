@@ -66,6 +66,11 @@ typedef struct FrameMetadata {
   float measured_grey_fraction;
   float target_grey_fraction;
 
+  // Focus
+  unsigned int lens_pos;
+  float lens_err;
+  float lens_true_pos;
+
   float processing_time;
 } FrameMetadata;
 
