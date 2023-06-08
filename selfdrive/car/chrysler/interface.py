@@ -52,7 +52,7 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 14.5
       if car_fw is not None:
         for fw in car_fw:
-          if fw.ecu == 'eps' and fw.fwVersion in (b"68312176AE", b"68312176AG", b"68273275AG"):
+          if fw.ecu == 'eps' and fw.fwVersion in (b"68273275AF", b"68273275AG", b"68312176AE", b"68312176AG"):
             ret.minSteerSpeed = 0.
 
     if candidate in (CAR.RAM_2500):
