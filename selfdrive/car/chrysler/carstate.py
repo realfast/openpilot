@@ -3,7 +3,7 @@ from common.conversions import Conversions as CV
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
-from selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
+from selfdrive.car.chrysler.values import DBC, RAM_DT, STEER_THRESHOLD, RAM_CARS
 
 
 class CarState(CarStateBase):
@@ -81,6 +81,25 @@ class CarState(CarStateBase):
     ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
     ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
 
+    self.das_3 = cp_cruise.vl['DAS_3']
+    self.das_4 = cp_cruise.vl['DAS_4']
+    self.das_5 = cp_cruise.vl['DAS_5']
+    self.torqMin = cp_cruise.vl["DAS_3"]["ENGINE_TORQUE_REQUEST"]
+    self.maxgear = cp_cruise.vl["DAS_3"]["GR_MAX_REQ"]
+    self.torqMax = cp.vl["ECM_TRQ"]["ENGINE_TORQ_MAX"]
+    self.engineRpm = cp.vl["ECM_1"]["ENGINE_RPM"]
+    self.engineTorque = cp.vl["ECM_1"]["ENGINE_TORQUE"]
+    self.inputSpeed = cp.vl["TRANS_SPEED"]["INPUT_SPEED"]
+    self.tcLocked = cp.vl["TRANS_SPEED"]["TC_LOCKED"]
+
+    if self.CP.carFingerprint in RAM_DT:
+      #calculate the input speed from the output speed and gear ratio
+      self.transOutputSpeed = cp.vl["TRANS_SPEED"]["OUTPUT_SPEED"]
+      self.transGearRatio = cp.vl["TRANS_SPEED"]["RATIO"]
+      self.inputSpeed = (self.transOutputSpeed + .001)*(self.transGearRatio + .001)
+
+    self.tcSlipPct = (self.inputSpeed/(self.engineRpm + 0.001)) + 0.001
+
     if self.CP.carFingerprint in RAM_CARS:
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']  # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       ret.steerFaultTemporary  = cp.vl["EPS_3"]["DASM_FAULT"] == 1
@@ -115,10 +134,35 @@ class CarState(CarStateBase):
       ("COUNTER", "DAS_3"),
       ("ACC_SET_SPEED_KPH", "DAS_4"),
       ("ACC_STATE", "DAS_4"),
+      ("ACC_GO", "DAS_3", 0),
+      ("ENGINE_TORQUE_REQUEST", "DAS_3", 0),
+      ("ENGINE_TORQUE_REQUEST_MAX", "DAS_3", 0),
+      ("ACC_DECEL", "DAS_3", 0),
+      ("ACC_DECEL_REQ", "DAS_3", 0),
+      ("ACC_AVAILABLE", "DAS_3", 0),
+      ("DISABLE_FUEL_SHUTOFF", "DAS_3", 0),
+      ("GR_MAX_REQ", "DAS_3", 0),
+      ("STS", "DAS_3", 0),
+      ("COLLISION_BRK_PREP", "DAS_3", 0),
+      ("ACC_BRK_PREP", "DAS_3", 0),
+      ("DISPLAY_REQ", "DAS_3", 0),
+      ("COUNTER", "DAS_3", 0),
+      ("CHECKSUM", "DAS_3", 0),
+      ("ACC_DISTANCE_CONFIG_1", "DAS_4", 0),
+      ("ACC_DISTANCE_CONFIG_2", "DAS_4", 0),
+      ("SPEED_DIGITAL", "DAS_4", 0),
+      ("FCW_BRAKE_ENABLED", "DAS_4", 0),
+      ("ACC_SET_SPEED_MPH", "DAS_4", 0),
+      ("FCW_STATE", "DAS_5", 0),
+      ("FCW_DISTANCE", "DAS_5", 0),
+      ("SET_SPEED_KPH", "DAS_5", 0),
+      ("COUNTER1", "DAS_5", 0),
+      ("CHECKSUM1", "DAS_5", 0),
     ]
     checks = [
       ("DAS_3", 50),
       ("DAS_4", 50),
+      ("DAS_5", 50),
     ]
     return signals, checks
 
@@ -156,6 +200,12 @@ class CarState(CarStateBase):
       ("ACC_OnOff", "CRUISE_BUTTONS"),
       ("ACC_Distance_Inc", "CRUISE_BUTTONS"),
       ("COUNTER", "CRUISE_BUTTONS"),
+      ("ENGINE_RPM", "ECM_1", 0),
+      ("ENGINE_TORQUE", "ECM_1", 0),
+      ("ENGINE_TORQ_MIN", "ECM_TRQ", 0),
+      ("ENGINE_TORQ_MAX", "ECM_TRQ", 0),
+      ("INPUT_SPEED", "TRANS_SPEED"),
+      ("TC_LOCKED", "TRANS_SPEED"),
     ]
 
     checks = [
@@ -169,6 +219,9 @@ class CarState(CarStateBase):
       ("STEERING_LEVERS", 10),
       ("ORC_1", 2),
       ("BCM_1", 1),
+      ("ECM_1", 50),
+      ("ECM_TRQ", 50),
+      ("TRANS_SPEED", 50),
     ]
 
     if CP.enableBsm:
@@ -177,6 +230,12 @@ class CarState(CarStateBase):
         ("LEFT_STATUS", "BSM_1"),
       ]
       checks.append(("BSM_1", 2))
+
+    if CP.carFingerprint in RAM_DT:
+      signals+= [
+        ("RATIO", "TRANS_SPEED"),
+        ("OUTPUT_SPEED", "TRANS_SPEED"),
+      ]
 
     if CP.carFingerprint in RAM_CARS:
       signals += [
