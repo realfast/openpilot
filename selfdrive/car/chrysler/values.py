@@ -413,6 +413,7 @@ FW_VERSIONS = {
       b'68525485AB', #TODO: CHECK in newest updat on dongle 5c05760b592aee2c
       b'68525487AB',
       b'68525498AB',
+      b'68528788AF',
     ],
     (Ecu.srs, 0x744, None): [
       b'68346749AB',
@@ -471,6 +472,7 @@ FW_VERSIONS = {
       b'M2421132MB',
       b'           ',
       b'52421232AF',
+      b'52370331AF',
     ],
     (Ecu.gateway, 0x18DACBF1, None): [
       b'68450806AB',
