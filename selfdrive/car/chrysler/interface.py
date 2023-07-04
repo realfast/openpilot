@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 from cereal import car
 from panda import Panda
-from selfdrive.car import STD_CARGO_KG, get_safety_config, scale_rot_inertia, scale_tire_stiffness
+from selfdrive.car import STD_CARGO_KG, get_safety_config
 from selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags
 from selfdrive.car.interfaces import CarInterfaceBase
 
-GearShifter = car.CarState.GearShifter
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
   def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
     ret.carName = "chrysler"
+    ret.dashcamOnly = candidate in RAM_HD
 
     # radar parsing needs some work, see https://github.com/commaai/openpilot/issues/26842
     ret.radarUnavailable = True # DBC[candidate]['radar'] is None
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 0.4
-    stiffnessFactor = 1.0
 
     # safety config
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
@@ -63,7 +62,6 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 3.88
       ret.steerRatio = 16.3
       ret.mass = 2493. + STD_CARGO_KG
-      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
       ret.minSteerSpeed = 0.5
       ret.minEnableSpeed = 14.6
       if car_fw is not None:
@@ -72,7 +70,6 @@ class CarInterface(CarInterfaceBase):
             ret.minEnableSpeed = 0.
 
     elif candidate == CAR.RAM_HD:
-      stiffnessFactor = 0.35
       ret.steerActuatorDelay = 0.25
       ret.wheelbase = 3.785
       ret.steerRatio = 15.61
@@ -88,14 +85,6 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
 
     ret.centerToFront = ret.wheelbase * 0.44
-
-    # starting with reasonable value for civic and scaling by mass and wheelbase
-    ret.rotationalInertia = scale_rot_inertia(ret.mass, ret.wheelbase)
-
-    # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
-    # mass and CG position, so all cars will have approximately similar dyn behaviors
-    ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront, stiffnessFactor)
-
     ret.enableBsm = 720 in fingerprint[0]
 
     return ret
@@ -109,7 +98,7 @@ class CarInterface(CarInterfaceBase):
     if self.CP.carFingerprint in RAM_DT:
       if self.CS.out.vEgo >= self.CP.minEnableSpeed:
         self.low_speed_alert = False
-      if (self.CP.minEnableSpeed >= 14.5)  and (self.CS.out.gearShifter != GearShifter.drive) :
+      if (self.CP.minEnableSpeed >= 14.5)  and (self.CS.out.gearShifter != car.CarState.GearShifter.drive) :
         self.low_speed_alert = True
 
     else:# Low speed steer alert hysteresis logic

@@ -5,8 +5,6 @@ from selfdrive.car.chrysler.chryslercan import create_lkas_hud, create_lkas_comm
 from selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, RAM_HD, CarControllerParams, ChryslerFlags
 from cereal import car
 
-GearShifter = car.CarState.GearShifter
-
 class CarController:
   def __init__(self, dbc_name, CP, VM):
     self.CP = CP
@@ -24,25 +22,27 @@ class CarController:
   def update(self, CC, CS, now_nanos):
     can_sends = []
 
-    lkas_active = CC.latActive and not CS.lkasdisabled
+    lkas_active = CC.latActive and self.lkas_control_bit_prev
 
     # cruise buttons
-    if (CS.button_counter != self.last_button_frame):
+    if (self.frame - self.last_button_frame)*DT_CTRL > 0.05:
       das_bus = 2 if self.CP.carFingerprint in RAM_CARS else 0
-      self.last_button_frame = CS.button_counter
-      if self.CP.carFingerprint in RAM_CARS:
-        if CS.cruise_cancel:
-          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=True))
-        else:
-          can_sends.append(create_cruise_buttons(self.packer, CS.button_counter, das_bus, CS.cruise_buttons, cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
-       # ACC cancellation
-      elif CC.cruiseControl.cancel:
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, cancel=True))
+      # ACC cancellation
+      if CC.cruiseControl.cancel:
+        self.last_button_frame = self.frame
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, cancel=True))
 
       # ACC resume from standstill
       elif CC.cruiseControl.resume:
-        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter+1, das_bus, CS.cruise_buttons, resume=True))
+        self.last_button_frame = self.frame
+        can_sends.append(create_cruise_buttons(self.packer, CS.button_counter + 1, das_bus, resume=True))
+
+    # HUD alerts
+    if self.frame % 25 == 0:
+      if CS.lkas_car_model != -1:
+        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
+        self.hud_count += 1
 
     # steering
     if self.frame % self.params.STEER_STEP == 0:
@@ -52,7 +52,7 @@ class CarController:
       if self.CP.carFingerprint in RAM_DT:
         if CS.out.vEgo >= self.CP.minEnableSpeed and CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
           lkas_control_bit = True
-        if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != GearShifter.drive) :
+        if (self.CP.minEnableSpeed >= 14.5)  and (CS.out.gearShifter != car.CarState.GearShifter.drive) :
           lkas_control_bit = False
       elif CS.out.vEgo > self.CP.minSteerSpeed:
         lkas_control_bit = True
@@ -64,10 +64,11 @@ class CarController:
           lkas_control_bit = False
 
       # EPS faults if LKAS re-enables too quickly
-      lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
+      lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
 
       if not lkas_control_bit and self.lkas_control_bit_prev:
         self.last_lkas_falling_edge = self.frame
+      self.lkas_control_bit_prev = lkas_control_bit
 
       # steer torque
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
@@ -75,15 +76,8 @@ class CarController:
       if not lkas_active or not lkas_control_bit:
         apply_steer = 0
       self.apply_steer_last = apply_steer
-      self.lkas_control_bit_prev = lkas_control_bit
 
       can_sends.append(create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
-
-    # HUD alerts
-    if self.frame % 25 == 0:
-      if CS.lkas_car_model != -1:
-        can_sends.append(create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert, self.hud_count, CS.lkas_car_model, CS))
-        self.hud_count += 1
 
     self.frame += 1
 
