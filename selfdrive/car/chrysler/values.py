@@ -39,12 +39,11 @@ class CarControllerParams:
     if CP.carFingerprint in RAM_HD:
       self.STEER_DELTA_UP = 14
       self.STEER_DELTA_DOWN = 14
-      self.STEER_ERROR_MAX = 200
       self.STEER_MAX = 361  # higher than this faults the EPS
     elif CP.carFingerprint in RAM_DT:
       self.STEER_DELTA_UP = 6
       self.STEER_DELTA_DOWN = 6
-      self.STEER_MAX = 350 # higher than this faults the EPS
+      self.STEER_MAX = 350  # EPS allows more, up to 350?
     else:
       self.STEER_DELTA_UP = 3
       self.STEER_DELTA_DOWN = 3
