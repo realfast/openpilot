@@ -130,7 +130,6 @@ class CarController:
       self.speed = CC.hudControl.setSpeed
 
       brake_threshold = -.25 #if CS.out.vEgo > 2.25 else 0
-      self.brake_prep = CC.hudControl.leadVisible
         
       if self.last_acc != CC.enabled:
         self.long_active = True
@@ -141,7 +140,8 @@ class CarController:
           self.decel_req = True
           self.decel = self.accel
 
-          # if CC.hudControl.leadVisible:
+          if CC.hudControl.leadVisible:
+            self.brake_prep = True
           #   self.decel *= 1.75
           
           if stopping and CS.out.vEgo < 0.01:
@@ -195,6 +195,7 @@ class CarController:
         self.accel_go = False
         self.standstill = False
         self.torque = -75
+        self.brake_prep = False
 
       #if CC.enabled:
       logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, self.accel, CS.out.vEgo, CS.out.aEgo, self.accel_req, self.decel_req, self.calc_velocity, self.desired_velocity, self.speed, CS.engineTorque, self.torque, CS.engineRpm)
