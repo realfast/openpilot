@@ -152,6 +152,7 @@ class CarController:
         else:
           self.accel_req = True
           self.decel_req = False
+          self.brake_prep = False
           
           if starting:
             self.accel_go = True
@@ -195,7 +196,6 @@ class CarController:
         self.accel_go = False
         self.standstill = False
         self.torque = -75
-        self.brake_prep = False
 
       #if CC.enabled:
       logging.info('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s', CC.actuators.accel, self.accel, CS.out.vEgo, CS.out.aEgo, self.accel_req, self.decel_req, self.calc_velocity, self.desired_velocity, self.speed, CS.engineTorque, self.torque, CS.engineRpm)
