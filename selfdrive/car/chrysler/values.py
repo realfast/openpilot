@@ -44,7 +44,7 @@ class CarControllerParams:
     elif CP.carFingerprint in RAM_DT:
       self.STEER_DELTA_UP = 6
       self.STEER_DELTA_DOWN = 6
-      self.STEER_MAX = 261  # EPS allows more, up to 350?
+      self.STEER_MAX = 350  # EPS allows more, up to 350?
     else:
       self.STEER_DELTA_UP = 3
       self.STEER_DELTA_DOWN = 3
@@ -217,6 +217,7 @@ FW_VERSIONS = {
       b'68294063AG',
       b'68294063AH',
       b'68294063AI',
+      b'68453473AD',
       b'68434846AC',
       b'68434858AC',
       b'68434860AC',
@@ -246,6 +247,7 @@ FW_VERSIONS = {
       b'68432418AD',
       b'68436004AD',
       b'68436004AE',
+      b'68438453AD',
       b'68438454AC',
       b'68438454AD',
       b'68438456AE',
@@ -326,13 +328,20 @@ FW_VERSIONS = {
     (Ecu.combinationMeter, 0x742, None): [
       b'68361606AH',
       b'68437735AC',
+      b'68437746AD',
+      b'68492682AD',
+      b'68525438AB',
       b'68492693AD',
       b'68525485AB',
       b'68525487AB',
       b'68525498AB',
       b'68528791AF',
+      b'68620921AC',
+      b'68620923AB',
+      b'68628474AB',
     ],
     (Ecu.srs, 0x744, None): [
+      b'68346749AB',
       b'68399794AC',
       b'68428503AA',
       b'68428505AA',
@@ -347,6 +356,7 @@ FW_VERSIONS = {
       b'68530686AB',
       b'68530686AC',
       b'68544596AC',
+      b'68641704AA',
     ],
     (Ecu.fwdRadar, 0x753, None): [
       b'04672895AB',
@@ -356,6 +366,7 @@ FW_VERSIONS = {
       b'68462657AE',
       b'68484694AD',
       b'68484694AE',
+      b'68615489AB',
     ],
     (Ecu.eps, 0x761, None): [
       b'68421036AC',
@@ -366,6 +377,7 @@ FW_VERSIONS = {
       b'52370131AF',
       b'52370231AF',
       b'52370231AG',
+      b'52370491AA',
       b'52370931CT',
       b'52401032AE',
       b'52421132AF',
@@ -373,6 +385,8 @@ FW_VERSIONS = {
       b'68527616AD ',
       b'M2370131MB',
       b'M2421132MB',
+      b'52421232AF',
+      b'52421492AA',
     ],
   },
 }
