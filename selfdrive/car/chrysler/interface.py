@@ -75,6 +75,10 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 16
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
 
+      # Some RAM HD use Chrysler button address
+      if 570 not in fingerprint[0]:
+        ret.flags |= ChryslerFlags.RAM_HD_ALT_BUTTONS.value
+
     else:
       raise ValueError(f"Unsupported car: {candidate}")
 
