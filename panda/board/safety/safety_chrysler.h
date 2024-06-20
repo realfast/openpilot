@@ -63,6 +63,7 @@ const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
   .DAS_6            = 0xFA,   // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 0xA6,   // LKAS controls from DASM
   .CRUISE_BUTTONS   = 0xB1,   // Cruise control buttons
+  .CRUISE_BUTTONS_ALT = 0xB1,   // Cruise control buttons
 };
 
 // CAN messages for the 5th gen RAM HD platform
@@ -92,9 +93,9 @@ const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
 
 const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
   {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
+  {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS_ALT, 2, 3},
   {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
-  {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS_ALT, 2, 3},
 };
 
 RxCheck chrysler_rx_checks[] = {
