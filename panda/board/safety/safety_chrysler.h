@@ -76,7 +76,7 @@ const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
   .DAS_6            = 0x275,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 0x276,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 0x23A,  // Cruise control buttons
-  .CRUISE_BUTTONS_ALT = 0xB1,   // Cruise control buttons
+  .CRUISE_BUTTONS_ALT = 0x23B,  // Cruise control buttons
 };
 
 const CanMsg CHRYSLER_TX_MSGS[] = {
