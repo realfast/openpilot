@@ -17,6 +17,7 @@ class CarController(CarControllerBase):
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
     self.spoof_speed = 0
+    self.last_speed_spoof_speed = 0
     
 
     self.packer = CANPacker(dbc_name)
@@ -70,20 +71,25 @@ class CarController(CarControllerBase):
       # steer torque
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_meas_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
-      if not lkas_active or not lkas_control_bit:
-        apply_steer = 0
 
       # Speed spoofing logic
-      if CC.enabled and not low_speed_alert and CS.out.vEgoRaw * CV.MS_TO_MPH < 36 and self.spoof_speed < 36 * CV.MPH_TO_KPH:
+      if lkas_active and CS.out.vEgoRaw * CV.MS_TO_MPH < 36:        
         self.spoof_speed = 36 * CV.MPH_TO_KPH
-        lkas_control_bit = False
+        if self.last_speed_spoof_speed < 36 * CV.MPH_TO_KPH:
+          lkas_control_bit = False
+
       else:
         self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
 
 
       if not lkas_control_bit and self.lkas_control_bit_prev:
         self.last_lkas_falling_edge = self.frame
+      
+      if not lkas_active or not lkas_control_bit:
+        apply_steer = 0
+
       self.lkas_control_bit_prev = lkas_control_bit
+      self.last_speed_spoof_speed = self.spoof_speed
 
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame, 0))
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame, 1))
