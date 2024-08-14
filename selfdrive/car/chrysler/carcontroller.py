@@ -81,23 +81,10 @@ class CarController(CarControllerBase):
         apply_steer = 0
 
       # Speed spoofing logic
-      if lkas_active and self.spoofspeed >= 36 * CV.MPH_TO_KPH:
-        self.lkasactivevalue = 2
-        if self.lkasactivevalue == self.lkascativevalueprev:
-          apply_steer = apply_steer
-        else:
-          apply_steer = 0
-      else:
-        apply_steer = 0
-        self.lkasactivevalue = 0
-
       if lkas_active and CS.out.vEgoRaw * CV.MS_TO_MPH < 36:
         self.spoofspeed = 36 * CV.MPH_TO_KPH
       else:
         self.spoofspeed = CS.out.vEgoRaw * CV.MS_TO_KPH
-
-      self.apply_steer_last = apply_steer
-      self.lkascativevalueprev = self.lkasactivevalue
 
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 0))
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 1))
