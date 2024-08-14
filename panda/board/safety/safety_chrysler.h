@@ -256,7 +256,7 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
 
   // forward to camera
   if (bus_num == 0) {
-    if (addr == chrysler_addrs->ESP_8 || addr == chrysler_addrs->DAS_6) {
+    if (addr == chrysler_addrs->ESP_8) {
       bus_fwd = 2;
     }
     else {
@@ -267,11 +267,11 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
   // forward all messages from camera except LKAS messages
   const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6));
   if ((bus_num == 2) && !is_lkas){
-    bus_fwd = 0;
+    bus_fwd = 10;
   }
 
   if (bus_num == 1) {
-    bus_fwd = 0x21;
+    bus_fwd = 0x20;
   }
 
   return bus_fwd;
