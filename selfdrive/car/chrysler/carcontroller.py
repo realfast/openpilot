@@ -83,10 +83,6 @@ class CarController(CarControllerBase):
       else:
         self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
 
-      #print to console
-      print(f"apply_steer: {apply_steer}")
-      print(f"lkas_control_bit: {lkas_control_bit}")
-      print(f"self.frame: {self.frame}")
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame, 0))
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame, 1))
       can_sends.append(chryslercan.create_speed_spoof(self.packer, CS.esp8_counter, self.spoof_speed))
