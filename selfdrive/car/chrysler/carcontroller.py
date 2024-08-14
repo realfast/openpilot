@@ -66,9 +66,11 @@ class CarController(CarControllerBase):
         
       # Speed spoofing logic
       if CC.enabled and CS.out.vEgoRaw * CV.MS_TO_MPH < 36:      
-        self.spoof_speed = 36 * CV.MPH_TO_KPH
         if self.last_speed_spoof_speed < 36 * CV.MPH_TO_KPH:
-          lkas_control_bit = False  
+          lkas_control_bit =False   
+        else: 
+          lkas_control_bit = True
+        self.spoof_speed = 36 * CV.MPH_TO_KPH
 
       # EPS faults if LKAS re-enables too quickly
       lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
