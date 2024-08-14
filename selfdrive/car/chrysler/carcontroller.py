@@ -45,9 +45,7 @@ class CarController(CarControllerBase):
     if self.frame % 25 == 0:
       if CS.lkas_car_model != -1:
         can_sends.append(chryslercan.create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert,
-                                                     self.hud_count, CS.lkas_car_model, CS.auto_high_beam, 0))
-        can_sends.append(chryslercan.create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert,
-                                                     self.hud_count, CS.lkas_car_model, CS.auto_high_beam, 1))
+                                                     self.hud_count, CS.lkas_car_model, CS.auto_high_beam,))
         self.hud_count += 1
 
     # steering
@@ -83,8 +81,7 @@ class CarController(CarControllerBase):
       else:
         self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
 
-      can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame, 0))
-      can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame, 1))
+      can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame))
       can_sends.append(chryslercan.create_speed_spoof(self.packer, CS.esp8_counter, self.spoof_speed))
 
     self.frame += 1
