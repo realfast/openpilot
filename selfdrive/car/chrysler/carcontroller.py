@@ -16,10 +16,7 @@ class CarController(CarControllerBase):
     self.last_lkas_falling_edge = 0
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
-    self.lkasdisabled = 0
-    self.spoofspeed = 0
-    self.lkasactivevalue = 0
-    self.lkascativevalueprev = 0
+    self.spoof_speed = 0
     
 
     self.packer = CANPacker(dbc_name)
@@ -82,13 +79,13 @@ class CarController(CarControllerBase):
 
       # Speed spoofing logic
       if lkas_active and CS.out.vEgoRaw * CV.MS_TO_MPH < 36:
-        self.spoofspeed = 36 * CV.MPH_TO_KPH
+        self.spoof_speed = 36 * CV.MPH_TO_KPH
       else:
-        self.spoofspeed = CS.out.vEgoRaw * CV.MS_TO_KPH
+        self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
 
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 0))
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 1))
-      can_sends.append(chryslercan.create_speed_spoof(self.packer, CS.esp8_counter, self.spoofspeed))
+      can_sends.append(chryslercan.create_speed_spoof(self.packer, CS.esp8_counter, self.spoof_speed))
 
     self.frame += 1
 
