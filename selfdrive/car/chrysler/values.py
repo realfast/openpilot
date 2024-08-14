@@ -22,7 +22,7 @@ class ChryslerCarDocs(CarDocs):
 
 @dataclass
 class ChryslerPlatformConfig(PlatformConfig):
-  dbc_dict: DbcDict = field(default_factory=lambda: dbc_dict('chrysler_pacifica_2017_hybrid_generated', 'chrysler_pacifica_2017_hybrid_private_fusion'))
+  dbc_dict: DbcDict = field(default_factory=lambda: dbc_dict('chrysler_pacifica_2017_hybrid_generated', None))
 
 
 @dataclass(frozen=True)
@@ -113,6 +113,9 @@ RAM_DT = {CAR.RAM_1500_5TH_GEN, }
 RAM_HD = {CAR.RAM_HD_5TH_GEN, }
 RAM_CARS = RAM_DT | RAM_HD
 
+PACIFICA_2020 = {CAR.CHRYSLER_PACIFICA_2020, }
+
+STEER_TO_ZERO = RAM_HD | PACIFICA_2020
 
 CHRYSLER_VERSION_REQUEST = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \
   p16(0xf132)

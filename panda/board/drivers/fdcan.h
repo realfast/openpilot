@@ -209,7 +209,10 @@ void can_rx(uint8_t can_number) {
       (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.data_len_code]);
       can_set_checksum(&to_send);
 
-      can_send(&to_send, bus_fwd_num, true);
+      can_send(&to_send, (bus_fwd_num & 0xF), true); // Grab the low 4 bits and forward to that bus
+      if (bus_fwd_num > 0xF) { // if a value is stored in the high 4 bits create a second forward
+        can_send(&to_send, ((bus_fwd_num >> 4) & 0x0F), true); // Grab the high 4 bits and forward to that bus
+      }
       can_health[can_number].total_fwd_cnt += 1U;
     }
 

@@ -2,7 +2,7 @@
 from cereal import car
 from panda import Panda
 from openpilot.selfdrive.car import create_button_events, get_safety_config
-from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags
+from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, STEER_TO_ZERO, ChryslerFlags
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
@@ -12,7 +12,7 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
     ret.carName = "chrysler"
-    ret.dashcamOnly = candidate in RAM_HD
+    # ret.dashcamOnly = candidate in RAM_HD
 
     # radar parsing needs some work, see https://github.com/commaai/openpilot/issues/26842
     ret.radarUnavailable = True # DBC[candidate]['radar'] is None
@@ -66,7 +66,9 @@ class CarInterface(CarInterfaceBase):
     else:
       raise ValueError(f"Unsupported car: {candidate}")
 
-    if ret.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
+    if candidate in STEER_TO_ZERO:
+      ret.minSteerSpeed = 0.5
+    elif ret.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
       # TODO: allow these cars to steer down to 13 m/s if already engaged.
       # TODO: Durango 2020 may be able to steer to zero once above 38 kph
       ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
@@ -77,7 +79,7 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def _update(self, c):
-    ret = self.CS.update(self.cp, self.cp_cam)
+    ret = self.CS.update(self.cp, self.cp_cam, self.cp_eps)
 
     ret.buttonEvents = create_button_events(self.CS.distance_button, self.CS.prev_distance_button, {1: ButtonType.gapAdjustCruise})
 
