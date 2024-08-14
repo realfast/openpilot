@@ -4,7 +4,7 @@ from openpilot.selfdrive.car.chrysler.values import RAM_CARS
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, auto_high_beam):
+def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, auto_high_beam, bus):
   # LKAS_HUD - Controls what lane-keeping icon is displayed
 
   # == Color ==
@@ -48,12 +48,11 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, au
 
   if CP.carFingerprint in RAM_CARS:
     values['AUTO_HIGH_BEAM_ON'] = auto_high_beam
-    packer.make_can_msg("DAS_6", 1, values)
 
-  return packer.make_can_msg("DAS_6", 0, values)
+  return packer.make_can_msg("DAS_6", bus, values)
 
 
-def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame):
+def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame, bus):
   # LKAS_COMMAND Lane-keeping signal to turn the wheel
   enabled_val = 2 if CP.carFingerprint in RAM_CARS else 1
   values = {
@@ -61,9 +60,7 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame):
     "LKAS_CONTROL_BIT": enabled_val if lkas_control_bit else 0,
     "COUNTER": frame % 0x10,
   }
-  if CP.carFingerprint in RAM_CARS:
-    packer.make_can_msg("LKAS_COMMAND", 1, values)
-  return packer.make_can_msg("LKAS_COMMAND", 0, values)
+  return packer.make_can_msg("LKAS_COMMAND", bus, values)
 
 
 def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
