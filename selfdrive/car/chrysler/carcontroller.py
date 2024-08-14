@@ -4,7 +4,7 @@ from openpilot.selfdrive.car import apply_meas_steer_torque_limits
 from openpilot.selfdrive.car.chrysler import chryslercan
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS, CarControllerParams, ChryslerFlags
 from openpilot.selfdrive.car.interfaces import CarControllerBase
-
+from common.conversions import Conversions as CV  # Import Conversions
 
 class CarController(CarControllerBase):
   def __init__(self, dbc_name, CP, VM):
@@ -16,6 +16,11 @@ class CarController(CarControllerBase):
     self.last_lkas_falling_edge = 0
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
+    self.lkasdisabled = 0
+    self.spoofspeed = 0
+    self.lkasactivevalue = 0
+    self.lkascativevalueprev = 0
+    
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -43,7 +48,9 @@ class CarController(CarControllerBase):
     if self.frame % 25 == 0:
       if CS.lkas_car_model != -1:
         can_sends.append(chryslercan.create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert,
-                                                     self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
+                                                     self.hud_count, CS.lkas_car_model, CS.auto_high_beam, 0))
+        can_sends.append(chryslercan.create_lkas_hud(self.packer, self.CP, lkas_active, CC.hudControl.visualAlert,
+                                                     self.hud_count, CS.lkas_car_model, CS.auto_high_beam, 1))
         self.hud_count += 1
 
     # steering
@@ -72,9 +79,29 @@ class CarController(CarControllerBase):
       apply_steer = apply_meas_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
       if not lkas_active or not lkas_control_bit:
         apply_steer = 0
-      self.apply_steer_last = apply_steer
 
-      can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit))
+      # Speed spoofing logic
+      if lkas_active and self.spoofspeed >= 36 * CV.MPH_TO_KPH:
+        self.lkasactivevalue = 2
+        if self.lkasactivevalue == self.lkascativevalueprev:
+          apply_steer = apply_steer
+        else:
+          apply_steer = 0
+      else:
+        apply_steer = 0
+        self.lkasactivevalue = 0
+
+      if lkas_active and CS.out.vEgoRaw * CV.MS_TO_MPH < 36:
+        self.spoofspeed = 36 * CV.MPH_TO_KPH
+      else:
+        self.spoofspeed = CS.out.vEgoRaw * CV.MS_TO_KPH
+
+      self.apply_steer_last = apply_steer
+      self.lkascativevalueprev = self.lkasactivevalue
+
+      can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 0))
+      can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, 1))
+      can_sends.append(chryslercan.create_speed_spoof(self.packer, CS.esp8_counter, self.spoofspeed))
 
     self.frame += 1
 
