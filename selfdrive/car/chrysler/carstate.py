@@ -24,7 +24,7 @@ class CarState(CarStateBase):
     self.prev_distance_button = 0
     self.distance_button = 0
 
-  def update(self, cp, cp_cam):
+  def update(self, cp, cp_cam, cp_eps):
 
     ret = car.CarState.new_message()
 
@@ -48,6 +48,7 @@ class CarState(CarStateBase):
 
     # car speed
     if self.CP.carFingerprint in RAM_CARS:
+      self.esp8_counter = cp.vl["ESP_8"]["COUNTER"]
       ret.vEgoRaw = cp.vl["ESP_8"]["Vehicle_Speed"] * CV.KPH_TO_MS
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
     else:
@@ -71,8 +72,8 @@ class CarState(CarStateBase):
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
     ret.steeringRateDeg = cp.vl["STEERING"]["STEERING_RATE"]
-    ret.steeringTorque = cp.vl["EPS_2"]["COLUMN_TORQUE"]
-    ret.steeringTorqueEps = cp.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
+    ret.steeringTorque = cp_eps.vl["EPS_2"]["COLUMN_TORQUE"]
+    ret.steeringTorqueEps = cp_eps.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
     ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
 
     # cruise state
@@ -88,7 +89,7 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in RAM_CARS:
       # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']
-      ret.steerFaultTemporary = cp.vl["EPS_3"]["DASM_FAULT"] == 1
+      ret.steerFaultTemporary = cp_eps.vl["EPS_3"]["DASM_FAULT"] == 1
     else:
       ret.steerFaultTemporary = cp.vl["EPS_2"]["LKAS_TEMPORARY_FAULT"] == 1
       ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
@@ -116,7 +117,6 @@ class CarState(CarStateBase):
     messages = [
       # sig_address, frequency
       ("ESP_1", 50),
-      ("EPS_2", 100),
       ("ESP_6", 50),
       ("STEERING", 100),
       ("ECM_5", 50),
@@ -132,11 +132,11 @@ class CarState(CarStateBase):
     if CP.carFingerprint in RAM_CARS:
       messages += [
         ("ESP_8", 50),
-        ("EPS_3", 50),
         ("Transmission_Status", 50),
       ]
     else:
       messages += [
+        ("EPS_2", 100),
         ("GEAR", 50),
         ("SPEED_1", 100),
       ]
@@ -154,3 +154,13 @@ class CarState(CarStateBase):
       messages += CarState.get_cruise_messages()
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 2)
+  
+  @staticmethod
+  def get_eps_can_parser(CP):
+    if CP.carFingerprint in RAM_CARS:
+      messages = [
+        ("EPS_2", 100),
+        ("EPS_3", 50),
+      ]
+
+    return CANParser(DBC[CP.carFingerprint]["pt"], messages, 1)
