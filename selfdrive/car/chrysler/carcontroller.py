@@ -18,6 +18,7 @@ class CarController(CarControllerBase):
     self.last_button_frame = 0
     self.spoof_speed = 0
     self.last_speed_spoof_speed = 0
+    self.actual_min_speed = 36 * CV.MPH_TO_KPH
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -65,12 +66,14 @@ class CarController(CarControllerBase):
           lkas_control_bit = False
         
       # Speed spoofing logic
-      if CC.enabled and CS.out.vEgoRaw * CV.MS_TO_MPH < 36:      
-        if self.last_speed_spoof_speed < 36 * CV.MPH_TO_KPH:
-          lkas_control_bit =False   
-        else: 
+      if CS.out.vEgoRaw * CV.MS_TO_KPH < self.actual_min_speed:     
+        lkas_control_bit = False
+        if self.last_speed_spoof_speed >= self.actual_min_speed :
           lkas_control_bit = True
-        self.spoof_speed = 36 * CV.MPH_TO_KPH
+        if CC.enabled:
+          self.spoof_speed = self.actual_min_speed
+        else:
+          self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
 
       # EPS faults if LKAS re-enables too quickly
       lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200)
