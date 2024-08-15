@@ -17,7 +17,7 @@ class CarController(CarControllerBase):
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
     self.spoof_speed = 0
-    self.actual_min_speed = 36 * CV.MPH_TO_KPH
+    self.actual_min_speed = 16.
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -64,7 +64,7 @@ class CarController(CarControllerBase):
         if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
           lkas_control_bit = False
         
-      if self.spoof_speed >= self.actual_min_speed:
+      if lkas_control_bit and self.spoof_speed >= self.actual_min_speed:
         lkas_control_bit = True
       else:
         lkas_control_bit = False
