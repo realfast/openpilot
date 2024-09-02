@@ -18,9 +18,17 @@ class CarController(CarControllerBase):
     self.last_button_frame = 0
     self.spoof_speed = 0
     self.actual_min_speed = 18 * CV.MS_TO_KPH
+    self.spoof_speed_increment = 0.1
+    self.spoof_speed_threshold = 15 * CV.MPH_TO_KPH
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
+
+  def increment_spoof_speed(self):
+    if self.spoof_speed < self.spoof_speed_threshold:
+      self.spoof_speed += self.spoof_speed_increment
+    else:
+      self.spoof_speed = self.actual_min_speed
 
   def update(self, CC, CS, now_nanos):
     can_sends = []
@@ -66,8 +74,8 @@ class CarController(CarControllerBase):
       else:
         lkas_control_bit = False
 
-      if CC.enabled and CS.out.vEgoRaw * CV.MS_TO_KPH < self.actual_min_speed: #if lkas is active and below threshold spoof speed 
-        self.spoof_speed = self.actual_min_speed
+      if CC.enabled and CS.out.vEgoRaw * CV.MS_TO_KPH < self.actual_min_speed:
+        self.increment_spoof_speed()
       else:
         self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
 
