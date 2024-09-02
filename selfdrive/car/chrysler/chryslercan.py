@@ -1,10 +1,14 @@
 from cereal import car
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS
+import copy  # Add this import
 
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
 def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, auto_high_beam, bus):
+
+  # commands = []
+
   # LKAS_HUD - Controls what lane-keeping icon is displayed
 
   # == Color ==
@@ -53,6 +57,7 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, au
 
 
 def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame, bus):
+    # commands = []
   # LKAS_COMMAND Lane-keeping signal to turn the wheel
   enabled_val = 2 if CP.carFingerprint in RAM_CARS else 1
   values = {
@@ -72,10 +77,9 @@ def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
   }
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def create_speed_spoof(packer, frame, spoofspeed):
+def create_speed_spoof(packer, message, spoofspeed):
   # Cruise_Control_Buttons Message sent to cancel ACC.
-  values = {
-    "Vehicle_Speed": spoofspeed,
-    "COUNTER": frame % 0x10,
-  }
+  values = copy.copy(message)  # Copy the values
+  values["Vehicle_Speed"] = spoofspeed  # Overwrite with spoofspeed
+
   return packer.make_can_msg("ESP_8", 1, values)

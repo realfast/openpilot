@@ -95,7 +95,7 @@ class CarController(CarControllerBase):
 
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame/self.params.STEER_STEP, 0))
       can_sends.append(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, self.frame/self.params.STEER_STEP, 1))
-      can_sends.append(chryslercan.create_speed_spoof(self.packer, CS.esp8_counter, self.spoof_speed))
+      can_sends.append(chryslercan.create_speed_spoof(self.packer, CS.esp8_message, self.spoof_speed))
 
     self.frame += 1
 
