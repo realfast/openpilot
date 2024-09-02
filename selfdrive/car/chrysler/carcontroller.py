@@ -17,7 +17,7 @@ class CarController(CarControllerBase):
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
     self.spoof_speed = 0
-    self.actual_min_speed = 17.5 * CV.MS_TO_KPH
+    self.actual_min_speed = 18 * CV.MS_TO_KPH
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -57,9 +57,6 @@ class CarController(CarControllerBase):
       lkas_control_bit = self.lkas_control_bit_prev
       if CS.out.vEgo > self.CP.minSteerSpeed:
         lkas_control_bit = True
-      elif self.CP.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
-        if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
-          lkas_control_bit = False
       elif self.CP.carFingerprint in RAM_CARS:
         if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
           lkas_control_bit = False
