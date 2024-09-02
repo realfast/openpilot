@@ -22,7 +22,7 @@ class ChryslerCarDocs(CarDocs):
 
 @dataclass
 class ChryslerPlatformConfig(PlatformConfig):
-  dbc_dict: DbcDict = field(default_factory=lambda: dbc_dict('chrysler_pacifica_2017_hybrid_generated', 'chrysler_pacifica_2017_hybrid_private_fusion'))
+  dbc_dict: DbcDict = field(default_factory=lambda: dbc_dict('chrysler_pacifica_2017_hybrid_generated', None))
 
 
 @dataclass(frozen=True)
