@@ -53,7 +53,7 @@ class CAR(Platforms):
       ChryslerCarDocs("Chrysler Pacifica 2019-20"),
       ChryslerCarDocs("Chrysler Pacifica 2021-23", package="All"),
     ],
-    CHRYSLER_PACIFICA_2017_HYBRID.specs,
+    ChryslerCarSpecs(mass=2242., wheelbase=3.089, steerRatio=16.2, minSteerSpeed=0.5),
   )
 
   # Dodge
@@ -112,6 +112,10 @@ STEER_THRESHOLD = 120
 RAM_DT = {CAR.RAM_1500_5TH_GEN, }
 RAM_HD = {CAR.RAM_HD_5TH_GEN, }
 RAM_CARS = RAM_DT | RAM_HD
+
+PACIFICA_2020 = {CAR.CHRYSLER_PACIFICA_2020, }
+
+STEER_TO_ZERO = RAM_HD | PACIFICA_2020
 
 
 CHRYSLER_VERSION_REQUEST = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \

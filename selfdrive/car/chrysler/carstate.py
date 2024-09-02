@@ -3,7 +3,7 @@ from openpilot.common.conversions import Conversions as CV
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from openpilot.selfdrive.car.interfaces import CarStateBase
-from openpilot.selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS
+from openpilot.selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, STEER_TO_ZERO
 
 
 class CarState(CarStateBase):
@@ -31,6 +31,11 @@ class CarState(CarStateBase):
     self.prev_distance_button = self.distance_button
     self.distance_button = cp.vl["CRUISE_BUTTONS"]["ACC_Distance_Dec"]
 
+    if self.CP.carFingerprint in STEER_TO_ZERO:
+      EPS_BUS = cp_eps
+    else:
+      EPS_BUS = cp
+
     # lock info
     ret.doorOpen = any([cp.vl["BCM_1"]["DOOR_OPEN_FL"],
                         cp.vl["BCM_1"]["DOOR_OPEN_FR"],
@@ -48,7 +53,6 @@ class CarState(CarStateBase):
 
     # car speed
     if self.CP.carFingerprint in RAM_CARS:
-      self.esp8_counter = cp.vl["ESP_8"]["COUNTER"]
       ret.vEgoRaw = cp.vl["ESP_8"]["Vehicle_Speed"] * CV.KPH_TO_MS
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(cp.vl["Transmission_Status"]["Gear_State"], None))
     else:
@@ -63,6 +67,8 @@ class CarState(CarStateBase):
       cp.vl["ESP_6"]["WHEEL_SPEED_RR"],
       unit=1,
     )
+    if self.CP.carFingerprint in STEER_TO_ZERO:
+      self.esp8_counter = cp.vl["ESP_8"]["COUNTER"]
 
     # button presses
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_stalk(200, cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1,
@@ -72,8 +78,8 @@ class CarState(CarStateBase):
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
     ret.steeringRateDeg = cp.vl["STEERING"]["STEERING_RATE"]
-    ret.steeringTorque = cp_eps.vl["EPS_2"]["COLUMN_TORQUE"]
-    ret.steeringTorqueEps = cp_eps.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
+    ret.steeringTorque = EPS_BUS.vl["EPS_2"]["COLUMN_TORQUE"]
+    ret.steeringTorqueEps = EPS_BUS.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
     ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
 
     # cruise state
@@ -89,10 +95,10 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in RAM_CARS:
       # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']
-      ret.steerFaultTemporary = cp_eps.vl["EPS_3"]["DASM_FAULT"] == 1
+      ret.steerFaultTemporary = EPS_BUS.vl["EPS_3"]["DASM_FAULT"] == 1
     else:
-      ret.steerFaultTemporary = cp.vl["EPS_2"]["LKAS_TEMPORARY_FAULT"] == 1
-      ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
+      ret.steerFaultTemporary = EPS_BUS.vl["EPS_2"]["LKAS_TEMPORARY_FAULT"] == 1
+      ret.steerFaultPermanent = EPS_BUS.vl["EPS_2"]["LKAS_STATE"] == 4
 
     # blindspot sensors
     if self.CP.enableBsm:
@@ -131,16 +137,28 @@ class CarState(CarStateBase):
 
     if CP.carFingerprint in RAM_CARS:
       messages += [
-        ("ESP_8", 50),
         ("Transmission_Status", 50),
       ]
     else:
       messages += [
-        ("EPS_2", 100),
         ("GEAR", 50),
         ("SPEED_1", 100),
       ]
-      messages += CarState.get_cruise_messages()
+    
+    if CP.carFingerprint not in STEER_TO_ZERO:
+      messages += [
+        ("EPS_2", 100),
+      ]
+      if CP.carFingerprint in RAM_CARS:
+        messages += [
+          ("EPS_3", 50),
+        ]
+    else:
+      messages += [
+        ("ESP_8", 50),
+      ]
+
+    messages += CarState.get_cruise_messages()
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 0)
 
@@ -157,10 +175,13 @@ class CarState(CarStateBase):
   
   @staticmethod
   def get_eps_can_parser(CP):
-    if CP.carFingerprint in RAM_CARS:
+    if CP.carFingerprint in STEER_TO_ZERO:
       messages = [
         ("EPS_2", 100),
-        ("EPS_3", 50),
       ]
+      if CP.carFingerprint in RAM_CARS:
+        messages += [
+          ("EPS_3", 50),
+        ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 1)
