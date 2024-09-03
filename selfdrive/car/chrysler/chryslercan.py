@@ -1,13 +1,12 @@
 from cereal import car
-from openpilot.selfdrive.car.chrysler.values import RAM_CARS
-import copy  # Add this import
+from openpilot.selfdrive.car.chrysler.values import RAM_CARS, STEER_TO_ZERO
 
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
-def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, auto_high_beam, bus):
+def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, auto_high_beam):
 
-  # commands = []
+  commands = []
 
   # LKAS_HUD - Controls what lane-keeping icon is displayed
 
@@ -53,20 +52,31 @@ def create_lkas_hud(packer, CP, lkas_active, hud_alert, hud_count, car_model, au
   if CP.carFingerprint in RAM_CARS:
     values['AUTO_HIGH_BEAM_ON'] = auto_high_beam
 
-  return packer.make_can_msg("DAS_6", bus, values)
+  commands.append(packer.make_can_msg("DAS_6", 0, values))
+
+  if CP.carFingerprint in STEER_TO_ZERO:
+    commands.append(packer.make_can_msg("DAS_6", 1, values))
+
+  return commands
 
 
-def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame, bus):
-    # commands = []
+def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame):
+  commands = []
   # LKAS_COMMAND Lane-keeping signal to turn the wheel
   enabled_val = 2 if CP.carFingerprint in RAM_CARS else 1
+
   values = {
     "STEERING_TORQUE": apply_steer,
     "LKAS_CONTROL_BIT": enabled_val if lkas_control_bit else 0,
     "COUNTER": frame % 0x10,
   }
 
-  return packer.make_can_msg("LKAS_COMMAND", bus, values)
+  commands.append(packer.make_can_msg("LKAS_COMMAND", 0, values))
+
+  if CP.carFingerprint in STEER_TO_ZERO:
+    commands.append(packer.make_can_msg("LKAS_COMMAND", 1, values))
+
+  return commands
 
 
 def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
@@ -77,9 +87,13 @@ def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
   }
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def create_speed_spoof(packer, message, spoofspeed):
+def create_speed_spoof(packer, frame, spoofspeed):
   # Cruise_Control_Buttons Message sent to cancel ACC.
-  values = message
-  values["Vehicle_Speed"] = spoofspeed  # Overwrite with spoofspeed
+  # values = message
+  # values["Vehicle_Speed"] = spoofspeed  # Overwrite with spoofspeed
+  values = {
+    "Vehicle_Speed": spoofspeed,
+    "COUNTER": frame % 0x10,
+  }
 
   return packer.make_can_msg("ESP_8", 1, values)
