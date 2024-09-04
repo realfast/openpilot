@@ -67,9 +67,6 @@ class CarState(CarStateBase):
       cp.vl["ESP_6"]["WHEEL_SPEED_RR"],
       unit=1,
     )
-    if self.CP.carFingerprint in STEER_TO_ZERO:
-      self.esp8_counter = cp.vl["ESP_8"]["COUNTER"]
-      self.esp8_message = cp.vl["ESP_8"]
 
     # button presses
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_stalk(200, cp.vl["STEERING_LEVERS"]["TURN_SIGNALS"] == 1,
