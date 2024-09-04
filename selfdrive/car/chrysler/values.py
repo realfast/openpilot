@@ -53,7 +53,6 @@ class CAR(Platforms):
       ChryslerCarDocs("Chrysler Pacifica 2019-20"),
       ChryslerCarDocs("Chrysler Pacifica 2021-23", package="All"),
     ],
-    ChryslerCarSpecs(mass=2242., wheelbase=3.089, steerRatio=16.2, minSteerSpeed=0.5),
   )
 
   # Dodge
@@ -84,7 +83,7 @@ class CAR(Platforms):
       ChryslerCarDocs("Ram 2500 2020-24", car_parts=CarParts.common([CarHarness.ram])),
       ChryslerCarDocs("Ram 3500 2019-22", car_parts=CarParts.common([CarHarness.ram])),
     ],
-    ChryslerCarSpecs(mass=3405., wheelbase=3.785, steerRatio=15.61, minSteerSpeed=0.5),
+    ChryslerCarSpecs(mass=3405., wheelbase=3.785, steerRatio=15.61, minSteerSpeed=16.),
     dbc_dict('chrysler_ram_hd_generated', None),
   )
 

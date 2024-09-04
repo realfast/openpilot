@@ -2,7 +2,7 @@
 from cereal import car
 from panda import Panda
 from openpilot.selfdrive.car import create_button_events, get_safety_config
-from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags
+from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, STEER_TO_ZERO, ChryslerFlags
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
@@ -66,10 +66,12 @@ class CarInterface(CarInterfaceBase):
     else:
       raise ValueError(f"Unsupported car: {candidate}")
 
-    # if ret.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
-    #   # TODO: allow these cars to steer down to 13 m/s if already engaged.
-    #   # TODO: Durango 2020 may be able to steer to zero once above 38 kph
-    #   ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
+    if candidate in STEER_TO_ZERO:
+      ret.minSteerSpeed = 0.5
+    elif ret.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
+      # TODO: allow these cars to steer down to 13 m/s if already engaged.
+      # TODO: Durango 2020 may be able to steer to zero once above 38 kph
+      ret.minSteerSpeed = 17.5  # m/s 17 on the way up, 13 on the way down once engaged.
 
     ret.centerToFront = ret.wheelbase * 0.44
     ret.enableBsm = 720 in fingerprint[0]
