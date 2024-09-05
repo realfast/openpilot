@@ -53,6 +53,7 @@ class CAR(Platforms):
       ChryslerCarDocs("Chrysler Pacifica 2019-20"),
       ChryslerCarDocs("Chrysler Pacifica 2021-23", package="All"),
     ],
+    CHRYSLER_PACIFICA_2017_HYBRID.specs,
   )
 
   # Dodge
