@@ -135,6 +135,7 @@ class CarState(CarStateBase):
 
     if CP.carFingerprint in RAM_CARS:
       messages += [
+        ("ESP_8", 50),
         ("Transmission_Status", 50),
       ]
     else:
@@ -151,10 +152,6 @@ class CarState(CarStateBase):
         messages += [
           ("EPS_3", 50),
         ]
-    else:
-      messages += [
-        ("ESP_8", 50),
-      ]
 
     messages += CarState.get_cruise_messages()
 
