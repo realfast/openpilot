@@ -87,13 +87,9 @@ def create_cruise_buttons(packer, frame, bus, cancel=False, resume=False):
   }
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def create_speed_spoof(packer, frame, spoofspeed):
-  # Cruise_Control_Buttons Message sent to cancel ACC.
-  # values = message
-  # values["Vehicle_Speed"] = spoofspeed  # Overwrite with spoofspeed
+def create_speed_spoof(packer, spoof_speed):
   values = {
-    "Vehicle_Speed": spoofspeed,
-    "COUNTER": frame % 0x10,
+    "Vehicle_Speed": spoof_speed,
   }
 
   return packer.make_can_msg("ESP_8", 1, values)

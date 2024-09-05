@@ -97,7 +97,7 @@ class CarController(CarControllerBase):
         self.increment_spoof_speed()
       else:
         self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
-      can_sends.append(chryslercan.create_speed_spoof(self.packer, self.frame/2 , self.spoof_speed))
+      can_sends.append(chryslercan.create_speed_spoof(self.packer, self.spoof_speed))
 
     self.frame += 1
 
