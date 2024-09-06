@@ -107,6 +107,8 @@ class CarControllerParams:
       self.STEER_MAX = 261  # higher than this faults the EPS
     if CP.carFingerprint in PACIFICA_2020:
       self.STEER_STEP = 1 
+      self.STEER_DELTA_UP = 12
+      self.STEER_DELTA_DOWN = 12
 
 STEER_THRESHOLD = 120
 
