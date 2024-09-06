@@ -97,6 +97,7 @@ class CarControllerParams:
       self.STEER_DELTA_UP = 14
       self.STEER_DELTA_DOWN = 14
       self.STEER_MAX = 361  # higher than this faults the EPS
+      self.STEER_STEP = 1
     elif CP.carFingerprint in RAM_DT:
       self.STEER_DELTA_UP = 6
       self.STEER_DELTA_DOWN = 6
