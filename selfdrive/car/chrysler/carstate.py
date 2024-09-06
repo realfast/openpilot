@@ -143,7 +143,8 @@ class CarState(CarStateBase):
         ("GEAR", 50),
         ("SPEED_1", 100),
       ]
-    
+      messages += CarState.get_cruise_messages()
+
     if CP.carFingerprint not in STEER_TO_ZERO:
       messages += [
         ("EPS_2", 100),
@@ -152,8 +153,6 @@ class CarState(CarStateBase):
         messages += [
           ("EPS_3", 50),
         ]
-
-    messages += CarState.get_cruise_messages()
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 0)
 
