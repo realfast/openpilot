@@ -6,6 +6,7 @@ from openpilot.selfdrive.car.interfaces import LatControlInputs
 from openpilot.selfdrive.controls.lib.latcontrol import LatControl
 from openpilot.selfdrive.controls.lib.pid import PIDController
 from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
+from common.op_params import opParams, FRICTION, MAX_LAT_ACCEL
 
 # At higher speeds (25+mph) we can assume:
 # Lateral acceleration achieved by a specific car correlates to
@@ -32,10 +33,12 @@ class LatControlTorque(LatControl):
     self.use_steering_angle = self.torque_params.useSteeringAngle
     self.steering_angle_deadzone_deg = self.torque_params.steeringAngleDeadzoneDeg
 
-  def update_live_torque_params(self, latAccelFactor, latAccelOffset, friction):
-    self.torque_params.latAccelFactor = latAccelFactor
+  def update_live_torque_params(self, latAccelFactor, latAccelOffset, friction, OP=None):
+    if OP is None:
+      OP = opParams()
+    self.torque_params.latAccelFactor = OP.get(MAX_LAT_ACCEL)
     self.torque_params.latAccelOffset = latAccelOffset
-    self.torque_params.friction = friction
+    self.torque_params.friction = OP.get(FRICTION)
 
   def update(self, active, CS, VM, params, steer_limited, desired_curvature, llk):
     pid_log = log.ControlsState.LateralTorqueState.new_message()
