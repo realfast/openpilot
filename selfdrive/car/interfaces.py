@@ -221,8 +221,6 @@ class CarInterfaceBase(ABC):
   def configure_torque_tune(candidate, tune, steering_angle_deadzone_deg=0.0, use_steering_angle=True, OP=None):
     if OP is None:
       OP = opParams()
-    self.op_params = OP
-
 
     params = get_torque_params()[candidate]
 
@@ -231,8 +229,8 @@ class CarInterfaceBase(ABC):
     tune.torque.kp = 1.0
     tune.torque.kf = 1.0
     tune.torque.ki = 0.1
-    tune.torque.friction = self.op_params.get(FRICTION)
-    tune.torque.latAccelFactor = self.op_params.get(MAX_LAT_ACCEL)
+    tune.torque.friction = OP.get(FRICTION)
+    tune.torque.latAccelFactor = OP.get(MAX_LAT_ACCEL)
     tune.torque.latAccelOffset = 0.0
     tune.torque.steeringAngleDeadzoneDeg = steering_angle_deadzone_deg
 
