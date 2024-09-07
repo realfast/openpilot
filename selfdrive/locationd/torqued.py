@@ -10,6 +10,7 @@ from openpilot.common.filter_simple import FirstOrderFilter
 from openpilot.common.swaglog import cloudlog
 from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
 from openpilot.selfdrive.locationd.helpers import PointBuckets, ParameterEstimator
+from common.op_params import opParams, STEER_ACT_DELAY
 
 HISTORY = 5  # secs
 POINTS_PER_BUCKET = 1500
@@ -50,9 +51,14 @@ class TorqueBuckets(PointBuckets):
 
 
 class TorqueEstimator(ParameterEstimator):
-  def __init__(self, CP, decimated=False):
+  def __init__(self, CP, decimated=False, OP=None):
+    if OP is None:
+      OP = opParams()
+    
+    self.op_params = OP
+
     self.hist_len = int(HISTORY / DT_MDL)
-    self.lag = CP.steerActuatorDelay + .2   # from controlsd
+    self.lag = self.op_params.get(STEER_ACT_DELAY) + .2   # from controlsd
     if decimated:
       self.min_bucket_points = MIN_BUCKET_POINTS / 10
       self.min_points_total = MIN_POINTS_TOTAL_QLOG
@@ -157,6 +163,8 @@ class TorqueEstimator(ParameterEstimator):
       self.filtered_params[param].update_alpha(self.decay)
 
   def handle_log(self, t, which, msg):
+    
+    self.lag = self.op_params.get(STEER_ACT_DELAY) + .2
     if which == "carControl":
       self.raw_points["carControl_t"].append(t + self.lag)
       self.raw_points["active"].append(msg.latActive)
