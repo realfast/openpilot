@@ -5,9 +5,15 @@ from openpilot.selfdrive.car.chrysler import chryslercan
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS, STEER_TO_ZERO, CarControllerParams, ChryslerFlags
 from openpilot.selfdrive.car.interfaces import CarControllerBase
 from common.conversions import Conversions as CV  # Import Conversions
+from common.op_params import opParams, STEER_DELTA_UP, STEER_DELTA_DOWN, STEER_ERROR_MAX
+
 
 class CarController(CarControllerBase):
-  def __init__(self, dbc_name, CP, VM):
+  def __init__(self, dbc_name, CP, VM, OP = None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
+
     self.CP = CP
     self.apply_steer_last = 0
     self.frame = 0
@@ -32,6 +38,10 @@ class CarController(CarControllerBase):
 
   def update(self, CC, CS, now_nanos):
     can_sends = []
+
+    self.params.STEER_DELTA_UP = self.op_params.get(STEER_DELTA_UP)
+    self.params.STEER_DELTA_DOWN = self.op_params.get(STEER_DELTA_DOWN)
+    self.params.STEER_ERROR_MAX = self.op_params.get(STEER_ERROR_MAX)
 
     lkas_active = CC.latActive and self.lkas_control_bit_prev
 

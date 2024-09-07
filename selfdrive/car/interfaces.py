@@ -19,6 +19,7 @@ from openpilot.selfdrive.car.values import PLATFORMS
 from openpilot.selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, get_friction
 from openpilot.selfdrive.controls.lib.events import Events
 from openpilot.selfdrive.controls.lib.vehicle_model import VehicleModel
+from common.op_params import opParams, FRICTION, MAX_LAT_ACCEL
 
 ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
@@ -217,7 +218,12 @@ class CarInterfaceBase(ABC):
     return ret
 
   @staticmethod
-  def configure_torque_tune(candidate, tune, steering_angle_deadzone_deg=0.0, use_steering_angle=True):
+  def configure_torque_tune(candidate, tune, steering_angle_deadzone_deg=0.0, use_steering_angle=True, OP=None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
+
+
     params = get_torque_params()[candidate]
 
     tune.init('torque')
@@ -225,8 +231,8 @@ class CarInterfaceBase(ABC):
     tune.torque.kp = 1.0
     tune.torque.kf = 1.0
     tune.torque.ki = 0.1
-    tune.torque.friction = params['FRICTION']
-    tune.torque.latAccelFactor = params['LAT_ACCEL_FACTOR']
+    tune.torque.friction = self.op_params.get(FRICTION)
+    tune.torque.latAccelFactor = self.op_params.get(MAX_LAT_ACCEL)
     tune.torque.latAccelOffset = 0.0
     tune.torque.steeringAngleDeadzoneDeg = steering_angle_deadzone_deg
 
