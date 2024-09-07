@@ -7,7 +7,6 @@ from common.numpy_fast import find_nearest_index, interp, is_multi_iter
 from common.colors import opParams_error as error
 from common.colors import opParams_warning as warning
 from openpilot.system.hardware import PC
-from openpilot.selfdrive.car.chrysler.values import STEER_MAX_LOOKUP, STEER_DELTA_UP, STEER_DELTA_DOWN
 try:
   from common.realtime import sec_since_boot
 except ImportError:
