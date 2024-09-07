@@ -179,7 +179,7 @@ class opParams:
                         STEER_DELTA_DOWN: Param(3, VT.number, live=True),
                         STEER_MAX_ERROR: Param(80, VT.number, live=True),
                         STEER_ACT_DELAY: Param(0.1, VT.number, live=True),
-
+                        STEER_STEP: Param(1, VT.number, live=True),
 }
 
     self._params_file = '/data/op_params.json'
@@ -341,6 +341,7 @@ STEER_DELTA_UP = 'steer_delta_up'
 STEER_DELTA_DOWN = 'steer_delta_down'
 STEER_MAX_ERROR = 'steer_max_error'
 STEER_ACT_DELAY = 'steer_act_delay'
+STEER_STEP = 'steer_step'
 # STEER_RATIO = 'steer ratio'
 # STEER_RATE_COST = 'steer_rate_cost'
 # DEVICE_OFFSET = 'device_offset'

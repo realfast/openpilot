@@ -5,7 +5,7 @@ from openpilot.selfdrive.car.chrysler import chryslercan
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS, STEER_TO_ZERO, CarControllerParams, ChryslerFlags
 from openpilot.selfdrive.car.interfaces import CarControllerBase
 from common.conversions import Conversions as CV  # Import Conversions
-from common.op_params import opParams, STEER_DELTA_UP, STEER_DELTA_DOWN, STEER_MAX_ERROR
+from common.op_params import opParams, STEER_DELTA_UP, STEER_DELTA_DOWN, STEER_MAX_ERROR, STEER_STEP
 
 
 class CarController(CarControllerBase):
@@ -66,6 +66,7 @@ class CarController(CarControllerBase):
                                                      self.hud_count, CS.lkas_car_model, CS.auto_high_beam))
         self.hud_count += 1
 
+    self.steer_step = self.op_params.get(STEER_STEP)
     # steering
     if self.frame % self.params.STEER_STEP == 0:
 
