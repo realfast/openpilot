@@ -91,13 +91,12 @@ class CAR(Platforms):
 
 class CarControllerParams:
   def __init__(self, CP):
-    self.STEER_STEP = 2  # 50 Hz
+    self.STEER_STEP = 1  # 50 Hz
     self.STEER_ERROR_MAX = 80
     if CP.carFingerprint in RAM_HD:
       self.STEER_DELTA_UP = 14
       self.STEER_DELTA_DOWN = 14
       self.STEER_MAX = 361  # higher than this faults the EPS
-      self.STEER_STEP = 1
     elif CP.carFingerprint in RAM_DT:
       self.STEER_DELTA_UP = 6
       self.STEER_DELTA_DOWN = 6
@@ -107,9 +106,8 @@ class CarControllerParams:
       self.STEER_DELTA_DOWN = 3
       self.STEER_MAX = 261  # higher than this faults the EPS
     if CP.carFingerprint in PACIFICA_2020:
-      self.STEER_STEP = 1 
-      self.STEER_DELTA_UP = 6
-      self.STEER_DELTA_DOWN = 6
+      self.STEER_DELTA_UP = 4
+      self.STEER_DELTA_DOWN = 4
 
 STEER_THRESHOLD = 120
 

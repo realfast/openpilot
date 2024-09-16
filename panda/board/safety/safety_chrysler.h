@@ -1,9 +1,9 @@
 const SteeringLimits CHRYSLER_STEERING_LIMITS = {
   .max_steer = 261,
-  .max_rt_delta = 112,
+  .max_rt_delta = 300,
   .max_rt_interval = 250000,
-  .max_rate_up = 3,
-  .max_rate_down = 3,
+  .max_rate_up = 4,
+  .max_rate_down = 4,
   .max_torque_error = 80,
   .type = TorqueMotorLimited,
 };
@@ -20,7 +20,7 @@ const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
 
 const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
   .max_steer = 361,
-  .max_rt_delta = 182,
+  .max_rt_delta = 250,
   .max_rt_interval = 250000,
   .max_rate_up = 14,
   .max_rate_down = 14,
@@ -237,7 +237,7 @@ static bool chrysler_tx_hook(const CANPacket_t *to_send) {
 
     bool steer_req = (chrysler_platform == CHRYSLER_PACIFICA) ? GET_BIT(to_send, 4U) : (GET_BYTE(to_send, 3) & 0x7U) == 2U;
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
-      // tx = false;
+      tx = false;
     }
   }
 
