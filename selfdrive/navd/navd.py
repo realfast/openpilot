@@ -58,6 +58,10 @@ class RouteEngine:
       self.api = Api(self.params.get("DongleId", encoding='utf8'))
       self.mapbox_host = "https://maps.comma.ai"
 
+    if self.mapbox_token != "" and self.params.get("CustomMapboxTokenSk") is not None:
+      self.mapbox_token = self.params.get("CustomMapboxTokenSk")
+      self.mapbox_host = "https://api.mapbox.com"
+
   def update(self):
     self.sm.update(0)
 

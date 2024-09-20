@@ -11,6 +11,7 @@
 #include "common/swaglog.h"
 #include "common/util.h"
 #include "common/watchdog.h"
+#include "qt/util.h"
 #include "system/hardware/hw.h"
 
 #define BACKLIGHT_DT 0.05
@@ -18,8 +19,7 @@
 
 // Projects a point in car to space to the corresponding point in full frame
 // image space.
-static bool calib_frame_to_full_frame(const UIState *s, float in_x, float in_y, float in_z, QPointF *out) {
-  const float margin = 500.0f;
+bool calib_frame_to_full_frame(const UIState *s, float in_x, float in_y, float in_z, QPointF *out, const float margin) {
   const QRectF clip_region{-margin, -margin, s->fb_w + 2 * margin, s->fb_h + 2 * margin};
 
   const vec3 pt = (vec3){{in_x, in_y, in_z}};
@@ -77,14 +77,10 @@ void update_line_data(const UIState *s, const cereal::XYZTData::Reader &line,
 }
 
 void update_model(UIState *s,
-                  const cereal::ModelDataV2::Reader &model,
-                  const cereal::UiPlan::Reader &plan) {
+                  const cereal::ModelDataV2::Reader &model) {
   UIScene &scene = s->scene;
-  auto plan_position = plan.getPosition();
-  if (plan_position.getX().size() < model.getPosition().getX().size()) {
-    plan_position = model.getPosition();
-  }
-  float max_distance = std::clamp(*(plan_position.getX().end() - 1),
+  auto model_position = model.getPosition();
+  float max_distance = std::clamp(*(model_position.getX().end() - 1),
                                   MIN_DRAW_DISTANCE, MAX_DRAW_DISTANCE);
 
   // update lane lines
@@ -110,8 +106,8 @@ void update_model(UIState *s,
     const float lead_d = lead_one.getDRel() * 2.;
     max_distance = std::clamp((float)(lead_d - fmin(lead_d * 0.35, 10.)), 0.0f, max_distance);
   }
-  max_idx = get_path_length_idx(plan_position, max_distance);
-  update_line_data(s, plan_position, 0.9, 1.22, &scene.track_vertices, max_idx, false);
+  max_idx = get_path_length_idx(model_position, max_distance);
+  update_line_data(s, model_position, 0.9, 1.22, &scene.track_vertices, max_idx, false);
 }
 
 void update_dmonitoring(UIState *s, const cereal::DriverStateV2::Reader &driverstate, float dm_fade_state, bool is_rhd) {
@@ -149,11 +145,11 @@ void update_dmonitoring(UIState *s, const cereal::DriverStateV2::Reader &drivers
   }
 }
 
-static void update_sockets(UIState *s) {
+void update_sockets(UIState *s) {
   s->sm->update(0);
 }
 
-static void update_state(UIState *s) {
+void update_state(UIState *s) {
   SubMaster &sm = *(s->sm);
   UIScene &scene = s->scene;
 
@@ -212,14 +208,12 @@ static void update_state(UIState *s) {
   scene.world_objects_visible = scene.world_objects_visible ||
                                 (scene.started &&
                                  sm.rcv_frame("liveCalibration") > scene.started_frame &&
-                                 sm.rcv_frame("modelV2") > scene.started_frame &&
-                                 sm.rcv_frame("uiPlan") > scene.started_frame);
+                                 sm.rcv_frame("modelV2") > scene.started_frame);
 }
 
 void ui_update_params(UIState *s) {
   auto params = Params();
   s->scene.is_metric = params.getBool("IsMetric");
-  s->scene.map_on_left = params.getBool("NavSettingLeftSide");
 }
 
 void UIState::updateStatus() {
@@ -245,11 +239,15 @@ void UIState::updateStatus() {
   }
 }
 
+// #ifdef SUNNYPILOT
+// #include "selfdrive/ui/sunnypilot/qt/ui_scene.h"
+// #define UIScene UISceneSP
+// #endif
 UIState::UIState(QObject *parent) : QObject(parent) {
   sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState",
     "pandaStates", "carParams", "driverMonitoringState", "carState", "liveLocationKalman", "driverStateV2",
-    "wideRoadCameraState", "managerState", "navInstruction", "navRoute", "uiPlan", "clocks",
+    "wideRoadCameraState", "managerState", "clocks",
   });
 
   Params params;
@@ -259,6 +257,7 @@ UIState::UIState(QObject *parent) : QObject(parent) {
     prime_type = static_cast<PrimeType>(std::atoi(prime_value.c_str()));
   }
 
+  RETURN_IF_SUNNYPILOT
   // update timer
   timer = new QTimer(this);
   QObject::connect(timer, &QTimer::timeout, this, &UIState::update);
@@ -266,9 +265,14 @@ UIState::UIState(QObject *parent) : QObject(parent) {
 }
 
 void UIState::update() {
+  RETURN_IF_SUNNYPILOT
   update_sockets(this);
   update_state(this);
   updateStatus();
+
+  if (std::getenv("PRIME_TYPE")) {
+      setPrimeType((PrimeType)atoi(std::getenv("PRIME_TYPE")));
+  }
 
   if (sm->frame % UI_FREQ == 0) {
     watchdog_kick(nanos_since_boot());
@@ -294,8 +298,9 @@ void UIState::setPrimeType(PrimeType type) {
 Device::Device(QObject *parent) : brightness_filter(BACKLIGHT_OFFROAD, BACKLIGHT_TS, BACKLIGHT_DT), QObject(parent) {
   setAwake(true);
   resetInteractiveTimeout();
-
+#ifndef SUNNYPILOT
   QObject::connect(uiState(), &UIState::uiUpdate, this, &Device::update);
+#endif
 }
 
 void Device::update(const UIState &s) {
@@ -320,7 +325,7 @@ void Device::resetInteractiveTimeout(int timeout) {
 }
 
 void Device::updateBrightness(const UIState &s) {
-  float clipped_brightness = offroad_brightness;
+  clipped_brightness = offroad_brightness;
   if (s.scene.started && s.scene.light_sensor > 0) {
     clipped_brightness = s.scene.light_sensor;
 
@@ -334,7 +339,8 @@ void Device::updateBrightness(const UIState &s) {
     // Scale back to 10% to 100%
     clipped_brightness = std::clamp(100.0f * clipped_brightness, 10.0f, 100.0f);
   }
-
+  RETURN_IF_SUNNYPILOT
+  
   int brightness = brightness_filter.update(clipped_brightness);
   if (!awake) {
     brightness = 0;
@@ -361,6 +367,7 @@ void Device::updateWakefulness(const UIState &s) {
   setAwake(s.scene.ignition || interactive_timeout > 0);
 }
 
+#ifndef SUNNYPILOT
 UIState *uiState() {
   static UIState ui_state;
   return &ui_state;
@@ -370,3 +377,4 @@ Device *device() {
   static Device _device;
   return &_device;
 }
+#endif

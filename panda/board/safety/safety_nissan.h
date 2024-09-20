@@ -89,6 +89,16 @@ static void nissan_rx_hook(const CANPacket_t *to_push) {
     pcm_cruise_check(cruise_engaged);
   }
 
+  if (((addr == 0x1B6) && (((bus == 1) && !nissan_alt_eps) || ((bus == 2) && nissan_alt_eps))) || ((addr == 0x239) && (bus == 0))) {
+    if ((addr == 0x1B6) && (((bus == 1) && !nissan_alt_eps) || ((bus == 2) && nissan_alt_eps))) {
+      acc_main_on = GET_BIT(to_push, 36U) != 0U;
+    }
+    if ((addr == 0x239) && (bus == 0)) {
+      acc_main_on = GET_BIT(to_push, 17U) != 0U;
+    }
+    mads_acc_main_check(acc_main_on);
+  }
+
   generic_rx_checks((addr == 0x169) && (bus == 0));
 }
 

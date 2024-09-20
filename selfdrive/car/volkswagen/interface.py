@@ -1,8 +1,10 @@
 from cereal import car
 from panda import Panda
+from openpilot.common.params import Params
 from openpilot.selfdrive.car import get_safety_config
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
-from openpilot.selfdrive.car.volkswagen.values import CAR, CANBUS, CarControllerParams, NetworkLocation, TransmissionType, GearShifter, VolkswagenFlags
+from openpilot.selfdrive.car.volkswagen.values import CAR, CANBUS, CarControllerParams, NetworkLocation, TransmissionType, GearShifter, VolkswagenFlags, \
+                                                      VolkswagenFlagsSP
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
@@ -91,13 +93,19 @@ class CarInterface(CarInterfaceBase):
       if ret.transmissionType == TransmissionType.manual:
         ret.minEnableSpeed = 4.5
 
+    if Params().get_bool("VwCCOnly"):
+      if car_fw is not None and not any(fw.ecu == "fwdRadar" for fw in car_fw):
+        ret.spFlags |= VolkswagenFlagsSP.SP_CC_ONLY_NO_RADAR.value
+      else:
+        ret.spFlags |= VolkswagenFlagsSP.SP_CC_ONLY.value
+      ret.openpilotLongitudinalControl = False
+
     ret.pcmCruise = not ret.openpilotLongitudinalControl
+    ret.customStockLongAvailable = True
     ret.stoppingControl = True
     ret.stopAccel = -0.55
     ret.vEgoStarting = 0.1
     ret.vEgoStopping = 0.5
-    ret.longitudinalTuning.kpV = [0.1]
-    ret.longitudinalTuning.kiV = [0.0]
     ret.autoResumeSng = ret.minEnableSpeed == -1
 
     return ret
@@ -106,16 +114,52 @@ class CarInterface(CarInterfaceBase):
   def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam, self.cp_ext, self.CP.transmissionType)
 
-    events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
-                                       pcm_enable=not self.CS.CP.openpilotLongitudinalControl,
+    self.CS.mads_enabled = self.get_sp_cruise_main_state(ret)
+
+    self.CS.accEnabled = self.get_sp_v_cruise_non_pcm_state(ret, c.vCruise, self.CS.accEnabled,
+                                                            enable_buttons=(ButtonType.setCruise, ButtonType.resumeCruise))
+
+    if ret.cruiseState.available:
+      if self.enable_mads:
+        if not self.CS.prev_mads_enabled and self.CS.mads_enabled:
+          self.CS.madsEnabled = True
+        self.CS.madsEnabled = self.get_acc_mads(ret, self.CS.madsEnabled)
+    else:
+      self.CS.madsEnabled = False
+    self.CS.madsEnabled = self.get_sp_started_mads(ret, self.CS.madsEnabled)
+
+    if not self.CP.pcmCruise or (self.CP.pcmCruise and self.CP.minEnableSpeed > 0) or not self.CP.pcmCruiseSpeed:
+      if any(b.type == ButtonType.cancel for b in self.CS.button_events):
+        self.get_sp_cancel_cruise_state()
+    if self.get_sp_pedal_disengage(ret):
+      self.get_sp_cancel_cruise_state()
+      ret.cruiseState.enabled = ret.cruiseState.enabled if not self.enable_mads else False if self.CP.pcmCruise else self.CS.accEnabled
+
+    if self.CP.pcmCruise and self.CP.minEnableSpeed > 0 and self.CP.pcmCruiseSpeed:
+      if ret.gasPressed and not ret.cruiseState.enabled:
+        self.CS.accEnabled = False
+      self.CS.accEnabled = ret.cruiseState.enabled or self.CS.accEnabled
+
+    ret = self.get_sp_common_state(ret)
+
+    ret.buttonEvents = [
+      *self.CS.button_events,
+      *self.button_events.create_mads_event(self.CS.madsEnabled, self.CS.out.madsEnabled)  # MADS BUTTON
+    ]
+
+    events = self.create_common_events(ret, c, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
+                                       pcm_enable=False,
                                        enable_buttons=(ButtonType.setCruise, ButtonType.resumeCruise))
+
+    events, ret = self.create_sp_events(ret, events,
+                                        enable_buttons=(ButtonType.setCruise, ButtonType.resumeCruise))
 
     # Low speed steer alert hysteresis logic
     if (self.CP.minSteerSpeed - 1e-3) > CarControllerParams.DEFAULT_MIN_STEER_SPEED and ret.vEgo < (self.CP.minSteerSpeed + 1.):
       self.low_speed_alert = True
     elif ret.vEgo > (self.CP.minSteerSpeed + 2.):
       self.low_speed_alert = False
-    if self.low_speed_alert:
+    if self.low_speed_alert and self.CS.madsEnabled:
       events.add(EventName.belowSteerSpeed)
 
     if self.CS.CP.openpilotLongitudinalControl:
@@ -127,7 +171,8 @@ class CarInterface(CarInterfaceBase):
     if self.CC.eps_timer_soft_disable_alert:
       events.add(EventName.steerTimeLimit)
 
+    ret.customStockLong = self.update_custom_stock_long()
+
     ret.events = events.to_msg()
 
     return ret
-

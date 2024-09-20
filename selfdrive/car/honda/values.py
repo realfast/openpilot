@@ -101,6 +101,14 @@ class Footnote(Enum):
   CIVIC_DIESEL = CarFootnote(
     "2019 Honda Civic 1.6L Diesel Sedan does not have ALC below 12mph.",
     Column.FSR_STEERING)
+  ACCORD_NIDEC = CarFootnote(
+    "openpilot operates above 25mph for 9th Generation Accord 4CYL, 6CYL and Hybrid which don't have Low-Speed Follow.",
+    Column.FSR_LONGITUDINAL)
+  SERIAL_STEERING = CarFootnote(
+    "9th Generation model-years have ALC data over serial lines and require third party hardware to " +
+    "interface with openpilot. For more information, " +
+    "see <a href=\"https://github.com/mlocoteta/serialSteeringHardware\" target=\"_blank\">mlocoteta's GitHub</a>.",
+    Column.HARDWARE)
 
 
 class HondaBoschPlatformConfig(PlatformConfig):
@@ -141,8 +149,8 @@ class CAR(Platforms):
   )
   HONDA_CIVIC_2022 = HondaBoschPlatformConfig(
     [
-      HondaCarDocs("Honda Civic 2022-23", "All", video_link="https://youtu.be/ytiOT5lcp6Q"),
-      HondaCarDocs("Honda Civic Hatchback 2022-23", "All", video_link="https://youtu.be/ytiOT5lcp6Q"),
+      HondaCarDocs("Honda Civic 2022-24", "All", video_link="https://youtu.be/ytiOT5lcp6Q"),
+      HondaCarDocs("Honda Civic Hatchback 2022-24", "All", video_link="https://youtu.be/ytiOT5lcp6Q"),
     ],
     HONDA_CIVIC_BOSCH.specs,
     dbc_dict('honda_civic_ex_2022_can_generated', None),
@@ -259,6 +267,17 @@ class CAR(Platforms):
     CarSpecs(mass=1326, wheelbase=2.70, centerToFrontRatio=0.4, steerRatio=15.38),  # 10.93 is end-to-end spec
     dbc_dict('honda_civic_touring_2016_can_generated', 'acura_ilx_2016_nidec'),
   )
+  HONDA_ACCORD_4CYL_9TH_GEN = HondaNidecPlatformConfig(
+    [HondaCarDocs("Honda Accord 4-Cylinder 2016-17")],
+    CarSpecs(mass=1487, wheelbase=2.75, centerToFrontRatio=0.39, steerRatio=13.66),  # 13.37 is end-to-end spec
+    dbc_dict('honda_accord_touring_2016_can_generated', 'acura_ilx_2016_nidec'),
+    flags=HondaFlags.NIDEC_ALT_SCM_MESSAGES,
+  )
+  HONDA_CLARITY = HondaNidecPlatformConfig(
+    [HondaCarDocs("Honda Clarity 2018-22", footnotes=[Footnote.ACCORD_NIDEC, Footnote.SERIAL_STEERING])],
+    CarSpecs(mass=1838, wheelbase=2.75, centerToFrontRatio=0.4, steerRatio=16.50),  # 12.72 is end-to-end spec
+    dbc_dict('honda_clarity_hybrid_2018_can_generated', 'acura_ilx_2016_nidec'),
+  )
 
 
 HONDA_ALT_VERSION_REQUEST = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \
@@ -318,6 +337,7 @@ FW_QUERY_CONFIG = FwQueryConfig(
 
 STEER_THRESHOLD = {
   # default is 1200, overrides go here
+  CAR.HONDA_ACCORD_4CYL_9TH_GEN: 30,
   CAR.ACURA_RDX: 400,
   CAR.HONDA_CRV_EU: 400,
 }
@@ -326,6 +346,7 @@ HONDA_NIDEC_ALT_PCM_ACCEL = CAR.with_flags(HondaFlags.NIDEC_ALT_PCM_ACCEL)
 HONDA_NIDEC_ALT_SCM_MESSAGES = CAR.with_flags(HondaFlags.NIDEC_ALT_SCM_MESSAGES)
 HONDA_BOSCH = CAR.with_flags(HondaFlags.BOSCH)
 HONDA_BOSCH_RADARLESS = CAR.with_flags(HondaFlags.BOSCH_RADARLESS)
+SERIAL_STEERING = {CAR.HONDA_ACCORD_4CYL_9TH_GEN, }
 
 
 DBC = CAR.create_dbc_map()

@@ -14,6 +14,8 @@ SCons.Warnings.warningAsException(True)
 
 TICI = os.path.isfile('/TICI')
 AGNOS = TICI
+UBUNTU_FOCAL = int(subprocess.check_output('[ -f /etc/os-release ] && . /etc/os-release && [ "$ID" = "ubuntu" ] && [ "$VERSION_ID" = "20.04" ] && echo 1 || echo 0', shell=True, encoding='utf-8').rstrip())
+Export('UBUNTU_FOCAL')
 
 Decider('MD5-timestamp')
 
@@ -70,6 +72,12 @@ AddOption('--minimal',
           default=os.path.exists(File('#.lfsconfig').abspath), # minimal by default on release branch (where there's no LFS)
           help='the minimum build to run openpilot. no tests, tools, etc.')
 
+AddOption('--stock-ui',
+          action='store_true',
+          dest='stock_ui',
+          default=False,
+          help='Build stock UI instead of sunnypilot UI')
+
 ## Architecture name breakdown (arch)
 ## - larch64: linux tici aarch64
 ## - aarch64: linux pc aarch64
@@ -102,7 +110,6 @@ if arch == "larch64":
 
   libpath = [
     "/usr/local/lib",
-    "/usr/lib",
     "/system/vendor/lib64",
     f"#third_party/acados/{arch}/lib",
   ]
@@ -170,8 +177,11 @@ if arch != "Darwin":
   ldflags += ["-Wl,--as-needed", "-Wl,--no-undefined"]
 
 # Enable swaglog include in submodules
-cflags += ['-DSWAGLOG="\\"common/swaglog.h\\""']
 cxxflags += ['-DSWAGLOG="\\"common/swaglog.h\\""']
+
+if not GetOption('stock_ui'):
+  cflags += ["-DSUNNYPILOT"]
+  cxxflags += ["-DSUNNYPILOT"]
 
 ccflags_option = GetOption('ccflags')
 if ccflags_option:
@@ -206,7 +216,6 @@ env = Environment(
     "#third_party/json11",
     "#third_party/linux/include",
     "#third_party/snpe/include",
-    "#third_party/qrcode",
     "#third_party",
     "#cereal",
     "#msgq",
@@ -234,7 +243,7 @@ env = Environment(
   COMPILATIONDB_USE_ABSPATH=True,
   REDNOSE_ROOT="#",
   tools=["default", "cython", "compilation_db", "rednose_filter"],
-  toolpath=["#rednose_repo/site_scons/site_tools"],
+  toolpath=["#site_scons/site_tools", "#rednose_repo/site_scons/site_tools"],
 )
 
 if arch == "Darwin":
@@ -246,7 +255,8 @@ if GetOption('compile_db'):
   env.CompilationDatabase('compile_commands.json')
 
 # Setup cache dir
-cache_dir = '/data/scons_cache' if AGNOS else '/tmp/scons_cache'
+default_cache_dir = '/data/scons_cache' if AGNOS else '/tmp/scons_cache'
+cache_dir = ARGUMENTS.get('cache_dir', default_cache_dir)
 CacheDir(cache_dir)
 Clean(["."], cache_dir)
 
@@ -273,7 +283,8 @@ if arch == "Darwin":
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
-Export('envCython')
+np_version = SCons.Script.Value(np.__version__)
+Export('envCython', 'np_version')
 
 # Qt build environment
 qt_env = env.Clone()
@@ -317,7 +328,7 @@ try:
 except SCons.Errors.UserError:
   qt_env.Tool('qt')
 
-qt_env['CPPPATH'] += qt_dirs# + ["#selfdrive/ui/qt/"]
+qt_env['CPPPATH'] += qt_dirs + ["#third_party/qrcode"]
 qt_flags = [
   "-D_REENTRANT",
   "-DQT_NO_DEBUG",
@@ -366,7 +377,6 @@ Export('messaging')
 
 # Build other submodules
 SConscript([
-  'body/board/SConscript',
   'opendbc/can/SConscript',
   'panda/SConscript',
 ])

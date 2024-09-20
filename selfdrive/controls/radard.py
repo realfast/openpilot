@@ -10,8 +10,9 @@ from openpilot.common.numpy_fast import interp
 from openpilot.common.params import Params
 from openpilot.common.realtime import DT_CTRL, Ratekeeper, Priority, config_realtime_process
 from openpilot.common.swaglog import cloudlog
-
 from openpilot.common.simple_kalman import KF1D
+from openpilot.selfdrive.car.hyundai.values import HyundaiFlagsSP
+from openpilot.selfdrive.pandad import can_capnp_to_list
 
 
 # Default lead acceleration decay set to 50% at 1s
@@ -37,7 +38,7 @@ class KalmanParams:
     #Q = np.matrix([[10., 0.0], [0.0, 100.]])
     #R = 1e3
     #K = np.matrix([[ 0.05705578], [ 0.03073241]])
-    dts = [dt * 0.01 for dt in range(1, 21)]
+    dts = [i * 0.01 for i in range(1, 21)]
     K0 = [0.12287673, 0.14556536, 0.16522756, 0.18281627, 0.1988689,  0.21372394,
           0.22761098, 0.24069424, 0.253096,   0.26491023, 0.27621103, 0.28705801,
           0.29750003, 0.30757767, 0.31732515, 0.32677158, 0.33594201, 0.34485814,
@@ -91,10 +92,11 @@ class Track:
     self.aLeadK = aLeadK
     self.aLeadTau = aLeadTau
 
-  def get_RadarState(self, model_prob: float = 0.0):
+  def get_RadarState(self, CP: car.CarParams = None, lead_msg_y: float = 0.0, model_prob: float = 0.0):
+    y_rel_vision = False if CP is None or CP.carName != "hyundai" else CP.spFlags & HyundaiFlagsSP.SP_CAMERA_SCC_LEAD
     return {
       "dRel": float(self.dRel),
-      "yRel": float(self.yRel),
+      "yRel": float(-lead_msg_y) if y_rel_vision else float(self.yRel),
       "vRel": float(self.vRel),
       "vLead": float(self.vLead),
       "vLeadK": float(self.vLeadK),
@@ -167,7 +169,7 @@ def get_RadarState_from_vision(lead_msg: capnp._DynamicStructReader, v_ego: floa
 
 
 def get_lead(v_ego: float, ready: bool, tracks: dict[int, Track], lead_msg: capnp._DynamicStructReader,
-             model_v_ego: float, low_speed_override: bool = True) -> dict[str, Any]:
+             model_v_ego: float, CP: car.CarParams, low_speed_override: bool = True) -> dict[str, Any]:
   # Determine leads, this is where the essential logic happens
   if len(tracks) > 0 and ready and lead_msg.prob > .5:
     track = match_vision_to_track(v_ego, lead_msg, tracks)
@@ -176,7 +178,7 @@ def get_lead(v_ego: float, ready: bool, tracks: dict[int, Track], lead_msg: capn
 
   lead_dict = {'status': False}
   if track is not None:
-    lead_dict = track.get_RadarState(lead_msg.prob)
+    lead_dict = track.get_RadarState(CP, lead_msg.y[0], lead_msg.prob)
   elif (track is None) and ready and (lead_msg.prob > .5):
     lead_dict = get_RadarState_from_vision(lead_msg, v_ego, model_v_ego)
 
@@ -193,7 +195,7 @@ def get_lead(v_ego: float, ready: bool, tracks: dict[int, Track], lead_msg: capn
 
 
 class RadarD:
-  def __init__(self, radar_ts: float, delay: int = 0):
+  def __init__(self, radar_ts: float, CP: car.CarParams, delay: int = 0):
     self.current_time = 0.0
 
     self.tracks: dict[int, Track] = {}
@@ -207,6 +209,8 @@ class RadarD:
     self.radar_state_valid = False
 
     self.ready = False
+
+    self.CP = CP
 
   def update(self, sm: messaging.SubMaster, rr):
     self.ready = sm.seen['modelV2']
@@ -257,8 +261,8 @@ class RadarD:
       model_v_ego = self.v_ego
     leads_v3 = sm['modelV2'].leadsV3
     if len(leads_v3) > 1:
-      self.radar_state.leadOne = get_lead(self.v_ego, self.ready, self.tracks, leads_v3[0], model_v_ego, low_speed_override=True)
-      self.radar_state.leadTwo = get_lead(self.v_ego, self.ready, self.tracks, leads_v3[1], model_v_ego, low_speed_override=False)
+      self.radar_state.leadOne = get_lead(self.v_ego, self.ready, self.tracks, leads_v3[0], model_v_ego, self.CP, low_speed_override=True)
+      self.radar_state.leadTwo = get_lead(self.v_ego, self.ready, self.tracks, leads_v3[1], model_v_ego, self.CP, low_speed_override=False)
 
   def publish(self, pm: messaging.PubMaster, lag_ms: float):
     assert self.radar_state is not None
@@ -288,8 +292,7 @@ def main():
 
   # wait for stats about the car to come in from controls
   cloudlog.info("radard is waiting for CarParams")
-  with car.CarParams.from_bytes(Params().get("CarParams", block=True)) as msg:
-    CP = msg
+  CP = messaging.log_from_bytes(Params().get("CarParams", block=True), car.CarParams)
   cloudlog.info("radard got CarParams")
 
   # import the radar from the fingerprint
@@ -304,11 +307,11 @@ def main():
   RI = RadarInterface(CP)
 
   rk = Ratekeeper(1.0 / CP.radarTimeStep, print_delay_threshold=None)
-  RD = RadarD(CP.radarTimeStep, RI.delay)
+  RD = RadarD(CP.radarTimeStep, CP, RI.delay)
 
   while 1:
     can_strings = messaging.drain_sock_raw(can_sock, wait_for_one=True)
-    rr = RI.update(can_strings)
+    rr = RI.update(can_capnp_to_list(can_strings))
     sm.update(0)
     if rr is None:
       continue

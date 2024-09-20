@@ -60,6 +60,12 @@ class ToyotaFlags(IntFlag):
   SNG_WITHOUT_DSU = 512
 
 
+class ToyotaFlagsSP(IntFlag):
+  SP_ZSS = 1
+  SP_ENHANCED_BSM = 2
+  SP_NEED_DEBUG_BSM = 4
+
+
 class Footnote(Enum):
   CAMRY = CarFootnote(
     "openpilot operates above 28mph for Camry 4CYL L, 4CYL LE and 4CYL SE which don't have Full-Speed Range Dynamic Radar Cruise Control.",

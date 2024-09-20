@@ -12,10 +12,10 @@ def dmonitoringd_thread():
   set_realtime_priority(2)
 
   params = Params()
-  pm = messaging.PubMaster(['driverMonitoringState'])
+  pm = messaging.PubMaster(['driverMonitoringState', 'driverMonitoringStateSP'])
   sm = messaging.SubMaster(['driverStateV2', 'liveCalibration', 'carState', 'controlsState', 'modelV2'], poll='driverStateV2')
 
-  DM = DriverMonitoring(rhd_saved=params.get_bool("IsRhdDetected"), always_on=params.get_bool("AlwaysOnDM"))
+  DM = DriverMonitoring(rhd_saved=params.get_bool("IsRhdDetected"), always_on=params.get_bool("AlwaysOnDM"), hands_on_wheel_monitoring=params.get_bool("HandsOnWheelMonitoring"))
 
   # 20Hz <- dmonitoringmodeld
   while True:
@@ -32,9 +32,13 @@ def dmonitoringd_thread():
     dat = DM.get_state_packet(valid=valid)
     pm.send('driverMonitoringState', dat)
 
+    sp_dat = DM.get_sp_state_packet(valid=valid)
+    pm.send('driverMonitoringStateSP', sp_dat)
+
     # load live always-on toggle
     if sm['driverStateV2'].frameId % 40 == 1:
       DM.always_on = params.get_bool("AlwaysOnDM")
+      DM.hands_on_wheel_monitoring = params.get_bool("HandsOnWheelMonitoring")
 
     # save rhd virtual toggle every 5 mins
     if (sm['driverStateV2'].frameId % 6000 == 0 and

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import platform
 import base64
-import bz2
 import hashlib
 import io
 import json
@@ -15,6 +15,8 @@ import sys
 import tempfile
 import threading
 import time
+import gzip
+import zstandard as zstd
 from dataclasses import asdict, dataclass, replace
 from datetime import datetime
 from functools import partial
@@ -35,6 +37,7 @@ from openpilot.common.file_helpers import CallbackReader
 from openpilot.common.params import Params
 from openpilot.common.realtime import set_core_affinity
 from openpilot.system.hardware import HARDWARE, PC
+from openpilot.system.loggerd.uploader import LOG_COMPRESSION_LEVEL
 from openpilot.system.loggerd.xattr_cache import getxattr, setxattr
 from openpilot.common.swaglog import cloudlog
 from openpilot.system.version import get_build_metadata
@@ -103,8 +106,9 @@ cancelled_uploads: set[str] = set()
 cur_upload_items: dict[int, UploadItem | None] = {}
 
 
-def strip_bz2_extension(fn: str) -> str:
-  if fn.endswith('.bz2'):
+# TODO-SP: adapt zst for sunnylink
+def strip_zst_extension(fn: str) -> str:
+  if fn.endswith('.zst'):
     return fn[:-4]
   return fn
 
@@ -177,6 +181,7 @@ def jsonrpc_handler(end_event: threading.Event) -> None:
       elif "id" in data and ("result" in data or "error" in data):
         log_recv_queue.put_nowait(data)
       else:
+        cloudlog.event("athena.jsonrpc_handler.invalid_request", error=True, data=data)
         raise Exception("not a valid request or response")
     except queue.Empty:
       pass
@@ -283,16 +288,16 @@ def _do_upload(upload_item: UploadItem, callback: Callable = None) -> requests.R
   path = upload_item.path
   compress = False
 
-  # If file does not exist, but does exist without the .bz2 extension we will compress on the fly
-  if not os.path.exists(path) and os.path.exists(strip_bz2_extension(path)):
-    path = strip_bz2_extension(path)
+  # If file does not exist, but does exist without the .zst extension we will compress on the fly
+  if not os.path.exists(path) and os.path.exists(strip_zst_extension(path)):
+    path = strip_zst_extension(path)
     compress = True
 
   with open(path, "rb") as f:
     content = f.read()
     if compress:
       cloudlog.event("athena.upload_handler.compress", fn=path, fn_orig=upload_item.path)
-      content = bz2.compress(content)
+      content = zstd.compress(content, LOG_COMPRESSION_LEVEL)
 
   with io.BytesIO(content) as data:
     return requests.put(upload_item.url,
@@ -388,7 +393,7 @@ def uploadFilesToUrls(files_data: list[UploadFileDict]) -> UploadFilesToUrlRespo
       continue
 
     path = os.path.join(Paths.log_root(), file.fn)
-    if not os.path.exists(path) and not os.path.exists(strip_bz2_extension(path)):
+    if not os.path.exists(path) and not os.path.exists(strip_zst_extension(path)):
       failed.append(file.fn)
       continue
 
@@ -414,6 +419,7 @@ def uploadFilesToUrls(files_data: list[UploadFileDict]) -> UploadFilesToUrlRespo
 
   resp: UploadFilesToUrlResponse = {"enqueued": len(items), "items": items}
   if failed:
+    cloudlog.event("athena.uploadFilesToUrls.failed", failed=failed, error=True)
     resp["failed"] = failed
 
   return resp
@@ -549,7 +555,7 @@ def takeSnapshot() -> str | dict[str, str] | None:
     raise Exception("not available while camerad is started")
 
 
-def get_logs_to_send_sorted() -> list[str]:
+def get_logs_to_send_sorted(log_attr_name=LOG_ATTR_NAME) -> list[str]:
   # TODO: scan once then use inotify to detect file creation/deletion
   curr_time = int(time.time())
   logs = []
@@ -557,7 +563,7 @@ def get_logs_to_send_sorted() -> list[str]:
     log_path = os.path.join(Paths.swaglog_root(), log_entry)
     time_sent = 0
     try:
-      value = getxattr(log_path, LOG_ATTR_NAME)
+      value = getxattr(log_path, log_attr_name)
       if value is not None:
         time_sent = int.from_bytes(value, sys.byteorder)
     except (ValueError, TypeError):
@@ -569,8 +575,69 @@ def get_logs_to_send_sorted() -> list[str]:
   return sorted(logs)[:-1]
 
 
-def log_handler(end_event: threading.Event) -> None:
+def add_log_to_queue(log_path, log_id, is_sunnylink = False):
+  MAX_SIZE_KB = 32
+  MAX_SIZE_BYTES = MAX_SIZE_KB * 1024
+
+  with open(log_path, 'r') as f:
+    data = f.read()
+
+    # Check if the file is empty
+    if not data:
+      cloudlog.warning(f"Log file {log_path} is empty.")
+      return
+
+    # Initialize variables for encoding
+    payload = data
+    is_compressed = False
+
+    # Log the current size of the file
+    current_size = len(json.dumps(payload).encode("utf-8")) + len(log_id.encode("utf-8")) + 100  # Add 100 bytes to account for encoding overhead
+    cloudlog.debug(f"Current size of log file {log_path}: {current_size} bytes")
+
+    if is_sunnylink and current_size > MAX_SIZE_BYTES:
+      # Compress and encode the data if it exceeds the maximum size
+      compressed_data = gzip.compress(data.encode())
+      payload = base64.b64encode(compressed_data).decode()
+      is_compressed = True
+
+      # Log the size after compression and encoding
+      compressed_size = len(compressed_data)
+      encoded_size = len(payload)
+      cloudlog.debug(f"Size of log file {log_path} "
+                    f"after compression: {compressed_size} bytes, "
+                    f"after encoding: {encoded_size} bytes")
+
+    jsonrpc = {
+      "method": "forwardLogs",
+      "params": {
+        "logs": payload
+      },
+      "jsonrpc": "2.0",
+      "id": log_id
+    }
+
+    if is_sunnylink and is_compressed:
+      jsonrpc["params"]["compressed"] = is_compressed
+
+    jsonrpc_str = json.dumps(jsonrpc)
+    size_in_bytes = len(jsonrpc_str.encode('utf-8'))
+
+    if is_sunnylink and size_in_bytes <= MAX_SIZE_BYTES:
+      cloudlog.debug(f"Target is sunnylink and log file {log_path} is small enough to send in one request ({size_in_bytes} bytes).")
+      low_priority_send_queue.put_nowait(jsonrpc_str)
+    elif is_sunnylink:
+      cloudlog.warning(f"Target is sunnylink and log file {log_path} is too large to send in one request.")
+    else:
+      cloudlog.debug(f"Target is not sunnylink, proceeding to send log file {log_path} in one request ({size_in_bytes} bytes).")
+      low_priority_send_queue.put_nowait(jsonrpc_str)
+
+
+def log_handler(end_event: threading.Event, log_attr_name=LOG_ATTR_NAME) -> None:
+  is_sunnylink = log_attr_name != LOG_ATTR_NAME
   if PC:
+    cloudlog.debug("athena.log_handler: Not supported on PC")
+    time.sleep(1)
     return
 
   log_files = []
@@ -579,7 +646,7 @@ def log_handler(end_event: threading.Event) -> None:
     try:
       curr_scan = time.monotonic()
       if curr_scan - last_scan > 10:
-        log_files = get_logs_to_send_sorted()
+        log_files = get_logs_to_send_sorted(log_attr_name)
         last_scan = curr_scan
 
       # send one log
@@ -590,18 +657,10 @@ def log_handler(end_event: threading.Event) -> None:
         try:
           curr_time = int(time.time())
           log_path = os.path.join(Paths.swaglog_root(), log_entry)
-          setxattr(log_path, LOG_ATTR_NAME, int.to_bytes(curr_time, 4, sys.byteorder))
-          with open(log_path) as f:
-            jsonrpc = {
-              "method": "forwardLogs",
-              "params": {
-                "logs": f.read()
-              },
-              "jsonrpc": "2.0",
-              "id": log_entry
-            }
-            low_priority_send_queue.put_nowait(json.dumps(jsonrpc))
-            curr_log = log_entry
+          setxattr(log_path, log_attr_name, int.to_bytes(curr_time, 4, sys.byteorder))
+
+          add_log_to_queue(log_path, log_entry, is_sunnylink)
+          curr_log = log_entry
         except OSError:
           pass  # file could be deleted by log rotation
 
@@ -618,7 +677,7 @@ def log_handler(end_event: threading.Event) -> None:
           if log_entry and log_success:
             log_path = os.path.join(Paths.swaglog_root(), log_entry)
             try:
-              setxattr(log_path, LOG_ATTR_NAME, LOG_ATTR_VALUE_MAX_UNIX_TIME)
+              setxattr(log_path, log_attr_name, LOG_ATTR_VALUE_MAX_UNIX_TIME)
             except OSError:
               pass  # file could be deleted by log rotation
           if curr_log == log_entry:
@@ -753,22 +812,23 @@ def ws_manage(ws: WebSocket, end_event: threading.Event) -> None:
   onroad_prev = None
   sock = ws.sock
 
-  while True:
+  while not end_event.wait(5):
     onroad = params.get_bool("IsOnroad")
     if onroad != onroad_prev:
       onroad_prev = onroad
 
       if sock is not None:
-        # While not sending data, onroad, we can expect to time out in 7 + (7 * 2) = 21s
-        #                         offroad, we can expect to time out in 30 + (10 * 3) = 60s
-        # FIXME: TCP_USER_TIMEOUT is effectively 2x for some reason (32s), so it's mostly unused
-        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 16000 if onroad else 0)
-        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 7 if onroad else 30)
+        if platform.system() == 'Darwin':  # macOS
+          sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+          sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPALIVE, 7 if onroad else 30)
+        else:
+          # While not sending data, onroad, we can expect to time out in 7 + (7 * 2) = 21s
+          #                         offroad, we can expect to time out in 30 + (10 * 3) = 60s
+          # FIXME: TCP_USER_TIMEOUT is effectively 2x for some reason (32s), so it's mostly unused
+          sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 16000 if onroad else 0)
+          sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 7 if onroad else 30)
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 7 if onroad else 10)
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 2 if onroad else 3)
-
-    if end_event.wait(5):
-      break
 
 
 def backoff(retries: int) -> int:

@@ -29,6 +29,9 @@ class CarState(CarStateBase):
     self.prev_distance_button = 0
     self.distance_button = 0
 
+    self.lkas_enabled = False
+    self.prev_lkas_enabled = False
+
   def update(self, pt_cp, cam_cp, loopback_cp):
     ret = car.CarState.new_message()
 
@@ -41,6 +44,8 @@ class CarState(CarStateBase):
     # This is to avoid a fault where you engage while still moving backwards after shifting to D.
     # An Equinox has been seen with an unsupported status (3), so only check if either wheel is in reverse (2)
     self.moving_backward = (pt_cp.vl["EBCMWheelSpdRear"]["RLWheelDir"] == 2) or (pt_cp.vl["EBCMWheelSpdRear"]["RRWheelDir"] == 2)
+    self.prev_mads_enabled = self.mads_enabled
+    self.prev_lkas_enabled = self.lkas_enabled
 
     # Variables used for avoiding LKAS faults
     self.loopback_lka_steering_cmd_updated = len(loopback_cp.vl_all["ASCMLKASteeringCmd"]["RollingCounter"]) > 0
@@ -60,6 +65,8 @@ class CarState(CarStateBase):
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     # sample rear wheel speeds, standstill=True if ECM allows engagement with brake
     ret.standstill = ret.wheelSpeeds.rl <= STANDSTILL_THRESHOLD and ret.wheelSpeeds.rr <= STANDSTILL_THRESHOLD
+
+    self.lkas_enabled = pt_cp.vl["ASCMSteeringButton"]["LKAButton"]
 
     if pt_cp.vl["ECMPRDNL2"]["ManualMode"] == 1:
       ret.gearShifter = self.parse_gear_shifter("T")
@@ -102,8 +109,8 @@ class CarState(CarStateBase):
 
     # 1 - latched
     ret.seatbeltUnlatched = pt_cp.vl["BCMDoorBeltStatus"]["LeftSeatBelt"] == 0
-    ret.leftBlinker = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 1
-    ret.rightBlinker = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 2
+    ret.leftBlinker = ret.leftBlinkerOn = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 1
+    ret.rightBlinker = ret.rightBlinkerOn = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 2
 
     ret.parkingBrake = pt_cp.vl["BCMGeneralPlatformStatus"]["ParkBrakeSwActive"] == 1
     ret.cruiseState.available = pt_cp.vl["ECMEngineStatus"]["CruiseMainOn"] != 0

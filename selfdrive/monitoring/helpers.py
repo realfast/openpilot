@@ -3,6 +3,7 @@ from math import atan2
 from cereal import car
 import cereal.messaging as messaging
 from openpilot.selfdrive.controls.lib.events import Events
+from openpilot.selfdrive.monitoring.hands_on_wheel_monitor import HandsOnWheelStatus
 from openpilot.common.numpy_fast import interp
 from openpilot.common.realtime import DT_DMON
 from openpilot.common.filter_simple import FirstOrderFilter
@@ -125,7 +126,7 @@ def face_orientation_from_net(angles_desc, pos_desc, rpy_calib):
 
 
 class DriverMonitoring:
-  def __init__(self, rhd_saved=False, settings=None, always_on=False):
+  def __init__(self, rhd_saved=False, settings=None, always_on=False, hands_on_wheel_monitoring=False):
     if settings is None:
       settings = DRIVER_MONITOR_SETTINGS()
     # init policy settings
@@ -162,6 +163,9 @@ class DriverMonitoring:
     self._reset_awareness()
     self._set_timers(active_monitoring=True)
     self._reset_events()
+
+    self.hands_on_wheel_status = HandsOnWheelStatus()
+    self.hands_on_wheel_monitoring = hands_on_wheel_monitoring
 
   def _reset_awareness(self):
     self.awareness = 1.
@@ -303,7 +307,7 @@ class DriverMonitoring:
     elif self.face_detected and self.pose.low_std:
       self.hi_stds = 0
 
-  def _update_events(self, driver_engaged, op_engaged, standstill, wrong_gear, car_speed):
+  def _update_events(self, driver_engaged, op_engaged, standstill, wrong_gear, car_speed, steering_wheel_engaged):
     self._reset_events()
     # Block engaging after max number of distrations or when alert active
     if self.terminal_alert_cnt >= self.settings._MAX_TERMINAL_ALERTS or \
@@ -312,6 +316,10 @@ class DriverMonitoring:
       self.current_events.add(EventName.tooDistracted)
 
     always_on_valid = self.always_on and not wrong_gear
+
+    # Update events and state from hands on wheel monitoring status
+    self.hands_on_wheel_status.update(self.current_events, steering_wheel_engaged, op_engaged, car_speed, always_on_valid, self.hands_on_wheel_monitoring)
+
     if (driver_engaged and self.awareness > 0 and not self.active_monitoring_mode) or \
        (not always_on_valid and not op_engaged) or \
        (always_on_valid and not op_engaged and self.awareness <= 0):
@@ -391,6 +399,13 @@ class DriverMonitoring:
     }
     return dat
 
+  def get_sp_state_packet(self, valid=True):
+    dat = messaging.new_message('driverMonitoringStateSP', valid=valid)
+    dat.driverMonitoringStateSP = {
+      "handsOnWheelState": self.hands_on_wheel_status.hands_on_wheel_state,
+    }
+    return dat
+
   def run_step(self, sm):
     # Set strictness
     self._set_policy(
@@ -412,5 +427,6 @@ class DriverMonitoring:
       op_engaged=sm['controlsState'].enabled,
       standstill=sm['carState'].standstill,
       wrong_gear=sm['carState'].gearShifter in [car.CarState.GearShifter.reverse, car.CarState.GearShifter.park],
-      car_speed=sm['carState'].vEgo
+      car_speed=sm['carState'].vEgo,
+      steering_wheel_engaged=sm['carState'].steeringPressed
     )

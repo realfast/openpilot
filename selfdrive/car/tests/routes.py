@@ -39,7 +39,7 @@ routes = [
 
   CarTestRoute("0c94aa1e1296d7c6|2021-05-05--19-48-37", CHRYSLER.JEEP_GRAND_CHEROKEE),
   CarTestRoute("91dfedae61d7bd75|2021-05-22--20-07-52", CHRYSLER.JEEP_GRAND_CHEROKEE_2019),
-  CarTestRoute("420a8e183f1aed48|2020-03-05--07-15-29", CHRYSLER.CHRYSLER_PACIFICA_2017_HYBRID),
+  CarTestRoute("420a8e183f1aed48|2020-03-05--07-15-29", CHRYSLER.CHRYSLER_PACIFICA_2018_HYBRID),  # 2017
   CarTestRoute("43a685a66291579b|2021-05-27--19-47-29", CHRYSLER.CHRYSLER_PACIFICA_2018),
   CarTestRoute("378472f830ee7395|2021-05-28--07-38-43", CHRYSLER.CHRYSLER_PACIFICA_2018_HYBRID),
   CarTestRoute("8190c7275a24557b|2020-01-29--08-33-58", CHRYSLER.CHRYSLER_PACIFICA_2019_HYBRID),
@@ -295,6 +295,8 @@ routes = [
   CarTestRoute("66c1699b7697267d/2024-03-03--13-09-53", TESLA.TESLA_MODELS_RAVEN),
 
   # Segments that test specific issues
+  # Controls mismatch due to interceptor threshold
+  CarTestRoute("cfb32f0fb91b173b|2022-04-06--14-54-45", HONDA.CIVIC, segment=21),
   # Controls mismatch due to standstill threshold
   CarTestRoute("bec2dcfde6a64235|2022-04-08--14-21-32", HONDA.HONDA_CRV_HYBRID, segment=22),
 ]

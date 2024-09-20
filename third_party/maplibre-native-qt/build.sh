@@ -10,6 +10,12 @@ if [ -f /TICI ]; then
   #MAPLIBRE_FLAGS="$MAPLIBRE_FLAGS -DCMAKE_SYSTEM_NAME=Android -DANDROID_ABI=arm64-v8a"
 fi
 
+if [[ "$(uname)" == "Darwin" ]]; then
+  # We are on macOS, set ARCHNAME to "darwin"
+  export ARCHNAME="darwin"
+  echo "Running on macOS, ARCHNAME set to $ARCHNAME"
+fi
+
 cd $DIR
 if [ ! -d maplibre ]; then
   git clone --single-branch https://github.com/maplibre/maplibre-native-qt.git $DIR/maplibre
@@ -31,6 +37,11 @@ mkdir -p $INSTALL_DIR
 
 rm -rf $DIR/include
 mkdir -p $INSTALL_DIR/lib $INSTALL_DIR/include $DIR/include
-cp -r $DIR/maplibre/build/src/core/*.so* $INSTALL_DIR/lib
 cp -r $DIR/maplibre/build/src/core/include/* $INSTALL_DIR/include
 cp -r $DIR/maplibre/src/**/*.hpp $DIR/include
+
+if [[ "${ARCHNAME}" == "darwin" ]]; then
+  cp -r $DIR/maplibre/build/src/core/QMapLibre.framework $INSTALL_DIR/lib/QMapLibre.framework
+else
+  cp -r $DIR/maplibre/build/src/core/*.so* $INSTALL_DIR/lib/ 
+fi

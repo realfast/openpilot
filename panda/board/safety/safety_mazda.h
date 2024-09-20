@@ -54,6 +54,9 @@ static void mazda_rx_hook(const CANPacket_t *to_push) {
     if (addr == MAZDA_CRZ_CTRL) {
       bool cruise_engaged = GET_BYTE(to_push, 0) & 0x8U;
       pcm_cruise_check(cruise_engaged);
+
+      acc_main_on = GET_BIT(to_push, 17U) != 0U;
+      mads_acc_main_check(acc_main_on);
     }
 
     if (addr == MAZDA_ENGINE_DATA) {
@@ -89,7 +92,12 @@ static bool mazda_tx_hook(const CANPacket_t *to_send) {
       // allow resume spamming while controls allowed, but
       // only allow cancel while contrls not allowed
       bool cancel_cmd = (GET_BYTE(to_send, 0) == 0x1U);
-      if (!controls_allowed && !cancel_cmd) {
+      bool resume_cmd = GET_BIT(to_send, 2) != 0U;
+      bool inc_cmd = GET_BIT(to_send, 4) != 0U;
+      bool dec_cmd = GET_BIT(to_send, 5) != 0U;
+
+      bool allowed = cancel_cmd || ((resume_cmd || inc_cmd || dec_cmd) && controls_allowed && controls_allowed_long);
+      if (!allowed) {
         tx = false;
       }
     }

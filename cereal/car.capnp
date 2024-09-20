@@ -116,6 +116,28 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     paramsdTemporaryError @50;
     paramsdPermanentError @119;
     actuatorsApiUnavailable @120;
+    espActive @121;
+    manualSteeringRequired @122;
+    manualLongitudinalRequired @123;
+    silentPedalPressed @124;
+    silentButtonEnable @125;
+    silentBrakeHold @126;
+    silentWrongGear @127;
+    spReverseGear @128;
+    preKeepHandsOnWheel @129;
+    promptKeepHandsOnWheel @130;
+    keepHandsOnWheel @131;
+    speedLimitActive @132;
+    speedLimitValueChange @133;
+    e2eLongStop @134;
+    e2eLongStart @135;
+    controlsMismatchLong @136;
+    cruiseEngageBlocked @137;
+    laneChangeRoadEdge @138;
+    speedLimitPreActive @139;
+    speedLimitConfirmed @140;
+    torqueNNLoad @141;
+    hyundaiRadarTracksAvailable @142;
 
     radarCanErrorDEPRECATED @15;
     communityFeatureDisallowedDEPRECATED @62;
@@ -194,6 +216,7 @@ struct CarState {
   espDisabled @32 :Bool;
   accFaulted @42 :Bool;
   carFaultedNonCritical @47 :Bool;  # some ECU is faulted, but car remains controllable
+  espActive @51 :Bool;
 
   # cruise state
   cruiseState @10 :CruiseState;
@@ -213,6 +236,27 @@ struct CarState {
 
   # clutch (manual transmission only)
   clutchPressed @28 :Bool;
+
+  madsEnabled @52 :Bool;
+  leftBlinkerOn @53 :Bool;
+  rightBlinkerOn @54 :Bool;
+  disengageByBrake @55 :Bool;
+  belowLaneChangeSpeed @56 :Bool;
+  accEnabled @57 :Bool;
+  latActive @58 :Bool;
+  gapAdjustCruiseTr @59 :Int32;
+  endToEndLong @60 :Bool;
+  customStockLong @61 :CustomStockLong;
+
+  struct CustomStockLong {
+    cruiseButton @0 :Int16;
+    finalSpeedKph @1 :Float32;
+    vCruiseKphPrevDEPRECATED @2 :Float32;
+    targetSpeed @3 :Float32;
+    vSetDis @4 :Float32;
+    speedDiff @5 :Float32;
+    buttonType @6 :Int16;
+  }
 
   # blindspot sensors
   leftBlindspot @33 :Bool; # Is there something blocking the left lane change
@@ -240,6 +284,7 @@ struct CarState {
     speedOffset @3 :Float32;
     standstill @4 :Bool;
     nonAdaptive @5 :Bool;
+    speedLimit @7 :Float32;
   }
 
   enum GearShifter {
@@ -325,6 +370,7 @@ struct CarControl {
   enabled @0 :Bool;
   latActive @11: Bool;
   longActive @12: Bool;
+  vCruise @17 :Float32;  # actual set speed
 
   # Actuator commands as computed by controlsd
   actuators @6 :Actuators;
@@ -412,6 +458,9 @@ struct CarControl {
       prompt @6;
       promptRepeat @7;
       promptDistracted @8;
+      promptStarting @9;
+      promptSingleLow @10;
+      promptSingleHigh @11;
     }
   }
 
@@ -444,6 +493,9 @@ struct CarParams {
   enableBsm @56 :Bool;       # blind spot monitoring
   flags @64 :UInt32;         # flags for car specific quirks
   experimentalLongitudinalAvailable @71 :Bool;
+  pcmCruiseSpeed @74 :Bool;  # is openpilot's state tied to the PCM's cruise speed?
+  customStockLongAvailable @75 :Bool;
+  spFlags @76 :UInt32;       # flags for car specific quirks in sunnypilot
 
   minEnableSpeed @7 :Float32;
   minSteerSpeed @8 :Float32;
@@ -490,8 +542,7 @@ struct CarParams {
   startingState @70 :Bool; # Does this car make use of special starting state
 
   steerActuatorDelay @36 :Float32; # Steering wheel actuator delay in seconds
-  longitudinalActuatorDelayLowerBound @61 :Float32; # Gas/Brake actuator delay in seconds, lower bound
-  longitudinalActuatorDelayUpperBound @58 :Float32; # Gas/Brake actuator delay in seconds, upper bound
+  longitudinalActuatorDelay @58 :Float32; # Gas/Brake actuator delay in seconds
   openpilotLongitudinalControl @37 :Bool; # is openpilot doing the longitudinal control?
   carVin @38 :Text; # VIN number queried during fingerprinting
   dashcamOnly @41: Bool;
@@ -534,6 +585,8 @@ struct CarParams {
     steeringAngleDeadzoneDeg @5 :Float32;
     latAccelFactor @6 :Float32;
     latAccelOffset @7 :Float32;
+    nnModelName @8 :Text;
+    nnModelFuzzyMatch @9 :Bool;
   }
 
   struct LongitudinalPIDTuning {
@@ -542,8 +595,8 @@ struct CarParams {
     kiBP @2 :List(Float32);
     kiV @3 :List(Float32);
     kf @6 :Float32;
-    deadzoneBP @4 :List(Float32);
-    deadzoneV @5 :List(Float32);
+    deadzoneBPDEPRECATED @4 :List(Float32);
+    deadzoneVDEPRECATED @5 :List(Float32);
   }
 
   struct LateralINDITuning {
@@ -703,4 +756,5 @@ struct CarParams {
   brakeMaxVDEPRECATED @16 :List(Float32);
   directAccelControlDEPRECATED @30 :Bool;
   maxSteeringAngleDegDEPRECATED @54 :Float32;
+  longitudinalActuatorDelayLowerBoundDEPRECATEDDEPRECATED @61 :Float32;
 }

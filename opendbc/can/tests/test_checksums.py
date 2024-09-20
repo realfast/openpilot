@@ -1,12 +1,8 @@
-#!/usr/bin/env python3
-import unittest
-
 from opendbc.can.parser import CANParser
 from opendbc.can.packer import CANPacker
-from opendbc.can.tests.test_packer_parser import can_list_to_can_capnp
 
 
-class TestCanChecksums(unittest.TestCase):
+class TestCanChecksums:
 
   def test_honda_checksum(self):
     """Test checksums for Honda standard and extended CAN ids"""
@@ -31,12 +27,7 @@ class TestCanChecksums(unittest.TestCase):
         packer.make_can_msg("LKAS_HUD", 0, values),
         packer.make_can_msg("LKAS_HUD_A", 0, values),
       ]
-      can_strings = [can_list_to_can_capnp(msgs), ]
-      parser.update_strings(can_strings)
+      parser.update_strings([0, msgs])
 
-      self.assertEqual(parser.vl['LKAS_HUD']['CHECKSUM'], std)
-      self.assertEqual(parser.vl['LKAS_HUD_A']['CHECKSUM'], ext)
-
-
-if __name__ == "__main__":
-  unittest.main()
+      assert parser.vl['LKAS_HUD']['CHECKSUM'] == std
+      assert parser.vl['LKAS_HUD_A']['CHECKSUM'] == ext

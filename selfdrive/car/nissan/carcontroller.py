@@ -1,4 +1,5 @@
 from cereal import car
+from openpilot.common.realtime import DT_CTRL
 from opendbc.can.packer import CANPacker
 from openpilot.selfdrive.car import apply_std_steer_angle_limits
 from openpilot.selfdrive.car.interfaces import CarControllerBase
@@ -10,19 +11,35 @@ VisualAlert = car.CarControl.HUDControl.VisualAlert
 
 class CarController(CarControllerBase):
   def __init__(self, dbc_name, CP, VM):
-    self.CP = CP
+    super().__init__(dbc_name, CP, VM)
     self.car_fingerprint = CP.carFingerprint
-    self.frame = 0
 
     self.lkas_max_torque = 0
     self.apply_angle_last = 0
 
     self.packer = CANPacker(dbc_name)
 
+    self.disengage_blink = 0.
+    self.lat_disengage_init = False
+    self.lat_active_last = False
+
   def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
+
+    lateral_paused = CS.madsEnabled and not CC.latActive
+    if CC.latActive:
+      self.lat_disengage_init = False
+    elif self.lat_active_last:
+      self.lat_disengage_init = True
+
+    if not self.lat_disengage_init:
+      self.disengage_blink = self.frame
+
+    blinking_icon = (self.frame - self.disengage_blink) * DT_CTRL < 1.0 if self.lat_disengage_init else False
+
+    self.lat_active_last = CC.latActive
 
     can_sends = []
 
@@ -67,7 +84,8 @@ class CarController(CarControllerBase):
     # Below are the HUD messages. We copy the stock message and modify
     if self.CP.carFingerprint != CAR.NISSAN_ALTIMA:
       if self.frame % 2 == 0:
-        can_sends.append(nissancan.create_lkas_hud_msg(self.packer, CS.lkas_hud_msg, CC.enabled, hud_control.leftLaneVisible, hud_control.rightLaneVisible,
+        can_sends.append(nissancan.create_lkas_hud_msg(self.packer, CS.lkas_hud_msg, CC.latActive, blinking_icon, lateral_paused,
+                                                       hud_control.leftLaneVisible, hud_control.rightLaneVisible,
                                                        hud_control.leftLaneDepart, hud_control.rightLaneDepart))
 
       if self.frame % 50 == 0:

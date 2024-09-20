@@ -1,4 +1,4 @@
-Import('qt_env', 'arch', 'common', 'messaging', 'visionipc', 'transformations')
+Import('qt_env', 'arch', 'common', 'messaging', 'visionipc', 'transformations', 'UBUNTU_FOCAL')
 
 map_env = qt_env.Clone()
 libs = ['qt_widgets', 'qt_util', 'QMapLibre', common, messaging, visionipc, transformations,
@@ -17,4 +17,4 @@ if arch in ['larch64', 'aarch64', 'x86_64']:
   map_env["RPATH"].append(Dir('.').abspath)
   map_env["LIBPATH"].append(Dir('.').abspath)
   maplib = map_env.SharedLibrary("maprender", ["map_renderer.cc"], LIBS=libs)
-  # map_env.Program("mapsd", ["main.cc", ], LIBS=[maplib[0].get_path(), ] + libs)
+  map_env.Program("mapsd", ["main.cc", ], LIBS=[maplib[0].get_path(), ] + libs)

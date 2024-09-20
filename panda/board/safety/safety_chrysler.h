@@ -36,7 +36,10 @@ typedef struct {
   const int DAS_3;
   const int DAS_6;
   const int LKAS_COMMAND;
+  const int LKAS_HEARTBIT;
   const int CRUISE_BUTTONS;
+  const int CENTER_STACK_1;
+  const int CENTER_STACK_2;
 } ChryslerAddrs;
 
 // CAN messages for Chrysler/Jeep platforms
@@ -49,6 +52,9 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .DAS_6            = 0x2A6,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 0x292,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 0x23B,  // Cruise control buttons
+  .LKAS_HEARTBIT    = 0x2D9,  // LKAS HEARTBIT from DASM
+  .CENTER_STACK_1   = 0x330,  // LKAS Button
+  .CENTER_STACK_2   = 0x28A,  // LKAS Button
 };
 
 // CAN messages for the 5th gen RAM DT platform
@@ -61,6 +67,8 @@ const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
   .DAS_6            = 0xFA,   // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 0xA6,   // LKAS controls from DASM
   .CRUISE_BUTTONS   = 0xB1,   // Cruise control buttons
+  .CENTER_STACK_1   = 0xDD,   // LKAS Button
+  .CENTER_STACK_2   = 0x28A,  // LKAS Button
 };
 
 // CAN messages for the 5th gen RAM HD platform
@@ -73,12 +81,15 @@ const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
   .DAS_6            = 0x275,  // LKAS HUD and auto headlight control from DASM
   .LKAS_COMMAND     = 0x276,  // LKAS controls from DASM
   .CRUISE_BUTTONS   = 0x23A,  // Cruise control buttons
+  .CENTER_STACK_1   = 0x330,  // LKAS Button
+  .CENTER_STACK_2   = 0x28A,  // LKAS Button
 };
 
 const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.CRUISE_BUTTONS, 0, 3},
   {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
   {CHRYSLER_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_ADDRS.LKAS_HEARTBIT, 0, 5},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
@@ -188,6 +199,9 @@ static void chrysler_rx_hook(const CANPacket_t *to_push) {
   if ((bus == das_3_bus) && (addr == chrysler_addrs->DAS_3)) {
     bool cruise_engaged = GET_BIT(to_push, 21U);
     pcm_cruise_check(cruise_engaged);
+
+    acc_main_on = GET_BIT(to_push, 20U) != 0U;
+    mads_acc_main_check(acc_main_on);
   }
 
   // TODO: use the same message for both
@@ -234,10 +248,12 @@ static bool chrysler_tx_hook(const CANPacket_t *to_send) {
   }
 
   // FORCE CANCEL: only the cancel button press is allowed
-  if (addr == chrysler_addrs->CRUISE_BUTTONS) {
+  if ((addr == chrysler_addrs->CRUISE_BUTTONS) && (chrysler_platform == CHRYSLER_PACIFICA)) {
     const bool is_cancel = GET_BYTE(to_send, 0) == 1U;
     const bool is_resume = GET_BYTE(to_send, 0) == 0x10U;
-    const bool allowed = is_cancel || (is_resume && controls_allowed);
+    const bool is_accel = GET_BIT(to_send, 2);
+    const bool is_decel = GET_BIT(to_send, 3);
+    const bool allowed = is_cancel || ((is_resume || is_accel || is_decel) && controls_allowed && controls_allowed_long);
     if (!allowed) {
       tx = false;
     }
@@ -249,13 +265,15 @@ static bool chrysler_tx_hook(const CANPacket_t *to_send) {
 static int chrysler_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
+  // forward all messages from car to camera except CRUISE_BUTTONS messages for Ram platforms
+  const bool is_cruise_buttons = ((addr == chrysler_addrs->CRUISE_BUTTONS) && (chrysler_platform != CHRYSLER_PACIFICA));
   // forward to camera
-  if (bus_num == 0) {
+  if ((bus_num == 0) && !is_cruise_buttons) {
     bus_fwd = 2;
   }
 
-  // forward all messages from camera except LKAS messages
-  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6));
+  // forward all messages from camera except LKAS messages and HeartBit
+  const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6) || (addr == chrysler_addrs->LKAS_HEARTBIT));
   if ((bus_num == 2) && !is_lkas){
     bus_fwd = 0;
   }

@@ -123,6 +123,20 @@ FW_VERSIONS = {
       b'38897-TWD-J020\x00\x00',
     ],
   },
+  CAR.HONDA_ACCORD_4CYL_9TH_GEN: {
+    (Ecu.vsa, 0x18DA28F1, None): [
+      b'57114-T2F-X840\x00\x00',
+    ],
+    (Ecu.fwdRadar, 0x18DAB0F1, None): [
+      b'36161-T2F-A140\x00\x00',
+    ],
+    (Ecu.combinationMeter, 0x18DA60F1, None): [
+      b'78109-T2F-L110\x00\x00',
+    ],
+    (Ecu.srs, 0x18DA53F1, None): [
+      b'77959-T2F-A030\x00\x00',
+    ],
+  },
   CAR.HONDA_CIVIC: {
     (Ecu.transmission, 0x18da1ef1, None): [
       b'28101-5CG-A040\x00\x00',
@@ -214,14 +228,22 @@ FW_VERSIONS = {
       b'39990-TBA-C120\x00\x00',
       b'39990-TEA-T820\x00\x00',
       b'39990-TEZ-T020\x00\x00',
-      b'39990-TGG,A020\x00\x00',
-      b'39990-TGG,A120\x00\x00',
       b'39990-TGG-A020\x00\x00',
       b'39990-TGG-A120\x00\x00',
       b'39990-TGG-J510\x00\x00',
       b'39990-TGH-J530\x00\x00',
       b'39990-TGL-E130\x00\x00',
       b'39990-TGN-E120\x00\x00',
+      # modded EPS bosch civic
+      b'39990-TBA,C020\x00\x00',
+      b'39990-TBA,C120\x00\x00',
+      b'39990-TEA,T820\x00\x00',
+      b'39990-TEZ,T020\x00\x00',
+      b'39990-TGG,A020\x00\x00',
+      b'39990-TGG,A120\x00\x00',
+      b'39990-TGG,J510\x00\x00',
+      b'39990-TGL,E130\x00\x00',
+      b'39990-TGN,E120\x00\x00',
     ],
     (Ecu.srs, 0x18da53f1, None): [
       b'77959-TBA-A060\x00\x00',
@@ -303,6 +325,31 @@ FW_VERSIONS = {
     ],
     (Ecu.gateway, 0x18daeff1, None): [
       b'38897-TBA-A020\x00\x00',
+    ],
+  },
+  CAR.HONDA_CLARITY: {
+    (Ecu.shiftByWire, 0x18da0bf1, None): [
+      b'54008-TRW-A910\x00\x00',
+    ],
+    (Ecu.vsa, 0x18da28f1, None): [
+      b'57114-TRW-A010\x00\x00',
+      b'57114-TRW-A020\x00\x00',
+    ],
+    (Ecu.eps, 0x18da30f1, None): [
+      b'39990-TRW-A020\x00\x00',
+      b'39990-TRW,A020\x00\x00',  # modified firmware
+      b'39990,TRW,A020\x00\x00',  # extra modified firmware
+    ],
+    (Ecu.srs, 0x18da53f1, None): [
+      b'77959-TRW-A210\x00\x00',
+      b'77959-TRW-A220\x00\x00',
+    ],
+    (Ecu.gateway, 0x18daeff1, None): [
+      b'38897-TRW-A010\x00\x00',
+    ],
+    (Ecu.combinationMeter, 0x18da60f1, None): [
+      b'78109-TRW-A020\x00\x00',
+      b'78109-TRW-A030\x00\x00',
     ],
   },
   CAR.HONDA_CRV: {
@@ -529,6 +576,7 @@ FW_VERSIONS = {
       b'28102-5MX-A900\x00\x00',
       b'28102-5MX-A910\x00\x00',
       b'28102-5MX-C001\x00\x00',
+      b'28102-5MX-C610\x00\x00',
       b'28102-5MX-C910\x00\x00',
       b'28102-5MX-D001\x00\x00',
       b'28102-5MX-D710\x00\x00',
@@ -877,7 +925,10 @@ FW_VERSIONS = {
       b'36161-T20-A070\x00\x00',
       b'36161-T20-A080\x00\x00',
       b'36161-T24-T070\x00\x00',
+      b'36161-T47-A050\x00\x00',
       b'36161-T47-A070\x00\x00',
+      b'8S102-T20-AA10\x00\x00',
+      b'8S102-T47-AA10\x00\x00',
     ],
     (Ecu.vsa, 0x18da28f1, None): [
       b'57114-T20-AB40\x00\x00',

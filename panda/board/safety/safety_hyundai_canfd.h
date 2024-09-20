@@ -172,14 +172,21 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
     if (addr == button_addr) {
       bool main_button = false;
       int cruise_button = 0;
+      bool lfa_pressed = 0;
       if (addr == 0x1cf) {
         cruise_button = GET_BYTE(to_push, 2) & 0x7U;
         main_button = GET_BIT(to_push, 19U);
+        lfa_pressed = GET_BIT(to_push, 23U);
       } else {
         cruise_button = (GET_BYTE(to_push, 4) >> 4) & 0x7U;
         main_button = GET_BIT(to_push, 34U);
+        lfa_pressed = GET_BIT(to_push, 39U);
       }
       hyundai_common_cruise_buttons_check(cruise_button, main_button);
+
+      if (mads_enabled) {
+        mads_lkas_button_check(lfa_pressed);
+      }
     }
 
     // gas press, different for EV, hybrid, and ICE models
@@ -247,8 +254,9 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
     int button = GET_BYTE(to_send, 2) & 0x7U;
     bool is_cancel = (button == HYUNDAI_BTN_CANCEL);
     bool is_resume = (button == HYUNDAI_BTN_RESUME);
+    bool is_set = (button == HYUNDAI_BTN_SET);
 
-    bool allowed = (is_cancel && cruise_engaged_prev) || (is_resume && controls_allowed);
+    bool allowed = (is_cancel && cruise_engaged_prev) || ((is_resume || is_set) && controls_allowed && controls_allowed_long);
     if (!allowed) {
       tx = false;
     }

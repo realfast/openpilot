@@ -1,14 +1,12 @@
-#!/usr/bin/env python3
+import pytest
 import time
-import unittest
 
 from opendbc.can.parser import CANParser
 from opendbc.can.packer import CANPacker
-from opendbc.can.tests.test_packer_parser import can_list_to_can_capnp
 
 
-@unittest.skip("TODO: varies too much between machines")
-class TestParser(unittest.TestCase):
+@pytest.mark.skip("TODO: varies too much between machines")
+class TestParser:
   def _benchmark(self, checks, thresholds, n):
     parser = CANParser('toyota_new_mc_pt_generated', checks, 0)
     packer = CANPacker('toyota_new_mc_pt_generated')
@@ -17,8 +15,7 @@ class TestParser(unittest.TestCase):
     for i in range(50000):
       values = {"ACC_CONTROL": {"ACC_TYPE": 1, "ALLOW_LONG_PRESS": 3}}
       msgs = [packer.make_can_msg(k, 0, v) for k, v in values.items()]
-      bts = can_list_to_can_capnp(msgs, logMonoTime=int(0.01 * i * 1e9))
-      can_msgs.append(bts)
+      can_msgs.append([int(0.01 * i * 1e9), msgs])
 
     ets = []
     for _ in range(25):
@@ -43,13 +40,9 @@ class TestParser(unittest.TestCase):
     print('%s: [%d] %.1fms to parse %s, avg: %dns' % (self._testMethodName, n, et/1e6, len(can_msgs), avg_nanos))
 
     minn, maxx = thresholds
-    self.assertLess(avg_nanos, maxx)
-    self.assertGreater(avg_nanos, minn, "Performance seems to have improved, update test thresholds.")
+    assert avg_nanos < maxx
+    assert avg_nanos > minn, "Performance seems to have improved, update test thresholds."
 
   def test_performance_all_signals(self):
     self._benchmark([('ACC_CONTROL', 10)], (10000, 19000), 1)
     self._benchmark([('ACC_CONTROL', 10)], (1300, 5000), 10)
-
-
-if __name__ == "__main__":
-  unittest.main()

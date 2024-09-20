@@ -7,10 +7,12 @@ from dataclasses import replace
 import capnp
 
 from cereal import car
+from panda.python.uds import SERVICE_TYPE
 from openpilot.common.numpy_fast import clip, interp
 from openpilot.common.utils import Freezable
 from openpilot.selfdrive.car.docs_definitions import CarDocs
 
+DT_CTRL = 0.01  # car state and control loop timestep (s)
 
 # kg of standard extra cargo to count for drive, gas, etc...
 STD_CARGO_KG = 136.
@@ -41,6 +43,30 @@ def create_button_events(cur_btn: int, prev_btn: int, buttons_dict: dict[int, ca
       events.append(car.CarState.ButtonEvent(pressed=pressed,
                                              type=buttons_dict.get(btn, ButtonType.unknown)))
   return events
+
+
+class ButtonEvents:
+  def __init__(self) -> None:
+    self.is_mads: bool = False
+
+  @staticmethod
+  def create_cancel_event(long_enabled: bool, prev_long_enabled: bool) -> list[capnp.lib.capnp._DynamicStructBuilder]:
+    events: list[capnp.lib.capnp._DynamicStructBuilder] = []
+
+    if not long_enabled and prev_long_enabled:
+      events.append(car.CarState.ButtonEvent(pressed=True,
+                                             type=ButtonType.cancel))
+    return events
+
+  def create_mads_event(self, mads_enabled: bool, prev_mads_enabled: bool) -> list[capnp.lib.capnp._DynamicStructBuilder]:
+    events: list[capnp.lib.capnp._DynamicStructBuilder] = []
+
+    mads_changed = prev_mads_enabled != mads_enabled
+    if (mads_changed and not self.is_mads) or (not mads_changed and self.is_mads):
+      events.append(car.CarState.ButtonEvent(pressed=mads_changed, type=ButtonType.altButton1))
+      self.is_mads = not self.is_mads
+
+    return events
 
 
 def gen_empty_fingerprint():
@@ -165,8 +191,74 @@ def common_fault_avoidance(fault_condition: bool, request: bool, above_limit_fra
   return above_limit_frames, request
 
 
+def crc8_pedal(data):
+  crc = 0xFF    # standard init value
+  poly = 0xD5   # standard crc8: x8+x7+x6+x4+x2+1
+  size = len(data)
+  for i in range(size - 1, -1, -1):
+    crc ^= data[i]
+    for _ in range(8):
+      if ((crc & 0x80) != 0):
+        crc = ((crc << 1) ^ poly) & 0xFF
+      else:
+        crc <<= 1
+  return crc
+
+
+def create_gas_interceptor_command(packer, gas_amount, idx):
+  # Common gas pedal msg generator
+  enable = gas_amount > 0.001
+
+  values = {
+    "ENABLE": enable,
+    "COUNTER_PEDAL": idx & 0xF,
+  }
+
+  if enable:
+    values["GAS_COMMAND"] = gas_amount * 255.
+    values["GAS_COMMAND2"] = gas_amount * 255.
+
+  dat = packer.make_can_msg("GAS_COMMAND", 0, values)[1]
+
+  checksum = crc8_pedal(dat[:-1])
+  values["CHECKSUM_PEDAL"] = checksum
+
+  return packer.make_can_msg("GAS_COMMAND", 0, values)
+
+
+def apply_center_deadzone(error, deadzone):
+  if (error > - deadzone) and (error < deadzone):
+    error = 0.
+  return error
+
+
+def rate_limit(new_value, last_value, dw_step, up_step):
+  return clip(new_value, last_value + dw_step, last_value + up_step)
+
+
+def get_friction(lateral_accel_error: float, lateral_accel_deadzone: float, friction_threshold: float,
+                 torque_params: car.CarParams.LateralTorqueTuning, friction_compensation: bool) -> float:
+  friction_interp = interp(
+    apply_center_deadzone(lateral_accel_error, lateral_accel_deadzone),
+    [-friction_threshold, friction_threshold],
+    [-torque_params.friction, torque_params.friction]
+  )
+  friction = float(friction_interp) if friction_compensation else 0.0
+  return friction
+
+
 def make_can_msg(addr, dat, bus):
-  return [addr, 0, dat, bus]
+  return [addr, dat, bus]
+
+
+def make_tester_present_msg(addr, bus, subaddr=None, suppress_response=False):
+  dat = [0x02, SERVICE_TYPE.TESTER_PRESENT]
+  if subaddr is not None:
+    dat.insert(0, subaddr)
+  dat.append(0x80 if suppress_response else 0x0)  # sub-function
+
+  dat.extend([0x0] * (8 - len(dat)))
+  return make_can_msg(addr, bytes(dat), bus)
 
 
 def get_safety_config(safety_model, safety_param = None):
@@ -233,6 +325,8 @@ class PlatformConfig(Freezable):
 
   flags: int = 0
 
+  spFlags: int = 0
+
   platform_str: str | None = None
 
   def __hash__(self) -> int:
@@ -276,3 +370,11 @@ class Platforms(str, ReprEnum, metaclass=PlatformsType):
   @classmethod
   def with_flags(cls, flags: IntFlag) -> set['Platforms']:
     return {p for p in cls if p.config.flags & flags}
+
+  @classmethod
+  def with_sp_flags(cls, spFlags: IntFlag) -> set['Platforms']:
+    return {p for p in cls if p.config.spFlags & spFlags}
+
+  @classmethod
+  def without_sp_flags(cls, spFlags: IntFlag) -> set['Platforms']:
+    return {p for p in cls if not (p.config.spFlags & spFlags)}

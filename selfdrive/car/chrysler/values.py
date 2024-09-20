@@ -1,3 +1,4 @@
+from collections import namedtuple
 from enum import IntFlag
 from dataclasses import dataclass, field
 
@@ -8,11 +9,18 @@ from openpilot.selfdrive.car.docs_definitions import CarHarness, CarDocs, CarPar
 from openpilot.selfdrive.car.fw_query_definitions import FwQueryConfig, Request, p16
 
 Ecu = car.CarParams.Ecu
+Button = namedtuple('Button', ['event_type', 'can_addr', 'can_msg', 'values'])
 
 
 class ChryslerFlags(IntFlag):
   # Detected flags
   HIGHER_MIN_STEERING_SPEED = 1
+
+
+class ChryslerFlagsSP(IntFlag):
+  SP_RAM_HD_PARAMSD_IGNORE = 1
+  SP_WP_S20 = 2
+
 
 @dataclass
 class ChryslerCarDocs(CarDocs):
@@ -32,34 +40,30 @@ class ChryslerCarSpecs(CarSpecs):
 
 class CAR(Platforms):
   # Chrysler
-  CHRYSLER_PACIFICA_2017_HYBRID = ChryslerPlatformConfig(
-    [ChryslerCarDocs("Chrysler Pacifica Hybrid 2017")],
+  CHRYSLER_PACIFICA_2018_HYBRID = ChryslerPlatformConfig(
+    [ChryslerCarDocs("Chrysler Pacifica Hybrid 2017-18")],
     ChryslerCarSpecs(mass=2242., wheelbase=3.089, steerRatio=16.2),
   )
-  CHRYSLER_PACIFICA_2018_HYBRID = ChryslerPlatformConfig(
-    [ChryslerCarDocs("Chrysler Pacifica Hybrid 2018")],
-    CHRYSLER_PACIFICA_2017_HYBRID.specs,
-  )
   CHRYSLER_PACIFICA_2019_HYBRID = ChryslerPlatformConfig(
-    [ChryslerCarDocs("Chrysler Pacifica Hybrid 2019-23")],
-    CHRYSLER_PACIFICA_2017_HYBRID.specs,
+    [ChryslerCarDocs("Chrysler Pacifica Hybrid 2019-24")],
+    CHRYSLER_PACIFICA_2018_HYBRID.specs,
   )
   CHRYSLER_PACIFICA_2018 = ChryslerPlatformConfig(
     [ChryslerCarDocs("Chrysler Pacifica 2017-18")],
-    CHRYSLER_PACIFICA_2017_HYBRID.specs,
+    CHRYSLER_PACIFICA_2018_HYBRID.specs,
   )
   CHRYSLER_PACIFICA_2020 = ChryslerPlatformConfig(
     [
       ChryslerCarDocs("Chrysler Pacifica 2019-20"),
       ChryslerCarDocs("Chrysler Pacifica 2021-23", package="All"),
     ],
-    CHRYSLER_PACIFICA_2017_HYBRID.specs,
+    CHRYSLER_PACIFICA_2018_HYBRID.specs,
   )
 
   # Dodge
   DODGE_DURANGO = ChryslerPlatformConfig(
     [ChryslerCarDocs("Dodge Durango 2020-21")],
-    CHRYSLER_PACIFICA_2017_HYBRID.specs,
+    CHRYSLER_PACIFICA_2018_HYBRID.specs,
   )
 
   # Jeep
@@ -76,7 +80,7 @@ class CAR(Platforms):
   # Ram
   RAM_1500_5TH_GEN = ChryslerPlatformConfig(
     [ChryslerCarDocs("Ram 1500 2019-24", car_parts=CarParts.common([CarHarness.ram]))],
-    ChryslerCarSpecs(mass=2493., wheelbase=3.88, steerRatio=16.3, minSteerSpeed=14.5),
+    ChryslerCarSpecs(mass=2493., wheelbase=3.88, steerRatio=16.3, minSteerSpeed=0.5, minEnableSpeed=14.5),
     dbc_dict('chrysler_ram_dt_generated', None),
   )
   RAM_HD_5TH_GEN = ChryslerPlatformConfig(
@@ -100,11 +104,19 @@ class CarControllerParams:
     elif CP.carFingerprint in RAM_DT:
       self.STEER_DELTA_UP = 6
       self.STEER_DELTA_DOWN = 6
-      self.STEER_MAX = 261  # EPS allows more, up to 350?
+      self.STEER_MAX = 350  # EPS allows more, up to 350?
     else:
       self.STEER_DELTA_UP = 3
       self.STEER_DELTA_DOWN = 3
       self.STEER_MAX = 261  # higher than this faults the EPS
+
+
+BUTTONS = [
+  Button(car.CarState.ButtonEvent.Type.accelCruise, "CRUISE_BUTTONS", "ACC_Accel", [1]),
+  Button(car.CarState.ButtonEvent.Type.decelCruise, "CRUISE_BUTTONS", "ACC_Decel", [1]),
+  Button(car.CarState.ButtonEvent.Type.cancel, "CRUISE_BUTTONS", "ACC_Cancel", [1]),
+  Button(car.CarState.ButtonEvent.Type.resumeCruise, "CRUISE_BUTTONS", "ACC_Resume", [1]),
+]
 
 
 STEER_THRESHOLD = 120

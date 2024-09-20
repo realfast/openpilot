@@ -218,7 +218,7 @@ static void ford_rx_hook(const CANPacket_t *to_push) {
       float filtered_pcm_speed = ((GET_BYTE(to_push, 6) << 8) | GET_BYTE(to_push, 7)) * 0.01 / 3.6;
       bool is_invalid_speed = ABS(filtered_pcm_speed - ((float)vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR)) > FORD_MAX_SPEED_DELTA;
       if (is_invalid_speed) {
-        controls_allowed = false;
+        controls_allowed_long = false;
       }
     }
 
@@ -247,6 +247,9 @@ static void ford_rx_hook(const CANPacket_t *to_push) {
       unsigned int cruise_state = GET_BYTE(to_push, 1) & 0x07U;
       bool cruise_engaged = (cruise_state == 4U) || (cruise_state == 5U);
       pcm_cruise_check(cruise_engaged);
+
+      acc_main_on = (cruise_state == 3U) || (cruise_state == 4U) || (cruise_state == 5U);
+      mads_acc_main_check(acc_main_on);
     }
 
     // If steering controls messages are received on the destination bus, it's an indication
@@ -296,8 +299,8 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
     // Violation if resume button is pressed while controls not allowed, or
     // if cancel button is pressed when cruise isn't engaged.
     bool violation = false;
-    violation |= GET_BIT(to_send, 8U) && !cruise_engaged_prev;   // Signal: CcAslButtnCnclPress (cancel)
-    violation |= GET_BIT(to_send, 25U) && !controls_allowed;     // Signal: CcAsllButtnResPress (resume)
+    violation |= GET_BIT(to_send, 8U) && !cruise_engaged_prev;                              // Signal: CcAslButtnCnclPress (cancel)
+    violation |= GET_BIT(to_send, 25U) && !(controls_allowed && controls_allowed_long);     // Signal: CcAsllButtnResPress (resume)
 
     if (violation) {
       tx = false;

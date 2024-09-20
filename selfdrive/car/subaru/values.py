@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum, IntFlag
+from panda import Panda
 
 from cereal import car
 from panda.python import uds
@@ -25,6 +26,8 @@ class CarControllerParams:
       self.STEER_DELTA_DOWN = 40
     elif CP.carFingerprint == CAR.SUBARU_IMPREZA_2020:
       self.STEER_MAX = 1439
+    elif CP.safetyConfigs[0].safetyParam & Panda.FLAG_SUBARU_MAX_STEER_IMPREZA_2018:
+      self.STEER_MAX = 3071
     else:
       self.STEER_MAX = 2047
 
@@ -70,6 +73,10 @@ class SubaruFlags(IntFlag):
 
 GLOBAL_ES_ADDR = 0x787
 GEN2_ES_BUTTONS_DID = b'\x11\x30'
+
+
+class SubaruFlagsSP(IntFlag):
+  SP_SUBARU_SNG = 1
 
 
 class CanBus:

@@ -1,24 +1,38 @@
+from cereal import car
 from openpilot.common.numpy_fast import clip, interp
 from opendbc.can.packer import CANPacker
-from openpilot.selfdrive.car import apply_driver_steer_torque_limits, common_fault_avoidance
+from openpilot.selfdrive.car import apply_driver_steer_torque_limits, common_fault_avoidance, make_tester_present_msg
 from openpilot.selfdrive.car.interfaces import CarControllerBase
 from openpilot.selfdrive.car.subaru import subarucan
-from openpilot.selfdrive.car.subaru.values import DBC, GLOBAL_ES_ADDR, CanBus, CarControllerParams, SubaruFlags
+from openpilot.selfdrive.car.subaru.values import DBC, GLOBAL_ES_ADDR, CanBus, CarControllerParams, SubaruFlags, SubaruFlagsSP
 
 # FIXME: These limits aren't exact. The real limit is more than likely over a larger time period and
 # involves the total steering angle change rather than rate, but these limits work well for now
 MAX_STEER_RATE = 25  # deg/s
 MAX_STEER_RATE_FRAMES = 7  # tx control frames needed before torque can be cut
 
+_SNG_ACC_MIN_DIST = 3
+_SNG_ACC_MAX_DIST = 4.5
+
 
 class CarController(CarControllerBase):
   def __init__(self, dbc_name, CP, VM):
-    self.CP = CP
+    super().__init__(dbc_name, CP, VM)
     self.apply_steer_last = 0
-    self.frame = 0
 
     self.cruise_button_prev = 0
     self.steer_rate_counter = 0
+
+    self.subaru_sng = False
+    if CP.spFlags & SubaruFlagsSP.SP_SUBARU_SNG:
+      self.subaru_sng = True
+      self.prev_close_distance = 0
+      self.prev_standstill = False
+      self.standstill_start = 0
+      self.sng_acc_resume = False
+      self.sng_acc_resume_cnt = -1
+      self.manual_hold = False
+      self.prev_cruise_state = 0
 
     self.p = CarControllerParams(CP)
     self.packer = CANPacker(DBC[CP.carFingerprint]['pt'])
@@ -57,6 +71,9 @@ class CarController(CarControllerBase):
 
       self.apply_steer_last = apply_steer
 
+    # *** stop and go ***
+    throttle_cmd, speed_cmd = self.stop_and_go(CC, CS)
+
     # *** longitudinal ***
 
     if CC.longActive:
@@ -93,17 +110,26 @@ class CarController(CarControllerBase):
 
         can_sends.append(subarucan.create_preglobal_es_distance(self.packer, cruise_button, CS.es_distance_msg))
 
+      if self.subaru_sng:
+        can_sends.append(subarucan.create_preglobal_throttle(self.packer, CS.throttle_msg["COUNTER"] + 1, CS.throttle_msg, throttle_cmd))
+
     else:
       if self.frame % 10 == 0:
         can_sends.append(subarucan.create_es_dashstatus(self.packer, self.frame // 10, CS.es_dashstatus_msg, CC.enabled,
                                                         self.CP.openpilotLongitudinalControl, CC.longActive, hud_control.leadVisible))
 
-        can_sends.append(subarucan.create_es_lkas_state(self.packer, self.frame // 10, CS.es_lkas_state_msg, CC.enabled, hud_control.visualAlert,
+        can_sends.append(subarucan.create_es_lkas_state(self.packer, self.frame // 10, CS.es_lkas_state_msg, CC.latActive, CS.madsEnabled, hud_control.visualAlert,
                                                         hud_control.leftLaneVisible, hud_control.rightLaneVisible,
                                                         hud_control.leftLaneDepart, hud_control.rightLaneDepart))
 
         if self.CP.flags & SubaruFlags.SEND_INFOTAINMENT:
           can_sends.append(subarucan.create_es_infotainment(self.packer, self.frame // 10, CS.es_infotainment_msg, hud_control.visualAlert))
+
+      if self.subaru_sng:
+        can_sends.append(subarucan.create_throttle(self.packer, CS.throttle_msg["COUNTER"] + 1, CS.throttle_msg, throttle_cmd))
+
+        if self.frame % 2 == 0:
+          can_sends.append(subarucan.create_brake_pedal(self.packer, self.frame // 2, CS.brake_pedal_msg, speed_cmd, pcm_cancel_cmd))
 
       if self.CP.openpilotLongitudinalControl:
         if self.frame % 5 == 0:
@@ -124,7 +150,7 @@ class CarController(CarControllerBase):
       if self.CP.flags & SubaruFlags.DISABLE_EYESIGHT:
         # Tester present (keeps eyesight disabled)
         if self.frame % 100 == 0:
-          can_sends.append([GLOBAL_ES_ADDR, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", CanBus.camera])
+          can_sends.append(make_tester_present_msg(GLOBAL_ES_ADDR, CanBus.camera, suppress_response=True))
 
         # Create all of the other eyesight messages to keep the rest of the car happy when eyesight is disabled
         if self.frame % 5 == 0:
@@ -142,3 +168,58 @@ class CarController(CarControllerBase):
 
     self.frame += 1
     return new_actuators, can_sends
+
+  # Stop and Go auto-resume thanks to martinl from subaru-community
+  def stop_and_go(self, CC: car.CarControl, CS: car.CarState, throttle_cmd: bool = False, speed_cmd: bool = False) -> tuple[bool, bool]:
+    if not self.subaru_sng:
+      return throttle_cmd, speed_cmd
+    if self.CP.flags & SubaruFlags.PREGLOBAL:
+      # Initiate the ACC resume sequence if conditions are met
+      if (CC.enabled                                          # ACC active
+        and CS.car_follow == 1                                # lead car
+        and CS.out.standstill                                 # must be standing still
+        and CS.close_distance > _SNG_ACC_MIN_DIST             # acc resume trigger low threshold
+        and CS.close_distance < _SNG_ACC_MAX_DIST             # acc resume trigger high threshold
+        and CS.close_distance > self.prev_close_distance):    # distance with lead car is increasing
+        self.sng_acc_resume = True
+    elif not (self.CP.flags & (SubaruFlags.GLOBAL_GEN2 | SubaruFlags.HYBRID)):
+      if CS.params_list.subaru_manual_parking_brake and self.subaru_sng:
+        # Send brake message with non-zero speed in standstill to avoid non-EPB ACC disengage
+        if (CC.enabled                                        # ACC active
+          and CS.car_follow == 1                              # lead car
+          and CS.out.standstill
+          and self.frame > self.standstill_start + 50):       # standstill for >0.5 second
+          speed_cmd = True
+      else:
+        # Record manual hold set while in standstill and no car in front
+        if CS.out.standstill and self.prev_cruise_state == 1 and CS.cruise_state == 3 and CS.car_follow == 0:
+          self.manual_hold = True
+        # Cancel manual hold when car starts moving
+        if not CS.out.standstill:
+          self.manual_hold = False
+        # Initiate the ACC resume sequence if conditions are met
+        if (CC.enabled                                        # ACC active
+          and not self.manual_hold
+          and CS.car_follow == 1                              # lead car
+          and CS.cruise_state == 3                            # ACC HOLD (only with EPB)
+          and CS.close_distance > _SNG_ACC_MIN_DIST           # acc resume trigger low threshold
+          and CS.close_distance < _SNG_ACC_MAX_DIST           # acc resume trigger high threshold
+          and CS.close_distance > self.prev_close_distance):  # distance with lead car is increasing
+          self.sng_acc_resume = True
+
+      if CS.out.standstill and not self.prev_standstill:
+        self.standstill_start = self.frame
+      self.prev_standstill = CS.out.standstill
+      self.prev_cruise_state = CS.cruise_state
+
+    if self.sng_acc_resume:
+      if self.sng_acc_resume_cnt < 5:
+        throttle_cmd = True
+        self.sng_acc_resume_cnt += 1
+      else:
+        self.sng_acc_resume = False
+        self.sng_acc_resume_cnt = -1
+
+    self.prev_close_distance = CS.close_distance
+
+    return throttle_cmd, speed_cmd
