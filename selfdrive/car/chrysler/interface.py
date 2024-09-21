@@ -87,7 +87,7 @@ class CarInterface(CarInterfaceBase):
       ret.spFlags |= ChryslerFlagsSP.SP_WP_S20.value
       ret.minSteerSpeed = 0.0
     elif candidate in STEER_TO_ZERO:
-      ret.minSteerEnableSpeed = ret.minSteerSpeed
+      ret.minEnableSpeed = ret.minSteerSpeed
       ret.minSteerSpeed = 0.0
 
     return ret
