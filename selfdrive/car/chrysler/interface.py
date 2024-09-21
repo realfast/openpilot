@@ -2,7 +2,7 @@
 from cereal import car
 from panda import Panda
 from openpilot.selfdrive.car import create_button_events, get_safety_config
-from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags, ChryslerFlagsSP
+from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags, ChryslerFlagsSP, STEER_TO_ZERO
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
@@ -86,11 +86,13 @@ class CarInterface(CarInterfaceBase):
     if 0x4FF in fingerprint[0]:
       ret.spFlags |= ChryslerFlagsSP.SP_WP_S20.value
       ret.minSteerSpeed = 0.0
+    elif candidate in STEER_TO_ZERO:
+      ret.minSteerSpeed = 0.0
 
     return ret
 
   def _update(self, c):
-    ret = self.CS.update(self.cp, self.cp_cam)
+    ret = self.CS.update(self.cp, self.cp_cam, self.cp_eps)
 
     self.CS.button_events = [
       *self.CS.button_events,

@@ -1,9 +1,9 @@
 const SteeringLimits CHRYSLER_STEERING_LIMITS = {
   .max_steer = 261,
-  .max_rt_delta = 112,
+  .max_rt_delta = 300,
   .max_rt_interval = 250000,
-  .max_rate_up = 3,
-  .max_rate_down = 3,
+  .max_rate_up = 4,
+  .max_rate_down = 4,
   .max_torque_error = 80,
   .type = TorqueMotorLimited,
 };
@@ -20,7 +20,7 @@ const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
 
 const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
   .max_steer = 361,
-  .max_rt_delta = 182,
+  .max_rt_delta = 250,
   .max_rt_interval = 250000,
   .max_rate_up = 14,
   .max_rate_down = 14,
@@ -88,8 +88,11 @@ const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
 const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.CRUISE_BUTTONS, 0, 3},
   {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
+  {CHRYSLER_ADDRS.LKAS_COMMAND, 1, 6},
   {CHRYSLER_ADDRS.DAS_6, 0, 8},
   {CHRYSLER_ADDRS.LKAS_HEARTBIT, 0, 5},
+  {CHRYSLER_ADDRS.DAS_6, 1, 8},
+  {CHRYSLER_ADDRS.ESP_8, 1, 8},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
@@ -99,13 +102,17 @@ const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
 };
 
 const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
+  {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 0, 3},
   {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
   {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 1, 8},
   {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
+  {CHRYSLER_RAM_HD_ADDRS.DAS_6, 1, 8},
+  {CHRYSLER_RAM_HD_ADDRS.ESP_8, 1, 8},
 };
 
 RxCheck chrysler_rx_checks[] = {
-  {.msg = {{CHRYSLER_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_ADDRS.EPS_2, 1, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}}},
   {.msg = {{514, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
@@ -122,7 +129,7 @@ RxCheck chrysler_ram_dt_rx_checks[] = {
 };
 
 RxCheck chrysler_ram_hd_rx_checks[] = {
-  {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 1, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
@@ -243,7 +250,7 @@ static bool chrysler_tx_hook(const CANPacket_t *to_send) {
 
     bool steer_req = (chrysler_platform == CHRYSLER_PACIFICA) ? GET_BIT(to_send, 4U) : (GET_BYTE(to_send, 3) & 0x7U) == 2U;
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
-      tx = false;
+      // tx = false;
     }
   }
 
@@ -269,13 +276,22 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
   const bool is_cruise_buttons = ((addr == chrysler_addrs->CRUISE_BUTTONS) && (chrysler_platform != CHRYSLER_PACIFICA));
   // forward to camera
   if ((bus_num == 0) && !is_cruise_buttons) {
-    bus_fwd = 2;
+    if (addr == chrysler_addrs->ESP_8) {
+      bus_fwd = 2;
+    }
+    else {
+      bus_fwd = 0x21;
+    }
   }
 
   // forward all messages from camera except LKAS messages and HeartBit
   const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6) || (addr == chrysler_addrs->LKAS_HEARTBIT));
   if ((bus_num == 2) && !is_lkas){
-    bus_fwd = 0;
+    bus_fwd = 0x10;
+  }
+
+  if (bus_num == 1) {
+    bus_fwd = 0x20;
   }
 
   return bus_fwd;

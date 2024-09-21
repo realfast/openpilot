@@ -3,7 +3,7 @@ from openpilot.common.conversions import Conversions as CV
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from openpilot.selfdrive.car.interfaces import CarStateBase
-from openpilot.selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, BUTTONS
+from openpilot.selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, BUTTONS, STEER_TO_ZERO
 
 
 class CarState(CarStateBase):
@@ -31,7 +31,7 @@ class CarState(CarStateBase):
 
     self.button_states = {button.event_type: False for button in BUTTONS}
 
-  def update(self, cp, cp_cam):
+  def update(self, cp, cp_cam, cp_eps):
 
     ret = car.CarState.new_message()
 
@@ -40,6 +40,11 @@ class CarState(CarStateBase):
 
     self.prev_mads_enabled = self.mads_enabled
     self.prev_lkas_enabled = self.lkas_enabled
+
+    if self.CP.carFingerprint in STEER_TO_ZERO:
+      EPS_BUS = cp_eps
+    else:
+      EPS_BUS = cp
 
     # lock info
     ret.doorOpen = any([cp.vl["BCM_1"]["DOOR_OPEN_FL"],
@@ -92,8 +97,8 @@ class CarState(CarStateBase):
     # steering wheel
     ret.steeringAngleDeg = cp.vl["STEERING"]["STEERING_ANGLE"] + cp.vl["STEERING"]["STEERING_ANGLE_HP"]
     ret.steeringRateDeg = cp.vl["STEERING"]["STEERING_RATE"]
-    ret.steeringTorque = cp.vl["EPS_2"]["COLUMN_TORQUE"]
-    ret.steeringTorqueEps = cp.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
+    ret.steeringTorque = EPS_BUS.vl["EPS_2"]["COLUMN_TORQUE"]
+    ret.steeringTorqueEps = EPS_BUS.vl["EPS_2"]["EPS_TORQUE_MOTOR"]
     ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
 
     # cruise state
@@ -110,14 +115,14 @@ class CarState(CarStateBase):
       # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']
       self.lkas_enabled = cp.vl["Center_Stack_2"]["LKAS_Button"] == 1 or cp.vl["Center_Stack_1"]["LKAS_Button"] == 1
-      ret.steerFaultTemporary = cp.vl["EPS_3"]["DASM_FAULT"] == 1
+      ret.steerFaultTemporary = EPS_BUS.vl["EPS_3"]["DASM_FAULT"] == 1
     else:
       self.lkas_enabled = cp.vl["TRACTION_BUTTON"]["TOGGLE_LKAS"] == 1
       self.lkas_heartbit = cp_cam.vl["LKAS_HEARTBIT"]
       if not self.control_initialized:
         self.lkas_disabled = bool(cp_cam.vl["LKAS_HEARTBIT"]["LKAS_DISABLED"])
-      ret.steerFaultTemporary = cp.vl["EPS_2"]["LKAS_TEMPORARY_FAULT"] == 1
-      ret.steerFaultPermanent = cp.vl["EPS_2"]["LKAS_STATE"] == 4
+      ret.steerFaultTemporary = EPS_BUS.vl["EPS_2"]["LKAS_TEMPORARY_FAULT"] == 1
+      ret.steerFaultPermanent = EPS_BUS.vl["EPS_2"]["LKAS_STATE"] == 4
 
     # blindspot sensors
     if self.CP.enableBsm:
@@ -143,7 +148,6 @@ class CarState(CarStateBase):
     messages = [
       # sig_address, frequency
       ("ESP_1", 50),
-      ("EPS_2", 100),
       ("ESP_6", 50),
       ("STEERING", 100),
       ("ECM_5", 50),
@@ -159,7 +163,6 @@ class CarState(CarStateBase):
     if CP.carFingerprint in RAM_CARS:
       messages += [
         ("ESP_8", 50),
-        ("EPS_3", 50),
         ("Transmission_Status", 50),
         ("Center_Stack_1", 1),
         ("Center_Stack_2", 1),
@@ -171,6 +174,15 @@ class CarState(CarStateBase):
         ("TRACTION_BUTTON", 1),
       ]
       messages += CarState.get_cruise_messages()
+
+    if CP.carFingerprint not in STEER_TO_ZERO:
+      messages += [
+        ("EPS_2", 100),
+      ]
+      if CP.carFingerprint in RAM_CARS:
+        messages += [
+          ("EPS_3", 50),
+        ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 0)
 
@@ -186,3 +198,16 @@ class CarState(CarStateBase):
       messages.append(("LKAS_HEARTBIT", 10))
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 2)
+  
+  @staticmethod
+  def get_eps_can_parser(CP):
+    if CP.carFingerprint in STEER_TO_ZERO:
+      messages = [
+        ("EPS_2", 100),
+      ]
+      if CP.carFingerprint in RAM_CARS:
+        messages += [
+          ("EPS_3", 50),
+        ]
+
+    return CANParser(DBC[CP.carFingerprint]["pt"], messages, 1)
