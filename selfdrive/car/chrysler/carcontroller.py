@@ -146,7 +146,7 @@ class CarController(CarControllerBase):
       lkas_control_bit = self.lkas_control_bit_prev
       if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20:        
         if CS.out.vEgo > self.CP.minSteerSpeed and self.spoof_speed >= self.CP.minEnableSpeed:
-          lkas_control_bit = True
+          lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
       elif self.CP.carFingerprint in RAM_DT:
         if self.CP.minEnableSpeed <= CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
           lkas_control_bit = True
