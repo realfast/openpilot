@@ -24,9 +24,8 @@ class CarController(CarControllerBase):
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
     self.spoof_speed = 0
-    self.actual_min_speed = 18 * CV.MS_TO_KPH
     self.spoof_speed_increment = 0.1
-    self.spoof_speed_threshold = 15 * CV.MPH_TO_KPH
+    self.spoof_speed_threshold = 15
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -58,12 +57,6 @@ class CarController(CarControllerBase):
     self.m_tsc = 0
     self.steady_speed = 0
     self.button_frame = 0
-
-  def increment_spoof_speed(self):
-    if self.spoof_speed < self.spoof_speed_threshold:
-      self.spoof_speed += self.spoof_speed_increment
-    else:
-      self.spoof_speed = self.actual_min_speed
 
   def update(self, CC, CS, now_nanos):
     if not self.CP.pcmCruiseSpeed:
@@ -168,7 +161,7 @@ class CarController(CarControllerBase):
           lkas_control_bit = False
 
       if self.CP.carFingerprint in STEER_TO_ZERO:        
-        if lkas_control_bit and self.spoof_speed >= self.actual_min_speed:
+        if lkas_control_bit and self.spoof_speed >= self.CP.minSteerEnableSpeed:
           lkas_control_bit = True
         else:
           lkas_control_bit = False
@@ -190,11 +183,14 @@ class CarController(CarControllerBase):
       can_sends.extend(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, int(self.frame/self.params.STEER_STEP)))
 
     if self.CP.carFingerprint in STEER_TO_ZERO and self.frame % 2 == 0:
-      if lkas_active and CS.out.vEgoRaw * CV.MS_TO_KPH < self.actual_min_speed:
-        self.increment_spoof_speed()
+      if lkas_active and CS.out.vEgoRaw < self.CP.minSteerEnableSpeed:
+        if self.spoof_speed < self.spoof_speed_threshold:
+              self.spoof_speed += self.spoof_speed_increment
+        else:
+          self.spoof_speed = self.CP.minSteerEnableSpeed
       else:
-        self.spoof_speed = CS.out.vEgoRaw * CV.MS_TO_KPH
-      can_sends.append(chryslercan.create_speed_spoof(self.packer, self.spoof_speed))
+        self.spoof_speed = CS.out.vEgoRaw
+      can_sends.append(chryslercan.create_speed_spoof(self.packer, self.spoof_speed * CV.MS_TO_KPH))
 
     self.frame += 1
 
