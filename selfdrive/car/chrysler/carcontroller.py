@@ -24,8 +24,6 @@ class CarController(CarControllerBase):
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
     self.spoof_speed = 0
-    self.spoof_speed_increment = 0.1
-    self.spoof_speed_threshold = 15
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -180,9 +178,9 @@ class CarController(CarControllerBase):
       can_sends.extend(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, int(self.frame/self.params.STEER_STEP)))
 
     if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.frame % 2 == 0:
-      if lkas_active and CS.out.vEgoRaw < self.CP.minEnableSpeed:
-        if self.spoof_speed < self.spoof_speed_threshold:
-              self.spoof_speed += self.spoof_speed_increment
+      if lkas_active and CS.out.vEgoRaw < self.CP.minEnableSpeed and self.spoof_speed < CS.out.vEgoRaw:
+        if self.CP.carFingerprint not in RAM_CARS and self.spoof_speed < 6.5: # 6.5 can jump straight to the min speed in pacifica. Prior to that it needs to increment.
+          self.spoof_speed += 0.1
         else:
           self.spoof_speed = self.CP.minEnableSpeed
       else:
