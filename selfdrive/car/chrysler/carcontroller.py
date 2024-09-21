@@ -161,7 +161,7 @@ class CarController(CarControllerBase):
           lkas_control_bit = False
 
       if self.CP.carFingerprint in STEER_TO_ZERO:        
-        if lkas_control_bit and self.spoof_speed >= self.CP.minSteerEnableSpeed:
+        if lkas_control_bit and self.spoof_speed >= self.CP.minEnableSpeed:
           lkas_control_bit = True
         else:
           lkas_control_bit = False
