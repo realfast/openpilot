@@ -37,6 +37,7 @@ class ChryslerPlatformConfig(PlatformConfig):
 @dataclass(frozen=True)
 class ChryslerCarSpecs(CarSpecs):
   minSteerSpeed: float = 3.8  # m/s
+  minEnableSpeed: float = 3.8
 
 
 class CAR(Platforms):
@@ -81,7 +82,7 @@ class CAR(Platforms):
   # Ram
   RAM_1500_5TH_GEN = ChryslerPlatformConfig(
     [ChryslerCarDocs("Ram 1500 2019-24", car_parts=CarParts.common([CarHarness.ram]))],
-    ChryslerCarSpecs(mass=2493., wheelbase=3.88, steerRatio=16.3, minSteerSpeed=0.5, minEnableSpeed=14.5),
+    ChryslerCarSpecs(mass=2493., wheelbase=3.88, steerRatio=16.3, minSteerSpeed=0.0, minEnableSpeed=14.5),
     dbc_dict('chrysler_ram_dt_generated', None),
   )
   RAM_HD_5TH_GEN = ChryslerPlatformConfig(
@@ -89,7 +90,7 @@ class CAR(Platforms):
       ChryslerCarDocs("Ram 2500 2020-24", car_parts=CarParts.common([CarHarness.ram])),
       ChryslerCarDocs("Ram 3500 2019-22", car_parts=CarParts.common([CarHarness.ram])),
     ],
-    ChryslerCarSpecs(mass=3405., wheelbase=3.785, steerRatio=15.61, minSteerSpeed=16.),
+    ChryslerCarSpecs(mass=3405., wheelbase=3.785, steerRatio=15.61, minSteerSpeed=15.5, minEnableSpeed=16),
     dbc_dict('chrysler_ram_hd_generated', None),
   )
 

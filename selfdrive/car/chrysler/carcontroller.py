@@ -9,7 +9,6 @@ from openpilot.selfdrive.car.chrysler import chryslercan
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, CarControllerParams, ChryslerFlags, ChryslerFlagsSP
 from openpilot.selfdrive.car.interfaces import CarControllerBase, FORWARD_GEARS
 from openpilot.selfdrive.controls.lib.drive_helpers import FCA_V_CRUISE_MIN
-from common.conversions import Conversions as CV  # Import Conversions
 
 ButtonType = car.CarState.ButtonEvent.Type
 
@@ -144,24 +143,14 @@ class CarController(CarControllerBase):
 
       # TODO: can we make this more sane? why is it different for all the cars?
       lkas_control_bit = self.lkas_control_bit_prev
-      if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20:        
-        if CS.out.vEgo > self.CP.minSteerSpeed and self.spoof_speed >= self.CP.minEnableSpeed:
-          lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
-      elif self.CP.carFingerprint in RAM_DT:
-        if self.CP.minEnableSpeed <= CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
-          lkas_control_bit = True
-        if (self.CP.minEnableSpeed >= 14.5) and (CS.out.gearShifter != 2):
-          lkas_control_bit = False
-      elif self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
-        lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
-      elif CS.out.vEgo > self.CP.minSteerSpeed:
-        lkas_control_bit = True
-      elif self.CP.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
-        if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
-          lkas_control_bit = False
-      elif self.CP.carFingerprint in RAM_CARS:
-        if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
-          lkas_control_bit = False
+      speed_logic = self.spoof_speed if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 else CS.out.vEgo
+
+      if self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
+        lkas_control_bit = CC.latActive and CS.steerReady
+      elif speed_logic >= self.CP.minEnableSpeed:
+        lkas_control_bit = CS.steerReady
+      elif CS.out.vEgo < self.CP.minSteerSpeed:
+        lkas_control_bit = False
 
       # EPS faults if LKAS re-enables too quickly
       lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
@@ -172,7 +161,7 @@ class CarController(CarControllerBase):
       # steer torque
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
       apply_steer = apply_meas_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
-      if not lkas_active or not lkas_control_bit or not self.lkas_control_bit_prev:
+      if not lkas_active or not CS.steerBitActive:
         apply_steer = 0
       self.apply_steer_last = apply_steer
       self.lkas_control_bit_prev = lkas_control_bit
