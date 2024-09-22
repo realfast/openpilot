@@ -1,5 +1,5 @@
 from cereal import car
-from openpilot.selfdrive.car.chrysler.values import RAM_CARS, STEER_TO_ZERO
+from openpilot.selfdrive.car.chrysler.values import RAM_CARS, ChryslerFlagsSP
 
 GearShifter = car.CarState.GearShifter
 VisualAlert = car.CarControl.HUDControl.VisualAlert
@@ -54,7 +54,7 @@ def create_lkas_hud(packer, CP, lkas_active, mads_enabled, hud_alert, hud_count,
 
   commands.append(packer.make_can_msg("DAS_6", 0, values))
 
-  if CP.carFingerprint in STEER_TO_ZERO:
+  if CP.spFlags & ChryslerFlagsSP.SP_RF_S20:
     commands.append(packer.make_can_msg("DAS_6", 1, values))
 
   return commands
@@ -72,7 +72,7 @@ def create_lkas_command(packer, CP, apply_steer, lkas_control_bit, frame):
 
   commands.append(packer.make_can_msg("LKAS_COMMAND", 0, values))
 
-  if CP.carFingerprint in STEER_TO_ZERO:
+  if CP.spFlags & ChryslerFlagsSP.SP_RF_S20:
     commands.append(packer.make_can_msg("LKAS_COMMAND", 1, values))
 
   return commands

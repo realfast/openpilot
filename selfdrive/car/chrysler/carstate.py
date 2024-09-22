@@ -3,7 +3,7 @@ from openpilot.common.conversions import Conversions as CV
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from openpilot.selfdrive.car.interfaces import CarStateBase
-from openpilot.selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, BUTTONS, STEER_TO_ZERO
+from openpilot.selfdrive.car.chrysler.values import DBC, STEER_THRESHOLD, RAM_CARS, BUTTONS, STEER_TO_ZERO, ChryslerFlagsSP
 
 
 class CarState(CarStateBase):
@@ -41,7 +41,7 @@ class CarState(CarStateBase):
     self.prev_mads_enabled = self.mads_enabled
     self.prev_lkas_enabled = self.lkas_enabled
 
-    if self.CP.carFingerprint in STEER_TO_ZERO:
+    if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20:
       EPS_BUS = cp_eps
     else:
       EPS_BUS = cp
