@@ -111,6 +111,10 @@ class CarState(CarStateBase):
     ret.cruiseState.standstill = cp_cruise.vl["DAS_3"]["ACC_STANDSTILL"] == 1
     ret.accFaulted = cp_cruise.vl["DAS_3"]["ACC_FAULTED"] != 0
 
+    # LKAS
+    self.steerBitActive = EPS_BUS.vl["EPS_2"]["LKAS_BIT_ACTIVE"] == 1
+    self.steerReady = EPS_BUS.vl["EPS_2"]["TORQUE_OVERLAY_STATUS"] == 3
+
     if self.CP.carFingerprint in RAM_CARS:
       # Auto High Beam isn't Located in this message on chrysler or jeep currently located in 729 message
       self.auto_high_beam = cp_cam.vl["DAS_6"]['AUTO_HIGH_BEAM_ON']
