@@ -78,6 +78,7 @@ class CarState(CarStateBase):
       cp.vl["ESP_6"]["WHEEL_SPEED_RR"],
       unit=1,
     )
+    self.esp_6_msg = cp.vl["ESP_6"]
 
     # Buttons
     for button in BUTTONS:

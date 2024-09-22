@@ -40,6 +40,7 @@ typedef struct {
   const int CRUISE_BUTTONS;
   const int CENTER_STACK_1;
   const int CENTER_STACK_2;
+  const int ESP_6;
 } ChryslerAddrs;
 
 // CAN messages for Chrysler/Jeep platforms
@@ -55,6 +56,7 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .LKAS_HEARTBIT    = 0x2D9,  // LKAS HEARTBIT from DASM
   .CENTER_STACK_1   = 0x330,  // LKAS Button
   .CENTER_STACK_2   = 0x28A,  // LKAS Button
+  .ESP_6            = 0x158,  // Wheel speeds
 };
 
 // CAN messages for the 5th gen RAM DT platform
@@ -93,6 +95,7 @@ const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.LKAS_HEARTBIT, 0, 5},
   {CHRYSLER_ADDRS.DAS_6, 1, 8},
   {CHRYSLER_ADDRS.ESP_8, 1, 8},
+  {CHRYSLER_ADDRS.ESP_6, 1, 8},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
@@ -276,7 +279,7 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
   const bool is_cruise_buttons = ((addr == chrysler_addrs->CRUISE_BUTTONS) && (chrysler_platform != CHRYSLER_PACIFICA));
   // forward to camera
   if ((bus_num == 0) && !is_cruise_buttons) {
-    if (addr == chrysler_addrs->ESP_8) {
+    if ((addr == chrysler_addrs->ESP_8) || (addr == chrysler_addrs->ESP_6)) {
       bus_fwd = 2;
     }
     else {

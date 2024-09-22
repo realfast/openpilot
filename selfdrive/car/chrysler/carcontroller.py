@@ -9,7 +9,6 @@ from openpilot.selfdrive.car.chrysler import chryslercan
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, CarControllerParams, ChryslerFlags, ChryslerFlagsSP
 from openpilot.selfdrive.car.interfaces import CarControllerBase, FORWARD_GEARS
 from openpilot.selfdrive.controls.lib.drive_helpers import FCA_V_CRUISE_MIN
-from common.conversions import Conversions as CV  # Import Conversions
 
 ButtonType = car.CarState.ButtonEvent.Type
 
@@ -26,6 +25,7 @@ class CarController(CarControllerBase):
     self.spoof_speed = 0
     self.spoof_speed_increment = 0.1
     self.spoof_speed_threshold = 7
+    self.ws_spoof_speed = 0
 
     self.packer = CANPacker(dbc_name)
     self.params = CarControllerParams(CP)
@@ -178,6 +178,8 @@ class CarController(CarControllerBase):
       else:
         self.spoof_speed = CS.out.vEgoRaw
       can_sends.append(chryslercan.create_speed_spoof(self.packer, self.spoof_speed * CV.MS_TO_KPH))
+
+      can_sends.append(chryslercan.create_ws_spoof(self.packer, CS.esp_6_msg, lkas_active))
 
     self.frame += 1
 
