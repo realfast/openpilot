@@ -155,7 +155,6 @@ class CarState(CarStateBase):
       # sig_address, frequency
       ("ESP_1", 50),
       ("ESP_6", 50),
-      ("SPEED_1", 100),
       ("STEERING", 100),
       ("ECM_5", 50),
       ("CRUISE_BUTTONS", 50),

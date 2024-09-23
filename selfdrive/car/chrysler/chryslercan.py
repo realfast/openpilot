@@ -120,7 +120,7 @@ def create_ws_spoof(packer, ESP_6_msg, lkas_active):
 
 def create_speed_1_spoof(packer, speed_1_msg, lkas_active):
   values = speed_1_msg.copy()
-  
+
   if lkas_active:
     values = {
       "SPEED_LEFT": 0,
