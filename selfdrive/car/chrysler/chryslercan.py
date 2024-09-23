@@ -114,7 +114,7 @@ def create_ws_spoof(packer, ESP_6_msg, lkas_active):
       "WhlDir_RR_Stat": 0, 
      } 
   else:
-    values = ESP_6_msg.copy
+    values = ESP_6_msg.copy()  # Added parentheses here
 
   return packer.make_can_msg("ESP_6", 1, values)
 
