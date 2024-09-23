@@ -148,10 +148,12 @@ class CarController(CarControllerBase):
 
       if self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
         lkas_control_bit = CC.latActive and CS.steerReady
+      elif CS.out.vEgo < self.CP.minSteerSpeed or speed_logic < self.CP.minSteerSpeed:
+        lkas_control_bit = False
+        self.spoof_speed = CS.out.vEgo
       elif speed_logic >= self.CP.minEnableSpeed:
         lkas_control_bit = CS.steerReady
-      elif CS.out.vEgo < self.CP.minSteerSpeed:
-        lkas_control_bit = False
+
 
       # EPS faults if LKAS re-enables too quickly
       lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
@@ -170,9 +172,9 @@ class CarController(CarControllerBase):
       can_sends.extend(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, int(self.frame/self.params.STEER_STEP)))
 
     if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.frame % 2 == 0:
-      if lkas_active and CS.out.vEgoRaw < self.CP.minEnableSpeed:
+      if lkas_active:
         if self.spoof_speed < self.spoof_speed_threshold:
-              self.spoof_speed += self.spoof_speed_increment
+          self.spoof_speed += self.spoof_speed_increment
         else:
           self.spoof_speed = self.CP.minEnableSpeed
       else:
