@@ -79,6 +79,7 @@ class CarState(CarStateBase):
       unit=1,
     )
     self.esp_6_msg = cp.vl["ESP_6"]
+    self.speed_1_msg = cp.vl["SPEED_1"]
 
     # Buttons
     for button in BUTTONS:
@@ -154,6 +155,7 @@ class CarState(CarStateBase):
       # sig_address, frequency
       ("ESP_1", 50),
       ("ESP_6", 50),
+      ("SPEED_1", 100),
       ("STEERING", 100),
       ("ECM_5", 50),
       ("CRUISE_BUTTONS", 50),

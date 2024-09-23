@@ -118,6 +118,17 @@ def create_ws_spoof(packer, ESP_6_msg, lkas_active):
 
   return packer.make_can_msg("ESP_6", 1, values)
 
+def create_speed_1_spoof(packer, speed_1_msg, lkas_active):
+  values = speed_1_msg.copy()
+  
+  if lkas_active:
+    values = {
+      "SPEED_LEFT": 0,
+      "SPEED_RIGHT": 0,
+    }
+
+  return packer.make_can_msg("SPEED_1", 1, values)
+
 def create_speed_spoof(packer, spoof_speed):
   values = {
     "Vehicle_Speed": spoof_speed,
