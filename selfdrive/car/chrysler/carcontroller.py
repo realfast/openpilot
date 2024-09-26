@@ -183,6 +183,7 @@ class CarController(CarControllerBase):
 
       can_sends.append(chryslercan.create_ws_spoof(self.packer, CS.esp_6_msg, lkas_active))
       can_sends.append(chryslercan.create_speed_1_spoof(self.packer, CS.speed_1_msg, lkas_active))
+      can_sends.append(chryslercan.create_esp_5_spoof(self.packer))
 
     self.frame += 1
 

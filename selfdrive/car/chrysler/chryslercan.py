@@ -101,7 +101,7 @@ def create_lkas_heartbit(packer, lkas_disabled, lkas_heartbit):
   values["LKAS_DISABLED"] = 1 if lkas_disabled else 0
   return packer.make_can_msg("LKAS_HEARTBIT", 0, values)
 
-def create_ws_spoof(packer, ESP_6_msg, lkas_active):
+def create_ws_spoof(packer, ESP_6_msg, lkas_active): #344
   if lkas_active:
     values = {
       "WHEEL_SPEED_FL": 0,
@@ -118,7 +118,7 @@ def create_ws_spoof(packer, ESP_6_msg, lkas_active):
 
   return packer.make_can_msg("ESP_6", 1, values)
 
-def create_speed_1_spoof(packer, speed_1_msg, lkas_active):
+def create_speed_1_spoof(packer, speed_1_msg, lkas_active): #514
   values = speed_1_msg.copy()
 
   if lkas_active:
@@ -129,9 +129,18 @@ def create_speed_1_spoof(packer, speed_1_msg, lkas_active):
 
   return packer.make_can_msg("SPEED_1", 1, values)
 
-def create_speed_spoof(packer, spoof_speed):
+def create_speed_spoof(packer, spoof_speed):  #284
   values = {
     "Vehicle_Speed": spoof_speed,
   }
 
   return packer.make_can_msg("ESP_8", 1, values)
+
+def create_esp_5_spoof(packer): #292
+    values = {
+      "WhlPlsCnt_FL": 0,
+      "WhlPlsCnt_FR": 0,
+      "WhlPlsCnt_RL": 0,
+      "WhlPlsCnt_RR": 0,
+    }
+    return packer.make_can_msg("ESP_5", 1, values)

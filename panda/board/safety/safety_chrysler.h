@@ -42,6 +42,7 @@ typedef struct {
   const int CENTER_STACK_2;
   const int ESP_6;
   const int SPEED_1;
+  const int ESP_5;
 } ChryslerAddrs;
 
 // CAN messages for Chrysler/Jeep platforms
@@ -59,6 +60,7 @@ const ChryslerAddrs CHRYSLER_ADDRS = {
   .CENTER_STACK_2   = 0x28A,  // LKAS Button
   .ESP_6            = 0x158,  // Wheel speeds
   .SPEED_1          = 0x202,  // Wheel speeds
+  .ESP_5            = 0x124,  // Wheel speeds
 };
 
 // CAN messages for the 5th gen RAM DT platform
@@ -98,6 +100,7 @@ const CanMsg CHRYSLER_TX_MSGS[] = {
   {CHRYSLER_ADDRS.DAS_6, 1, 8},
   {CHRYSLER_ADDRS.ESP_8, 1, 8},
   {CHRYSLER_ADDRS.ESP_6, 1, 8},
+  {CHRYSLER_ADDRS.ESP_5, 1, 8},
 };
 
 const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
@@ -281,7 +284,7 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
   const bool is_cruise_buttons = ((addr == chrysler_addrs->CRUISE_BUTTONS) && (chrysler_platform != CHRYSLER_PACIFICA));
   // forward to camera
   if ((bus_num == 0) && !is_cruise_buttons) {
-    if ((addr == chrysler_addrs->ESP_8) || (addr == chrysler_addrs->ESP_6) || (addr == chrysler_addrs->SPEED_1)) {
+    if ((addr == chrysler_addrs->ESP_8) || (addr == chrysler_addrs->ESP_6) || (addr == chrysler_addrs->SPEED_1) || (addr == chrysler_addrs->ESP_5)) {
       bus_fwd = 2;
     }
     else {
