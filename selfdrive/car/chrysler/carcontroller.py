@@ -150,7 +150,6 @@ class CarController(CarControllerBase):
       elif (CS.out.vEgo < self.CP.minSteerSpeed 
             or (self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.spoof_speed < self.CP.minEnableSpeed)):
         lkas_control_bit = False
-        self.spoof_speed = CS.out.vEgo
       elif speed_logic >= self.CP.minEnableSpeed:
         lkas_control_bit = CS.steerReady
 
