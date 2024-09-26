@@ -148,9 +148,9 @@ class CarController(CarControllerBase):
 
       if self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
         lkas_control_bit = CC.latActive and CS.steerReady
-      elif CS.out.vEgo < self.CP.minSteerSpeed or speed_logic < self.CP.minSteerSpeed:
+      elif (CS.out.vEgo < self.CP.minSteerSpeed 
+            or (self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.spoof_speed < self.CP.minEnableSpeed)):
         lkas_control_bit = False
-        self.spoof_speed = CS.out.vEgo
       elif speed_logic >= self.CP.minEnableSpeed:
         lkas_control_bit = CS.steerReady
 
@@ -172,13 +172,13 @@ class CarController(CarControllerBase):
       can_sends.extend(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, int(self.frame/self.params.STEER_STEP)))
 
     if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.frame % 2 == 0:
-      if lkas_active:
+      if lkas_active and CS.out.vEgo > self.CP.minSteerSpeed:
         if self.spoof_speed < self.spoof_speed_threshold:
           self.spoof_speed += self.spoof_speed_increment
         else:
           self.spoof_speed = self.CP.minEnableSpeed
       else:
-        self.spoof_speed = CS.out.vEgoRaw
+        self.spoof_speed = CS.out.vEgo
       can_sends.append(chryslercan.create_speed_spoof(self.packer, self.spoof_speed * CV.MS_TO_KPH))
 
       can_sends.append(chryslercan.create_ws_spoof(self.packer, CS.esp_6_msg, lkas_active))
