@@ -144,3 +144,22 @@ def create_esp_5_spoof(packer): #292
       "WhlPlsCnt_RR": 0,
     }
     return packer.make_can_msg("ESP_5", 1, values)
+
+def create_esp_4_spoof(packer): #332
+  values = {
+    "VehAccel_X": 0,
+    "VehAccel_Y": 0,
+  }
+  return packer.make_can_msg("ESP_4", 1, values)
+
+def create_ecm_1_spoof(packer): #264
+  values = {
+    "ENGINE_RPM": 900,
+  }
+  return packer.make_can_msg("ECM_1", 1, values)
+
+def create_IC_1_spoof(packer): #784
+  values = {
+    "ODO": 56512.0,
+  }
+  return packer.make_can_msg("IC_1", 1, values)
