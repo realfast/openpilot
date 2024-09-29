@@ -187,8 +187,8 @@ class CarController(CarControllerBase):
       can_sends.append(chryslercan.create_ecm_1_spoof(self.packer))
       can_sends.append(chryslercan.create_esp_4_spoof(self.packer))
 
-      if self.frame % 100 == 0:
-        can_sends.append(chryslercan.create_ic_1_spoof(self.packer))
+      # if self.frame % 100 == 0:
+      #   can_sends.append(chryslercan.create_ic_1_spoof(self.packer))
 
 
     self.frame += 1
