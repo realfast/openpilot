@@ -146,12 +146,12 @@ class CarController(CarControllerBase):
       speed_logic = self.spoof_speed if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 else CS.out.vEgo
 
       if self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
-        lkas_control_bit = CC.latActive and CS.steerReady
+        lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
       elif (CS.out.vEgo < self.CP.minSteerSpeed 
             or (self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.spoof_speed < self.CP.minEnableSpeed)):
         lkas_control_bit = False
       elif speed_logic >= self.CP.minEnableSpeed:
-        lkas_control_bit = CS.steerReady
+        lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
 
 
       # EPS faults if LKAS re-enables too quickly
