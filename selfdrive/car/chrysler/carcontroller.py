@@ -23,7 +23,7 @@ class CarController(CarControllerBase):
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
     self.spoof_speed = 0
-    self.spoof_speed_increment = 0.15
+    self.spoof_speed_increment = 0.1
     self.spoof_speed_threshold = 7
 
     self.packer = CANPacker(dbc_name)
