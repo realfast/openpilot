@@ -9,12 +9,16 @@ from openpilot.selfdrive.car.chrysler import chryslercan
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, CarControllerParams, ChryslerFlags, ChryslerFlagsSP
 from openpilot.selfdrive.car.interfaces import CarControllerBase, FORWARD_GEARS
 from openpilot.selfdrive.controls.lib.drive_helpers import FCA_V_CRUISE_MIN
-
+from common.op_params import opParams, STEER_STEP, STEER_SPOOF_JUMP
 ButtonType = car.CarState.ButtonEvent.Type
 
 
 class CarController(CarControllerBase):
-  def __init__(self, dbc_name, CP, VM):
+  def __init__(self, dbc_name, CP, VM, OP = None):
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
+
     super().__init__(dbc_name, CP, VM)
     self.apply_steer_last = 0
 
@@ -169,6 +173,8 @@ class CarController(CarControllerBase):
       can_sends.extend(chryslercan.create_lkas_command(self.packer, self.CP, int(apply_steer), lkas_control_bit, int(self.frame/self.params.STEER_STEP)))
 
     if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.frame % 2 == 0:
+      self.spoof_speed_increment = self.op_params.get(STEER_STEP)
+      self.spoof_speed_threshold = self.op_params.get(STEER_SPOOF_JUMP)
       if lkas_active and CS.out.vEgo > self.CP.minSteerSpeed:
         if self.spoof_speed < self.spoof_speed_threshold:
           self.spoof_speed = max(self.spoof_speed, CS.out.vEgo) + self.spoof_speed_increment
