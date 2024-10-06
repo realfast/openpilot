@@ -23,7 +23,7 @@ class CarController(CarControllerBase):
     self.lkas_control_bit_prev = False
     self.last_button_frame = 0
     self.spoof_speed = 0
-    self.spoof_speed_increment = 0.1
+    self.spoof_speed_increment = 0.15
     self.spoof_speed_threshold = 7
 
     self.packer = CANPacker(dbc_name)
@@ -170,7 +170,9 @@ class CarController(CarControllerBase):
 
     if self.CP.spFlags & ChryslerFlagsSP.SP_RF_S20 and self.frame % 2 == 0:
       if lkas_active and CS.out.vEgo > self.CP.minSteerSpeed:
-        if self.spoof_speed < self.spoof_speed_threshold:
+        if CS.out.vEgo <= self.spoof_speed_threshold and CC.steeringPressed:
+          self.spoof_speed = CS.out.vEgo
+        elif self.spoof_speed < self.spoof_speed_threshold:
           self.spoof_speed = max(self.spoof_speed, CS.out.vEgo) + self.spoof_speed_increment
         else:
           self.spoof_speed = self.CP.minEnableSpeed
