@@ -147,13 +147,9 @@ class CarController(CarControllerBase):
           lkas_control_bit = False
       elif self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
         lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
-      elif CS.out.vEgo > self.CP.minSteerSpeed:
-        lkas_control_bit = True
-      elif self.CP.flags & ChryslerFlags.HIGHER_MIN_STEERING_SPEED:
-        if CS.out.vEgo < (self.CP.minSteerSpeed - 3.0):
-          lkas_control_bit = False
-      elif self.CP.carFingerprint in RAM_CARS:
-        if CS.out.vEgo < (self.CP.minSteerSpeed - 0.5):
+      elif CS.out.vEgo > self.CP.minEnableSpeed:
+        lkas_control_bit = True:
+      elif CS.out.vEgo < self.CP.minSteerSpeed:
           lkas_control_bit = False
 
       # EPS faults if LKAS re-enables too quickly
