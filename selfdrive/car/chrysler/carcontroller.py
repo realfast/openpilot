@@ -148,7 +148,7 @@ class CarController(CarControllerBase):
       elif self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
         lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
       elif CS.out.vEgo > self.CP.minEnableSpeed:
-        lkas_control_bit = True:
+        lkas_control_bit = True
       elif CS.out.vEgo < self.CP.minSteerSpeed:
           lkas_control_bit = False
 
