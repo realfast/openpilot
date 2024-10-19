@@ -144,6 +144,7 @@ class CarState(CarStateBase):
       ("ESP_1", 50),
       ("EPS_2", 100),
       ("ESP_6", 50),
+      ("ESP_8", 50),
       ("STEERING", 100),
       ("ECM_5", 50),
       ("CRUISE_BUTTONS", 50),
@@ -157,7 +158,6 @@ class CarState(CarStateBase):
 
     if CP.carFingerprint in RAM_CARS:
       messages += [
-        ("ESP_8", 50),
         ("EPS_3", 50),
         ("Transmission_Status", 50),
         ("Center_Stack_1", 1),
