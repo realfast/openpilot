@@ -38,7 +38,6 @@ class CarInterface(CarInterfaceBase):
       new_eps_firmware = any(fw.ecu == 'eps' and fw.fwVersion[:4] >= b"6841" for fw in car_fw)
       if new_eps_platform or new_eps_firmware:
         ret.flags |= ChryslerFlags.HIGHER_MIN_STEERING_SPEED.value
-        # TODO: allow these cars to steer down to 13 m/s if already engaged.
         # TODO: Durango 2020 may be able to steer to zero once above 38 kph
         ret.minSteerSpeed = 13.0  # m/s 17 on the way up, 13 on the way down once engaged.
         ret.minEnableSpeed = 17.5
