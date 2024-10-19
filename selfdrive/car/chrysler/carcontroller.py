@@ -140,17 +140,17 @@ class CarController(CarControllerBase):
 
       # TODO: can we make this more sane? why is it different for all the cars?
       lkas_control_bit = self.lkas_control_bit_prev
-      if self.CP.carFingerprint in RAM_DT:
-        if self.CP.minEnableSpeed <= CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
-          lkas_control_bit = True
-        if (self.CP.minEnableSpeed >= 14.5) and (CS.out.gearShifter != 2):
-          lkas_control_bit = False
-      elif self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
+      if self.CP.spFlags & ChryslerFlagsSP.SP_WP_S20:
         lkas_control_bit = CC.latActive and CS.out.gearShifter in FORWARD_GEARS
+      elif CS.out.vEgo < self.CP.minSteerSpeed or CS.out.gearShifter not in FORWARD_GEARS:
+        lkas_control_bit = False
       elif CS.out.vEgo > self.CP.minEnableSpeed:
-        lkas_control_bit = True
-      elif CS.out.vEgo < self.CP.minSteerSpeed:
-          lkas_control_bit = False
+        if self.CP.carFingerprint in RAM_DT:
+          if CS.out.vEgo <= self.CP.minEnableSpeed + 0.5:
+            lkas_control_bit = True
+        else:
+          lkas_control_bit = True
+
 
       # EPS faults if LKAS re-enables too quickly
       lkas_control_bit = lkas_control_bit and (self.frame - self.last_lkas_falling_edge > 200) and not CS.out.steerFaultTemporary and not CS.out.steerFaultPermanent
