@@ -244,7 +244,7 @@ def below_steer_speed_alert(CP: car.CarParams, CS: car.CarState, sm: messaging.S
 
 def below_enable_steer_speed_alert(CP: car.CarParams, CS: car.CarState, sm: messaging.SubMaster, metric: bool, soft_disable_time: int) -> Alert:
   return Alert(
-    f"Engage Unavailable Below {get_display_speed(CP.minEnableSpeed, metric)}",
+    f"Steer Engagement Unavailable Below {get_display_speed(CP.minEnableSpeed, metric)}",
     "",
     AlertStatus.userPrompt, AlertSize.small,
     Priority.LOW, VisualAlert.steerRequired, AudibleAlert.prompt, 0.4)
