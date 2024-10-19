@@ -13,6 +13,7 @@ GearShifter = car.CarState.GearShifter
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController, CarState):
     super().__init__(CP, CarController, CarState)
+    self.min_enable_speed_alert = False
 
   @staticmethod
   def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
@@ -147,17 +148,20 @@ class CarInterface(CarInterfaceBase):
     events, ret = self.create_sp_events(ret, events)
 
     # Low speed steer alert hysteresis logic
-    if self.CP.carFingerprint in RAM_DT:
-      if self.CS.out.vEgo >= self.CP.minEnableSpeed:
-        self.low_speed_alert = False
-      if (self.CP.minEnableSpeed >= 14.5) and (self.CS.out.gearShifter != car.CarState.GearShifter.drive):
-        self.low_speed_alert = True
-    else:
-      if self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 0.5):
-        self.low_speed_alert = True
-      elif ret.vEgo > (self.CP.minSteerSpeed + 1.):
-        self.low_speed_alert = False
-    if self.low_speed_alert:
+    if (self.CP.minEnableSpeed > 0) and (self.CS.out.gearShifter != car.CarState.GearShifter.drive):
+        self.min_enable_speed_alert = True
+    elif self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 2.):
+      self.low_speed_alert = True
+      if ret.vEgo < self.CP.minSteerSpeed:
+        self.min_enable_speed_alert = True
+    elif ret.vEgo >= self.CP.minEnableSpeed:
+      self.min_enable_speed_alert = False
+    elif ret.vEgo > (self.CP.minSteerSpeed + 2.):
+      self.low_speed_alert = False
+    
+    if self.min_enable_speed_alert:
+      events.add(car.CarEvent.EventName.belowEnableSteerSpeed)
+    elif self.low_speed_alert:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 
     ret.customStockLong = self.update_custom_stock_long()
