@@ -4,6 +4,7 @@ from panda import Panda
 from openpilot.selfdrive.car import create_button_events, get_safety_config
 from openpilot.selfdrive.car.chrysler.values import CAR, RAM_HD, RAM_DT, RAM_CARS, ChryslerFlags, ChryslerFlagsSP
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
+from common.conversions import Conversions as CV
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
@@ -40,8 +41,10 @@ class CarInterface(CarInterfaceBase):
       if new_eps_platform or new_eps_firmware:
         ret.flags |= ChryslerFlags.HIGHER_MIN_STEERING_SPEED.value
         # TODO: Durango 2020 may be able to steer to zero once above 38 kph
-        ret.minSteerSpeed = 14.0  # m/s 17 on the way up, 14.0 on the way down once engaged.
-        ret.minEnableSpeed = 17.5
+        ret.minSteerSpeed = 14.  # m/s 17 on the way up, 14.0 on the way down once engaged.
+        ret.minEnableSpeed = 17.
+        # ret.minSteerSpeed = 50. * CV.KPH_TO_MS
+        # ret.minEnableSpeed = 60. * CV.KPH_TO_MS
 
     # Chrysler
     if candidate in (CAR.CHRYSLER_PACIFICA_2018, CAR.CHRYSLER_PACIFICA_2018_HYBRID, CAR.CHRYSLER_PACIFICA_2019_HYBRID,
