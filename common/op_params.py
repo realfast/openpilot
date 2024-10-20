@@ -175,8 +175,8 @@ class opParams:
                         #SHOW_RATE_PARAMS: Param(False, [bool], live=True),
                         #ENABLE_RATE_PARAMS: Param(False, [bool], live=True, depends_on=SHOW_RATE_PARAMS),
                         #STOCK_DELTA_UP_DOWN: Param(6, VT.number, live=True ,depends_on=SHOW_RATE_PARAMS),
-                        # STEER_DELTA_UP: Param(3, VT.number, live=True),
-                        # STEER_DELTA_DOWN: Param(3, VT.number, live=True),
+                        STEER_DELTA_UP: Param(4, VT.number, live=True),
+                        STEER_DELTA_DOWN: Param(4, VT.number, live=True),
                         # STEER_MAX_ERROR: Param(80, VT.number, live=True),
                         # STEER_ACT_DELAY: Param(0.1, VT.number, live=True),
                         # STEER_STEP: Param(.2, VT.number, live=True),
@@ -340,8 +340,8 @@ ENABLE_INDI_BREAKPOINTS = 'enable_indi_breakpoints'
 #SHOW_RATE_PARAMS = 'show_rate_params'
 #ENABLE_RATE_PARAMS = 'enable_rate_params'
 #STOCK_DELTA_UP_DOWN = 'stock_delta_up_down'
-# STEER_DELTA_UP = 'steer_delta_up'
-# STEER_DELTA_DOWN = 'steer_delta_down'
+STEER_DELTA_UP = 'steer_delta_up'
+STEER_DELTA_DOWN = 'steer_delta_down'
 # STEER_MAX_ERROR = 'steer_max_error'
 # STEER_ACT_DELAY = 'steer_act_delay'
 # STEER_STEP = 'steer_step'

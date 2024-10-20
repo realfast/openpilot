@@ -9,7 +9,7 @@ from openpilot.selfdrive.car.chrysler import chryslercan
 from openpilot.selfdrive.car.chrysler.values import RAM_CARS, RAM_DT, CarControllerParams, ChryslerFlags, ChryslerFlagsSP
 from openpilot.selfdrive.car.interfaces import CarControllerBase, FORWARD_GEARS
 from openpilot.selfdrive.controls.lib.drive_helpers import FCA_V_CRUISE_MIN
-from common.op_params import opParams, MIN_ENABLE_SPEED, MIN_STEER_SPEED
+from common.op_params import opParams, MIN_ENABLE_SPEED, MIN_STEER_SPEED, STEER_DELTA_UP, STEER_DELTA_DOWN
 ButtonType = car.CarState.ButtonEvent.Type
 
 
@@ -167,6 +167,8 @@ class CarController(CarControllerBase):
 
       # steer torque
       new_steer = int(round(CC.actuators.steer * self.params.STEER_MAX))
+      self.params.STEER_DELTA_UP = self.op_params.get(STEER_DELTA_UP)
+      self.params.STEER_DELTA_DOWN = self.op_params.get(STEER_DELTA_DOWN)
       apply_steer = apply_meas_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorqueEps, self.params)
       if not lkas_active or not lkas_control_bit or not self.lkas_control_bit_prev:
         apply_steer = 0
