@@ -148,10 +148,13 @@ class CarInterface(CarInterfaceBase):
     events, ret = self.create_sp_events(ret, events)
 
     # Low speed steer alert hysteresis logic
+    # Reset min_enable_speed_alert if the car is not in drive
     if (self.CP.minEnableSpeed > 0) and (self.CS.out.gearShifter != car.CarState.GearShifter.drive):
         self.min_enable_speed_alert = True
+    # Turn on low speed alert if the car is close to the min steer speed
     elif self.CP.minSteerSpeed > 0. and ret.vEgo < (self.CP.minSteerSpeed + 2.):
       self.low_speed_alert = True
+      # Turn on min_enable_speed_alert if the car is below the steer speed
       if ret.vEgo < self.CP.minSteerSpeed:
         self.min_enable_speed_alert = True
     elif ret.vEgo >= self.CP.minEnableSpeed:
