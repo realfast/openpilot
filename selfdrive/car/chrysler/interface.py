@@ -40,8 +40,8 @@ class CarInterface(CarInterfaceBase):
       if new_eps_platform or new_eps_firmware:
         ret.flags |= ChryslerFlags.HIGHER_MIN_STEERING_SPEED.value
         # TODO: Durango 2020 may be able to steer to zero once above 38 kph
-        ret.minSteerSpeed = 14.0  # m/s 17 on the way up, 14.0 on the way down once engaged.
-        ret.minEnableSpeed = 17.5
+        ret.minSteerSpeed = 13.889  #50KPH
+        ret.minEnableSpeed = 16.667  #60KPH
 
     # Chrysler
     if candidate in (CAR.CHRYSLER_PACIFICA_2018, CAR.CHRYSLER_PACIFICA_2018_HYBRID, CAR.CHRYSLER_PACIFICA_2019_HYBRID,
