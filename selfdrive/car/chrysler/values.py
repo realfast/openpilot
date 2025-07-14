@@ -89,7 +89,7 @@ class CAR(Platforms):
       ChryslerCarDocs("Ram 2500 2020-24", car_parts=CarParts.common([CarHarness.ram])),
       ChryslerCarDocs("Ram 3500 2019-22", car_parts=CarParts.common([CarHarness.ram])),
     ],
-    ChryslerCarSpecs(mass=3405., wheelbase=3.785, steerRatio=15.61, minSteerSpeed=15.5, minEnableSpeed=16),
+    ChryslerCarSpecs(mass=3405., wheelbase=3.79, steerRatio=15.61, minSteerSpeed=16, minEnableSpeed=16, tireStiffnessFront=65155, tireStiffnessRear=80926),
     dbc_dict('chrysler_ram_hd_generated', None),
   )
 
