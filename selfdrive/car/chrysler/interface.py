@@ -73,6 +73,8 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.RAM_HD_5TH_GEN:
       ret.steerActuatorDelay = 0.2
+      ret.tireStiffnessFront = 65155
+      ret.tireStiffnessRear = 80926
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, 1.0, False)
       ret.spFlags |= ChryslerFlagsSP.SP_RAM_HD_PARAMSD_IGNORE.value
 
